@@ -1,9 +1,0 @@
-*.sublime-*
-.DS_Store
-*.swp
-*.swo
-#*.*#
-.exe
-.idea
-.logs
-*.log
