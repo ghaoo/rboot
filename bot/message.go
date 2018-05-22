@@ -8,5 +8,5 @@ type Message struct {
 	ToUserID     string
 	ToUserName   string
 	Message      string
-	Direct       bool
+	AtMe         bool
 }
