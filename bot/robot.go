@@ -11,12 +11,12 @@ const (
 )
 
 type Robot struct {
-	name       string
+	name string
 }
 
 func New() *Robot {
 	return &Robot{
-		name:       DefaultRobotName,
+		name: DefaultRobotName,
 	}
 }
 
