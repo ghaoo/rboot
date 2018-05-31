@@ -1,9 +1,9 @@
 package rboot
 
 import (
-	"testing"
 	"bytes"
 	"io/ioutil"
+	"testing"
 )
 
 var msgBody = `From: John Doe <jdoe@machine.example>
@@ -30,4 +30,3 @@ func TestReadMessage(t *testing.T) {
 	t.Logf(`Body: %s`, string(body))
 
 }
-

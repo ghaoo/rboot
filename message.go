@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"io"
+	"io/ioutil"
 	"net/textproto"
 	"time"
 )
@@ -11,6 +12,10 @@ import (
 type Message struct {
 	Header Header
 	Body   io.Reader
+}
+
+func (msg *Message) Read() ([]byte, error) {
+	return ioutil.ReadAll(msg.Body)
 }
 
 // 读消息

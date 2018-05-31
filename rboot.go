@@ -1,16 +1,15 @@
 package rboot
 
 import (
+	"regexp"
 	"sync"
 	"log"
 )
 
 type Rboot struct {
-	name string
+	name        string
 	providerIn  chan Message
 	providerOut chan Message
-
-	plugs map[string]Plugin
 }
 
 func NewRboot(name string) *Rboot {
@@ -28,30 +27,63 @@ func (bot *Rboot) Go() {
 
 		for in := range bot.providerIn {
 
-			go func(bot Rboot, msg Message) {
+			go func(bot *Rboot, msg Message) {
 				defer func() {
 					if r := recover(); r != nil {
-						log.Printf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
+						log.Printf("Rboot: panic recovered when parsing message: %#v. Panic: %v", msg, r)
 					}
 				}()
-				/*for _, plug := range bot.plugs {
-					responses := plug.Action
-					for _, r := range responses {
-						s.providerOut <- r
+				mbyte, err := msg.Read()
+				if err != nil {
+					panic(err)
+				}
+
+				for name, rules := range ListPlugins() {
+					if bot.match(rules, string(mbyte)) {
+						handle, err := DirectiveAction(name)
+						if err != nil {
+							panic(err)
+						}
+
+						c := &Controller{bot}
+
+						outs, err := handle(c)
+
+						for _, out := range outs {
+							bot.providerOut <- out
+						}
 					}
-				}*/
-			}(*bot, in)
+				}
+			}(bot, in)
 		}
 	})
+}
+
+func (bot *Rboot) regexp(pattern string) *regexp.Regexp {
+	return regexp.MustCompile(pattern)
+}
+
+func (bot *Rboot) match(rules []string, msg string) bool {
+
+	for _, rule := range rules {
+		reg := bot.regexp(rule)
+
+		if !reg.MatchString(msg) {
+			return false
+		}
+		return true
+	}
+	return false
 }
 
 func (bot *Rboot) Name() string {
 	return bot.name
 }
 
-// 适配连接器
-type Provider interface {
-	Run() error
-	Incoming() chan Message
-	Outgoing() chan Message
+func (bot *Rboot) Incoming() chan Message {
+	return bot.providerIn
+}
+
+func (bot *Rboot) Outgoing() chan Message {
+	return bot.providerOut
 }
