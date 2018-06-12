@@ -7,26 +7,40 @@ import (
 var (
 	availablePlugins = make(map[string]*Plugin)
 
-	availableAdapters = make(map[string]func(*Controller)Adapter)
+	availableConnecters = make(map[string]func(*Response) Connecter)
+
+	rulesets = make(map[string][]string)
 )
 
+func init() {
+	rulesets = setRulesets()
+}
+
 type Plugin struct {
-	Rules       []string  // 插件指令集
-	Action      Handler // 插件操作函数
+	Action      SetupFunc // 插件操作函数
+	Ruleset     []string  // 指令集
 	Description string    // 插件简介
 }
 
-func ListPlugins() map[string][]string {
-	var ps = make(map[string][]string)
+func setRulesets() map[string][]string {
 
-	for name, plug := range availablePlugins {
-		ps[name] = plug.Rules
+	rules := make(map[string][]string)
+
+	if len(availablePlugins) <= 0 {
+		return rules
 	}
 
-	return ps
+	for name, plug := range availablePlugins {
+		if len(plug.Ruleset) > 0 {
+			rules[name] = plug.Ruleset
+		}
+
+	}
+
+	return rules
 }
 
-type Handler func(*Controller) ([]Message, error)
+type SetupFunc func(*Response) ([]Message, error)
 
 // 注册插件
 func RegisterPlugin(name string, plugin *Plugin) {
@@ -40,7 +54,28 @@ func RegisterPlugin(name string, plugin *Plugin) {
 	availablePlugins[name] = plugin
 }
 
-func DirectiveAction(name string) (Handler, error) {
+func getPlugin(name string) (*Plugin, error) {
+	if plug, ok := availablePlugins[name]; ok {
+		return plug, nil
+	}
+
+	if len(availablePlugins) == 0 {
+		return nil, fmt.Errorf("no plug-ins available")
+	}
+
+	if name == "" {
+		if len(availablePlugins) == 1 {
+			for _, plug := range availablePlugins {
+				return plug, nil
+			}
+		}
+		return nil, fmt.Errorf("multiple plugins available; must choose one")
+	}
+	return nil, fmt.Errorf("unknown plugin '%s'", name)
+
+}
+
+func DirectiveAction(name string) (SetupFunc, error) {
 
 	if plugin, ok := availablePlugins[name]; ok {
 		return plugin.Action, nil
@@ -50,13 +85,14 @@ func DirectiveAction(name string) (Handler, error) {
 
 }
 
-type Adapter interface {
-	Run() error // 运行适配器
-	Emit(*Controller) error	// 将 in message 发送给控制器
-	Send(*Controller, ...string) error	// 发送消息
-	Reply(*Controller, ...string) error	// 回答
+type Connecter interface {
+	Name() string          // 适配器名称
+	Run() error            // 运行适配器
+	Send(...string) error  // 发送消息
+	Reply(...string) error // 回复消息
+	Close() error          // 关闭适配器
 }
 
-func RegisterConnecter(name string, f func(*Controller) Adapter) {
-	availableAdapters[name] = f
+func RegisterConnecter(name string, f func(*Response) Connecter) {
+	availableConnecters[name] = f
 }
