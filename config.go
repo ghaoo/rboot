@@ -1,9 +1,9 @@
-package bot
+package rboot
 
 import (
-	"os"
-	"io/ioutil"
 	"github.com/go-yaml/yaml"
+	"io/ioutil"
+	"os"
 )
 
 var confile = "config.yml"
@@ -24,11 +24,10 @@ plugins:
 `
 
 type Config struct {
-	Name string `yaml:"name"`
-	Connecter string `yaml:"connecter"`
-	Plugins []string `yaml:"plugins"`
+	Name      string   `yaml:"name"`
+	Connecter string   `yaml:"connecter"`
+	Plugins   []string `yaml:"plugins"`
 }
-
 
 func load() ([]byte, error) {
 	_, err := os.Stat(confile)
@@ -65,13 +64,13 @@ func createConf() {
 func NewConf() Config {
 	data, err := load()
 	if err != nil {
-		panic("加载配置文件失败"+ err.Error())
+		panic("加载配置文件失败" + err.Error())
 	}
 
 	c := Config{}
 	err = yaml.Unmarshal(data, &c)
 	if err != nil {
-		panic("解析配置文件失败"+err.Error())
+		panic("解析配置文件失败" + err.Error())
 	}
 
 	return c

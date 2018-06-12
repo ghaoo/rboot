@@ -14,13 +14,14 @@ const (
 type Rboot struct {
 	name      string
 	connecter Connecter
+	conf      Config
 
 	signalChan chan os.Signal
 }
 
 func NewRboot() *Rboot {
 	bot := &Rboot{
-		name:       DefaultRobotName,
+		conf:       NewConf(),
 		signalChan: make(chan os.Signal, 1),
 	}
 
@@ -33,6 +34,10 @@ func (bot *Rboot) SetName(name string) {
 
 func (bot *Rboot) SetConnecter(connecter Connecter) {
 	bot.connecter = connecter
+}
+
+func (bot *Rboot) Conf() Config {
+	return bot.conf
 }
 
 func (bot *Rboot) Go() {
@@ -70,4 +75,17 @@ func (bot *Rboot) Stop() error {
 
 func (bot *Rboot) Name() string {
 	return bot.name
+}
+
+func (bot *Rboot) initialize() {
+	if bot.conf.Name == `` {
+		bot.name = DefaultRobotName
+	} else {
+		bot.name = bot.conf.Name
+	}
+
+	res := NewResponse(bot)
+
+
+
 }

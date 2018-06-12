@@ -96,3 +96,23 @@ type Connecter interface {
 func RegisterConnecter(name string, f func(*Response) Connecter) {
 	availableConnecters[name] = f
 }
+
+func getConnecter(res *Response, name string) (Connecter, error) {
+	if c, ok := availableConnecters[name]; ok {
+		return c(res), nil
+	}
+
+	if len(availableConnecters) == 0 {
+		return nil, fmt.Errorf("no connecter available")
+	}
+
+	if name == "" {
+		if len(availableConnecters) == 1 {
+			for _, c := range availableConnecters {
+				return c(res), nil
+			}
+		}
+		return nil, fmt.Errorf("multiple connecters available; must choose one")
+	}
+	return nil, fmt.Errorf("unknown connecter '%s'", name)
+}

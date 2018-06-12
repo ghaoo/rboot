@@ -15,6 +15,13 @@ type Response struct {
 	sync.Mutex
 }
 
+func NewResponse(bot *Rboot) *Response {
+	res := new(Response)
+	res.Rboot = bot
+
+	return res
+}
+
 func (res *Response) Receive(msg *Message) error {
 	res.Lock()
 	defer res.Unlock()
