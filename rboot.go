@@ -1,89 +1,73 @@
 package rboot
 
 import (
-	"regexp"
-	"sync"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+const (
+	DefaultRobotName = `Rboot`
 )
 
 type Rboot struct {
-	name        string
-	providerIn  chan Message
-	providerOut chan Message
+	name      string
+	connecter Connecter
+
+	signalChan chan os.Signal
 }
 
-func NewRboot(name string) *Rboot {
-	return &Rboot{
-		name:        name,
-		providerIn:  make(chan Message),
-		providerOut: make(chan Message),
+func NewRboot() *Rboot {
+	bot := &Rboot{
+		name:       DefaultRobotName,
+		signalChan: make(chan os.Signal, 1),
 	}
+
+	return bot
 }
 
-var once sync.Once
+func (bot *Rboot) SetName(name string) {
+	bot.name = name
+}
+
+func (bot *Rboot) SetConnecter(connecter Connecter) {
+	bot.connecter = connecter
+}
 
 func (bot *Rboot) Go() {
-	once.Do(func() {
 
-		for in := range bot.providerIn {
+	go bot.connecter.Run()
 
-			go func(bot *Rboot, msg Message) {
-				defer func() {
-					if r := recover(); r != nil {
-						log.Printf("Rboot: panic recovered when parsing message: %#v. Panic: %v", msg, r)
-					}
-				}()
-				mbyte, err := msg.Read()
-				if err != nil {
-					panic(err)
-				}
+	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
-				for name, rules := range ListPlugins() {
-					if bot.match(rules, string(mbyte)) {
-						handle, err := DirectiveAction(name)
-						if err != nil {
-							panic(err)
-						}
-
-						c := &Controller{bot}
-
-						outs, err := handle(c)
-
-						for _, out := range outs {
-							bot.providerOut <- out
-						}
-					}
-				}
-			}(bot, in)
+	stop := false
+	for !stop {
+		select {
+		case sig := <-bot.signalChan:
+			switch sig {
+			case syscall.SIGINT, syscall.SIGTERM:
+				stop = true
+			}
 		}
-	})
-}
-
-func (bot *Rboot) regexp(pattern string) *regexp.Regexp {
-	return regexp.MustCompile(pattern)
-}
-
-func (bot *Rboot) match(rules []string, msg string) bool {
-
-	for _, rule := range rules {
-		reg := bot.regexp(rule)
-
-		if !reg.MatchString(msg) {
-			return false
-		}
-		return true
 	}
-	return false
+
+	signal.Stop(bot.signalChan)
+
+	bot.Stop()
+}
+
+func (bot *Rboot) Stop() error {
+
+	log.Printf("stopping %s connecter", bot.connecter.Name())
+	if err := bot.connecter.Close(); err != nil {
+		return err
+	}
+
+	log.Printf("stopping %s", DefaultRobotName)
+	return nil
 }
 
 func (bot *Rboot) Name() string {
 	return bot.name
-}
-
-func (bot *Rboot) Incoming() chan Message {
-	return bot.providerIn
-}
-
-func (bot *Rboot) Outgoing() chan Message {
-	return bot.providerOut
 }
