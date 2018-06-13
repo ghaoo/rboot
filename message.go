@@ -81,3 +81,16 @@ func (h Header) To() string {
 
 	return hdr
 }
+
+func NewHeader(from, to, contentType string) Header {
+	header := make(Header)
+
+	now := time.Now().Local().String()
+
+	header.Add(`From`, from)
+	header.Add(`To`, to)
+	header.Add(`ContentType`, contentType)
+	header.Add(`Date`, now)
+
+	return header
+}

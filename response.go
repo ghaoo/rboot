@@ -3,14 +3,13 @@ package rboot
 import (
 	"fmt"
 	"io"
-	"regexp"
 	"sync"
-	"time"
+	"log"
 )
 
 type Response struct {
 	*Rboot
-	executePlugin *Plugin
+	msg *Message
 
 	sync.Mutex
 }
@@ -26,7 +25,7 @@ func (res *Response) Receive(msg *Message) error {
 	res.Lock()
 	defer res.Unlock()
 
-	b, err := msg.Read()
+	_, err := msg.Read()
 	if err != nil {
 		return fmt.Errorf(`Response Receive: message read error %v `, err)
 	}
@@ -39,23 +38,9 @@ func (res *Response) Receive(msg *Message) error {
 		msg.Header.Set(`To`, `Nil`)
 	}
 
-	text := string(b)
+	res.msg = msg
 
-	plug_name, ok := checkRuleset(text)
-
-	if !ok {
-		return fmt.Errorf(`Response Receive: no matching plugin... `)
-	}
-
-	if ok {
-		res.executePlugin, err = getPlugin(plug_name)
-
-		if err != nil {
-			return fmt.Errorf(`Response Receive: get plugin error %v `, err)
-		}
-
-		return nil
-	}
+	res.executeDirectives()
 
 	return nil
 
@@ -71,29 +56,6 @@ func (res *Response) ReceiveWithReader(in io.Reader) error {
 	return res.Receive(msg)
 }
 
-func checkRuleset(msg string) (string, bool) {
-	for plug, rules := range rulesets {
-		for _, rule := range rules {
-			if match(rule, msg) {
-				return plug, true
-			}
-		}
-	}
-
-	return ``, false
-}
-
-func match(pattern, msg string) bool {
-
-	reg := regexp.MustCompile(pattern)
-
-	if reg.MatchString(msg) {
-		return true
-	}
-
-	return false
-}
-
 func (res *Response) Send(strs ...string) error {
 	return res.connecter.Send(strs...)
 }
@@ -102,15 +64,16 @@ func (res *Response) Reply(strs ...string) error {
 	return res.connecter.Reply(strs...)
 }
 
-func newHeader(from, to, contentType string) Header {
-	header := make(Header)
+func (res *Response) executeDirectives() {
+	for _, name := range res.Rboot.conf.Plugins {
 
-	now := time.Now().Local().String()
+		action, err := DirectiveAction(name)
+		if err != nil {
+			log.Print(err)
+		}
 
-	header.Add(`From`, from)
-	header.Add(`To`, to)
-	header.Add(`ContentType`, contentType)
-	header.Add(`Date`, now)
-
-	return header
+		if err = action(res); err != nil {
+			log.Print(err)
+		}
+	}
 }

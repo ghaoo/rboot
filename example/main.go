@@ -3,7 +3,7 @@ package main
 import (
 	"rboot"
 
-	_ "rboot/adapter/cli"
+	_ "rboot/connecter"
 )
 
 func main() {

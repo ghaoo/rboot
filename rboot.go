@@ -8,7 +8,9 @@ import (
 )
 
 const (
+	DefaultRbootConf = `config.yml`
 	DefaultRobotName = `Rboot`
+	DefaultRobotConnecter = `cli`
 )
 
 type Rboot struct {
@@ -19,9 +21,16 @@ type Rboot struct {
 	signalChan chan os.Signal
 }
 
-func NewRboot() *Rboot {
+func NewRboot(config ...string) *Rboot {
+
+	var conf = DefaultRbootConf
+
+	if len(config) > 0 {
+		conf = config[0]
+	}
+
 	bot := &Rboot{
-		conf:       NewConf(),
+		conf:       NewConf(conf),
 		signalChan: make(chan os.Signal, 1),
 	}
 
@@ -41,6 +50,7 @@ func (bot *Rboot) Conf() Config {
 }
 
 func (bot *Rboot) Go() {
+	bot.initialize()
 
 	go bot.connecter.Run()
 
@@ -85,7 +95,17 @@ func (bot *Rboot) initialize() {
 	}
 
 	res := NewResponse(bot)
+	bot_cname := DefaultRobotConnecter
 
+	if bot.conf.Connecter != `` {
+		bot_cname = bot.conf.Connecter
+	}
 
+	con, err := getConnecter(res, bot_cname)
 
+	if err != nil {
+		panic(`initialize error: ` + err.Error())
+	}
+
+	bot.connecter = con
 }
