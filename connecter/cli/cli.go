@@ -75,7 +75,6 @@ func (c *cli) Run() error {
 
 			c.Receive(msg)
 
-			prompt()
 			continue
 		}
 	}()

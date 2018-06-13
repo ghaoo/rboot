@@ -6,18 +6,16 @@ import (
 	"os"
 )
 
-var confile = "config.yml"
+//var confile = "config.yml"
 
 var yaml_setting = `
-# rboot setting
+# Rboot setting
 
-# robot name
 name: Rboot
 
-# robot connecter name
 connecter: cli
 
-# robot enable plugins
+# enable plugins
 plugins:
  - testing
 
@@ -29,14 +27,14 @@ type Config struct {
 	Plugins   []string `yaml:"plugins"`
 }
 
-func load() ([]byte, error) {
-	_, err := os.Stat(confile)
+func load(confpath string) ([]byte, error) {
+	_, err := os.Stat(confpath)
 
 	if os.IsNotExist(err) {
-		createConf()
+		createConf(confpath)
 	}
 
-	file, err := os.Open(confile)
+	file, err := os.Open(confpath)
 	if err != nil {
 		return nil, err
 	}
@@ -45,24 +43,24 @@ func load() ([]byte, error) {
 	return ioutil.ReadAll(file)
 }
 
-func createConf() {
-	_, err := os.Stat(confile)
+func createConf(confpath string) {
+	_, err := os.Stat(confpath)
 	if os.IsNotExist(err) {
-		_, err := os.OpenFile(confile, os.O_WRONLY|os.O_CREATE, 0666)
+		_, err := os.OpenFile(confpath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			panic(err)
 		}
 
 		var confwrite = []byte(yaml_setting)
-		err = ioutil.WriteFile(confile, confwrite, 0666) //写入文件(字节数组)
+		err = ioutil.WriteFile(confpath, confwrite, 0666) //写入文件(字节数组)
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func NewConf() Config {
-	data, err := load()
+func NewConf(confpath string) Config {
+	data, err := load(confpath)
 	if err != nil {
 		panic("加载配置文件失败" + err.Error())
 	}

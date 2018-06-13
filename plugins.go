@@ -8,39 +8,14 @@ var (
 	availablePlugins = make(map[string]*Plugin)
 
 	availableConnecters = make(map[string]func(*Response) Connecter)
-
-	rulesets = make(map[string][]string)
 )
-
-func init() {
-	rulesets = setRulesets()
-}
 
 type Plugin struct {
 	Action      SetupFunc // 插件操作函数
-	Ruleset     []string  // 指令集
 	Description string    // 插件简介
 }
 
-func setRulesets() map[string][]string {
-
-	rules := make(map[string][]string)
-
-	if len(availablePlugins) <= 0 {
-		return rules
-	}
-
-	for name, plug := range availablePlugins {
-		if len(plug.Ruleset) > 0 {
-			rules[name] = plug.Ruleset
-		}
-
-	}
-
-	return rules
-}
-
-type SetupFunc func(*Response) ([]Message, error)
+type SetupFunc func(*Response) error
 
 // 注册插件
 func RegisterPlugin(name string, plugin *Plugin) {
