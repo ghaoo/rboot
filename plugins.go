@@ -8,10 +8,13 @@ var (
 	availablePlugins = make(map[string]*Plugin)
 
 	availableConnecters = make(map[string]func(*Response) Connecter)
+
+	rulesets = make(map[string]map[string]string)
 )
 
 type Plugin struct {
 	Action      SetupFunc // 插件操作函数
+	Ruleset     map[string]string  // 指令集
 	Description string    // 插件简介
 }
 
@@ -19,6 +22,7 @@ type SetupFunc func(*Response) error
 
 // 注册插件
 func RegisterPlugin(name string, plugin *Plugin) {
+
 	if name == "" {
 		panic("RegisterPlugin: plugin must have a name")
 	}
@@ -27,6 +31,11 @@ func RegisterPlugin(name string, plugin *Plugin) {
 	}
 
 	availablePlugins[name] = plugin
+
+	if len(plugin.Ruleset) > 0 {
+
+		rulesets[name] = plugin.Ruleset
+	}
 }
 
 func getPlugin(name string) (*Plugin, error) {

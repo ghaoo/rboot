@@ -3,13 +3,14 @@ package rboot
 import (
 	"fmt"
 	"io"
-	"sync"
 	"log"
+	"regexp"
+	"sync"
 )
 
 type Response struct {
 	*Rboot
-	msg *Message
+	Matcher string
 
 	sync.Mutex
 }
@@ -25,7 +26,7 @@ func (res *Response) Receive(msg *Message) error {
 	res.Lock()
 	defer res.Unlock()
 
-	_, err := msg.Read()
+	b, err := msg.Read()
 	if err != nil {
 		return fmt.Errorf(`Response Receive: message read error %v `, err)
 	}
@@ -38,12 +39,22 @@ func (res *Response) Receive(msg *Message) error {
 		msg.Header.Set(`To`, `Nil`)
 	}
 
-	res.msg = msg
+	text := string(b)
 
-	res.executeDirectives()
+	plug_name, ok := res.matchRuleset(text)
 
-	return nil
+	if ok {
 
+		action, err := DirectiveAction(plug_name)
+
+		if err != nil {
+			return err
+		}
+
+		return action(res)
+	}
+
+	return fmt.Errorf(`Response Receive: no matching plugin... `)
 }
 
 func (res *Response) ReceiveWithReader(in io.Reader) error {
@@ -56,24 +67,35 @@ func (res *Response) ReceiveWithReader(in io.Reader) error {
 	return res.Receive(msg)
 }
 
+func (res *Response) matchRuleset(msg string) (string, bool) {
+	for plug, rules := range rulesets {
+		for matcher, rule := range rules {
+			if res.match(rule, msg) {
+				res.Matcher = matcher
+				return plug, true
+			}
+		}
+	}
+
+	log.Printf(`no match plugin`)
+	return ``, false
+}
+
+func (res *Response) match(pattern, msg string) bool {
+
+	reg := regexp.MustCompile(pattern)
+
+	if reg.MatchString(msg) {
+		return true
+	}
+
+	return false
+}
+
 func (res *Response) Send(strs ...string) error {
 	return res.connecter.Send(strs...)
 }
 
 func (res *Response) Reply(strs ...string) error {
 	return res.connecter.Reply(strs...)
-}
-
-func (res *Response) executeDirectives() {
-	for _, name := range res.Rboot.conf.Plugins {
-
-		action, err := DirectiveAction(name)
-		if err != nil {
-			log.Print(err)
-		}
-
-		if err = action(res); err != nil {
-			log.Print(err)
-		}
-	}
 }

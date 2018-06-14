@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	DefaultRbootConf = `config.yml`
-	DefaultRobotName = `Rboot`
+	DefaultRbootConf      = `config.yml`
+	DefaultRobotName      = `Rboot`
 	DefaultRobotConnecter = `cli`
 )
 
