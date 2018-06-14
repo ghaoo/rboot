@@ -4,6 +4,7 @@ import (
 	"rboot"
 
 	_ "rboot/connecter"
+	_ "rboot/plugins"
 )
 
 func main() {
