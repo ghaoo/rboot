@@ -38,27 +38,6 @@ func RegisterPlugin(name string, plugin *Plugin) {
 	}
 }
 
-func getPlugin(name string) (*Plugin, error) {
-	if plug, ok := availablePlugins[name]; ok {
-		return plug, nil
-	}
-
-	if len(availablePlugins) == 0 {
-		return nil, fmt.Errorf("no plug-ins available")
-	}
-
-	if name == "" {
-		if len(availablePlugins) == 1 {
-			for _, plug := range availablePlugins {
-				return plug, nil
-			}
-		}
-		return nil, fmt.Errorf("multiple plugins available; must choose one")
-	}
-	return nil, fmt.Errorf("unknown plugin '%s'", name)
-
-}
-
 func DirectiveAction(name string) (SetupFunc, error) {
 
 	if plugin, ok := availablePlugins[name]; ok {
