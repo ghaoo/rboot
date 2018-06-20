@@ -41,11 +41,11 @@ func (res *Response) Receive(msg *Message) error {
 
 	text := string(b)
 
-	plug_name, ok := res.matchRuleset(text)
+	plugName, ok := res.matchRuleset(text)
 
 	if ok {
 
-		action, err := DirectiveAction(plug_name)
+		action, err := DirectiveAction(plugName)
 
 		if err != nil {
 			return err

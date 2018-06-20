@@ -5,46 +5,46 @@ import (
 )
 
 var (
-	availablePlugins = make(map[string]*Plugin)
+	availableScripts = make(map[string]*Script)
 
 	availableConnecters = make(map[string]func(*Response) Connecter)
 
 	rulesets = make(map[string]map[string]string)
 )
 
-type Plugin struct {
-	Action      SetupFunc // 插件操作函数
-	Ruleset     map[string]string  // 指令集
-	Description string    // 插件简介
+type Script struct {
+	Action      SetupFunc         // 插件操作函数
+	Ruleset     map[string]string // 指令集
+	Description string            // 插件简介
 }
 
 type SetupFunc func(*Response) error
 
 // 注册插件
-func RegisterPlugin(name string, plugin *Plugin) {
+func RegisterScript(name string, script *Script) {
 
 	if name == "" {
-		panic("RegisterPlugin: plugin must have a name")
+		panic("RegisterScript: script must have a name")
 	}
-	if _, ok := availablePlugins[name]; ok {
-		panic("RegisterPlugin: plugin named " + name + " already registered. ")
+	if _, ok := availableScripts[name]; ok {
+		panic("RegisterScript: script named " + name + " already registered. ")
 	}
 
-	availablePlugins[name] = plugin
+	availableScripts[name] = script
 
-	if len(plugin.Ruleset) > 0 {
+	if len(script.Ruleset) > 0 {
 
-		rulesets[name] = plugin.Ruleset
+		rulesets[name] = script.Ruleset
 	}
 }
 
 func DirectiveAction(name string) (SetupFunc, error) {
 
-	if plugin, ok := availablePlugins[name]; ok {
-		return plugin.Action, nil
+	if script, ok := availableScripts[name]; ok {
+		return script.Action, nil
 	}
 
-	return nil, fmt.Errorf("DirectiveAction: no action found in plugin '%s' (missing a plugin?)", name)
+	return nil, fmt.Errorf("DirectiveAction: no action found in script '%s' (missing a script?)", name)
 
 }
 
