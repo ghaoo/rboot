@@ -95,13 +95,13 @@ func (bot *Rboot) initialize() {
 	}
 
 	res := NewResponse(bot)
-	bot_cname := DefaultRobotConnecter
+	botConName := DefaultRobotConnecter
 
 	if bot.conf.Connecter != `` {
-		bot_cname = bot.conf.Connecter
+		botConName = bot.conf.Connecter
 	}
 
-	con, err := getConnecter(res, bot_cname)
+	con, err := getConnecter(res, botConName)
 
 	if err != nil {
 		panic(`initialize error: ` + err.Error())

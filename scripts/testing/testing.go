@@ -16,7 +16,7 @@ func setup(res *rboot.Response) error {
 }
 
 func init() {
-	rboot.RegisterPlugin(`testing`, &rboot.Plugin{
+	rboot.RegisterScript(`testing`, &rboot.Script{
 		Action: setup,
 		Ruleset: map[string]string{
 			`123`: `1|2|3`,
