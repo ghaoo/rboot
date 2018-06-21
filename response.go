@@ -54,7 +54,7 @@ func (res *Response) Receive(msg *Message) error {
 		return action(res)
 	}
 
-	return fmt.Errorf(`Response Receive: no matching plugin... `)
+	return fmt.Errorf(`Response Receive: no matching scripts... `)
 }
 
 func (res *Response) ReceiveWithReader(in io.Reader) error {
