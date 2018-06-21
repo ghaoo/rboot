@@ -15,8 +15,8 @@ name: Rboot
 
 connecter: cli
 
-# enable plugins
-plugins:
+# enable scripts
+scripts:
  - testing
 
 `
@@ -24,7 +24,7 @@ plugins:
 type Config struct {
 	Name      string   `yaml:"name"`
 	Connecter string   `yaml:"connecter"`
-	Plugins   []string `yaml:"plugins"`
+	Scripts   []string `yaml:"scripts"`
 }
 
 func load(confpath string) ([]byte, error) {

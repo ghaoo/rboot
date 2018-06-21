@@ -41,11 +41,11 @@ func (res *Response) Receive(msg *Message) error {
 
 	text := string(b)
 
-	plugName, ok := res.matchRuleset(text)
+	scrName, ok := res.matchRuleset(text)
 
 	if ok {
 
-		action, err := DirectiveAction(plugName)
+		action, err := DirectiveAction(scrName)
 
 		if err != nil {
 			return err
@@ -68,16 +68,16 @@ func (res *Response) ReceiveWithReader(in io.Reader) error {
 }
 
 func (res *Response) matchRuleset(msg string) (string, bool) {
-	for plug, rules := range rulesets {
+	for scr, rules := range rulesets {
 		for matcher, rule := range rules {
 			if res.match(rule, msg) {
 				res.Matcher = matcher
-				return plug, true
+				return scr, true
 			}
 		}
 	}
 
-	log.Printf(`no match plugin`)
+	log.Printf(`no match script`)
 	return ``, false
 }
 
