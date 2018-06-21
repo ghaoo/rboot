@@ -13,9 +13,9 @@ var (
 )
 
 type Script struct {
-	Action      SetupFunc         // 插件操作函数
+	Action      SetupFunc         // 操作函数
 	Ruleset     map[string]string // 指令集
-	Description string            // 插件简介
+	Description string            // 简介
 }
 
 type SetupFunc func(*Response) error
