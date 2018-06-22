@@ -93,9 +93,9 @@ func (res *Response) match(pattern, msg string) bool {
 }
 
 func (res *Response) Send(strs ...string) error {
-	return res.connecter.Send(strs...)
+	return res.provider.Send(strs...)
 }
 
 func (res *Response) Reply(strs ...string) error {
-	return res.connecter.Reply(strs...)
+	return res.provider.Reply(strs...)
 }

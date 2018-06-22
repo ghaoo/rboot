@@ -10,12 +10,12 @@ import (
 const (
 	DefaultRbootConf      = `config.yml`
 	DefaultRobotName      = `Rboot`
-	DefaultRobotConnecter = `cli`
+	DefaultRobotProvider = `cli`
 )
 
 type Rboot struct {
 	name      string
-	connecter Connecter
+	provider Provider
 	conf      Config
 
 	signalChan chan os.Signal
@@ -41,8 +41,8 @@ func (bot *Rboot) SetName(name string) {
 	bot.name = name
 }
 
-func (bot *Rboot) SetConnecter(connecter Connecter) {
-	bot.connecter = connecter
+func (bot *Rboot) SetProvider(provider Provider) {
+	bot.provider = provider
 }
 
 func (bot *Rboot) Conf() Config {
@@ -52,7 +52,7 @@ func (bot *Rboot) Conf() Config {
 func (bot *Rboot) Go() {
 	bot.initialize()
 
-	go bot.connecter.Run()
+	go bot.provider.Run()
 
 	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
@@ -74,8 +74,8 @@ func (bot *Rboot) Go() {
 
 func (bot *Rboot) Stop() error {
 
-	log.Printf("stopping %s connecter", bot.connecter.Name())
-	if err := bot.connecter.Close(); err != nil {
+	log.Printf("stopping %s connecter", bot.provider.Name())
+	if err := bot.provider.Close(); err != nil {
 		return err
 	}
 
@@ -95,17 +95,17 @@ func (bot *Rboot) initialize() {
 	}
 
 	res := NewResponse(bot)
-	botConName := DefaultRobotConnecter
+	botConName := DefaultRobotProvider
 
 	if bot.conf.Connecter != `` {
 		botConName = bot.conf.Connecter
 	}
 
-	con, err := getConnecter(res, botConName)
+	con, err := getProvider(res, botConName)
 
 	if err != nil {
 		panic(`initialize error: ` + err.Error())
 	}
 
-	bot.connecter = con
+	bot.provider = con
 }

@@ -13,7 +13,7 @@ var yaml_setting = `
 
 name: Rboot
 
-connecter: cli
+provider: cli
 
 # enable scripts
 scripts:

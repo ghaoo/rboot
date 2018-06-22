@@ -7,7 +7,7 @@ import (
 var (
 	availableScripts = make(map[string]*Script)
 
-	availableConnecters = make(map[string]func(*Response) Connecter)
+	availableProviders = make(map[string]func(*Response) Provider)
 
 	rulesets = make(map[string]map[string]string)
 )
@@ -48,7 +48,7 @@ func DirectiveAction(name string) (SetupFunc, error) {
 
 }
 
-type Connecter interface {
+type Provider interface {
 	Name() string          // 适配器名称
 	Run() error            // 运行适配器
 	Send(...string) error  // 发送消息
@@ -56,22 +56,22 @@ type Connecter interface {
 	Close() error          // 关闭适配器
 }
 
-func RegisterConnecter(name string, f func(*Response) Connecter) {
-	availableConnecters[name] = f
+func RegisterProvider(name string, f func(*Response) Provider) {
+	availableProviders[name] = f
 }
 
-func getConnecter(res *Response, name string) (Connecter, error) {
-	if c, ok := availableConnecters[name]; ok {
+func getProvider(res *Response, name string) (Provider, error) {
+	if c, ok := availableProviders[name]; ok {
 		return c(res), nil
 	}
 
-	if len(availableConnecters) == 0 {
+	if len(availableProviders) == 0 {
 		return nil, fmt.Errorf("no connecter available")
 	}
 
 	if name == "" {
-		if len(availableConnecters) == 1 {
-			for _, c := range availableConnecters {
+		if len(availableProviders) == 1 {
+			for _, c := range availableProviders {
 				return c(res), nil
 			}
 		}
