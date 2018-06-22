@@ -15,7 +15,7 @@ go:
 install: #依赖安装
   - go get github.com/go-yaml/yaml
   - mkdir -p $GOPATH/src/github.com/ghaoo
-  - cd $GOPATH/src/github.com/ghaoo/rboot
+  - cd $GOPATH/src/github.com/ghaoo/rboot/example
 
 script: # 集成脚本
     - overalls -project=github.com/ghaoo/rboot -covermode=count -ignore='.git,_vendor'
