@@ -17,7 +17,7 @@ type cli struct {
 }
 
 // 初始化cli连接器
-func NewCli(res *rboot.Response) rboot.Connecter {
+func NewCli(res *rboot.Response) rboot.Provider {
 	c := &cli{
 		Response: res,
 		quit:     make(chan bool),
@@ -104,5 +104,5 @@ func (c *cli) writeString(str string) error {
 }
 
 func init() {
-	rboot.RegisterConnecter(`cli`, NewCli)
+	rboot.RegisterProvider(`cli`, NewCli)
 }
