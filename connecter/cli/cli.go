@@ -16,6 +16,7 @@ type cli struct {
 	writer *bufio.Writer
 }
 
+// 初始化cli连接器
 func NewCli(res *rboot.Response) rboot.Connecter {
 	c := &cli{
 		Response: res,
@@ -99,11 +100,7 @@ func (c *cli) writeString(str string) error {
 		return err
 	}
 
-	if err := c.writer.Flush(); err != nil {
-		return err
-	}
-
-	return nil
+	return c.writer.Flush()
 }
 
 func init() {
