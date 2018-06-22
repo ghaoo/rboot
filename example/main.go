@@ -3,7 +3,7 @@ package main
 import (
 	"rboot"
 
-	_ "rboot/connecter"
+	_ "rboot/provider"
 	_ "rboot/scripts"
 )
 
