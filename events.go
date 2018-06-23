@@ -167,7 +167,7 @@ func newTimingCh(hm string) chan Event {
 			if n > 0 || hour > nh || (hour == nh && minute < nm) {
 				next = next.Add(time.Hour * 24)
 			}
-			println(`next timing `, next)
+			
 			n++
 			time.Sleep(next.Sub(now))
 			e := Event{}
