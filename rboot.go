@@ -1,10 +1,10 @@
 package rboot
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"log"
 )
 
 const (
@@ -14,10 +14,10 @@ const (
 )
 
 type Rboot struct {
-	name      string
-	plug *plugStream
-	provider  Provider
-	conf      Config
+	name     string
+	es     *eventStream
+	provider Provider
+	conf     Config
 
 	signalChan chan os.Signal
 }
@@ -31,6 +31,7 @@ func NewRboot(config ...string) *Rboot {
 	}
 
 	bot := &Rboot{
+		es: newStream(),
 		conf:       NewConf(conf),
 		signalChan: make(chan os.Signal, 1),
 	}
@@ -89,6 +90,10 @@ func (bot *Rboot) Name() string {
 }
 
 func (bot *Rboot) initialize() {
+	bot.es.init()
+
+	bot.es.merge("custom", usrEvent)
+
 	if bot.conf.Name == `` {
 		bot.name = DefaultRobotName
 	} else {
