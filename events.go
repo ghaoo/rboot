@@ -135,6 +135,7 @@ func newTimerCh(du time.Duration) chan Event {
 				Duration: du,
 				Count:    n,
 			}
+			e.Time = time.Now().Unix()
 			t <- e
 		}
 	}(t)
@@ -174,6 +175,7 @@ func newTimingCh(hm string) chan Event {
 			e.Data = TimingtData{
 				Count: n,
 			}
+			e.Time = time.Now().Unix()
 			t <- e
 		}
 	}(t)
