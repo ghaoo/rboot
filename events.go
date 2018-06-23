@@ -143,7 +143,7 @@ func newTimerCh(du time.Duration) chan Event {
 }
 
 // Timing ...
-type TimingtData struct {
+type TimingData struct {
 	Count uint64
 }
 
@@ -167,12 +167,12 @@ func newTimingCh(hm string) chan Event {
 			if n > 0 || hour > nh || (hour == nh && minute < nm) {
 				next = next.Add(time.Hour * 24)
 			}
-			
+
 			n++
 			time.Sleep(next.Sub(now))
 			e := Event{}
 			e.Path = `/timing/` + hm
-			e.Data = TimingtData{
+			e.Data = TimingData{
 				Count: n,
 			}
 			e.Time = time.Now().Unix()
