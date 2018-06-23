@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// 参考 net/mail
 type Message struct {
 	Header Header
 	Body   io.Reader
@@ -81,5 +82,3 @@ func (h Header) To() string {
 
 	return hdr
 }
-
-

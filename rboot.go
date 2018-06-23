@@ -1,21 +1,22 @@
 package rboot
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"log"
 )
 
 const (
-	DefaultRbootConf      = `config.yml`
-	DefaultRobotName      = `Rboot`
+	DefaultRbootConf     = `config.yml`
+	DefaultRobotName     = `Rboot`
 	DefaultRobotProvider = `cli`
 )
 
 type Rboot struct {
 	name      string
-	provider Provider
+	plug *plugStream
+	provider  Provider
 	conf      Config
 
 	signalChan chan os.Signal
