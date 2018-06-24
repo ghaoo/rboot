@@ -15,7 +15,7 @@ const (
 
 type Rboot struct {
 	name     string
-	es     *eventStream
+	es       *eventStream
 	provider Provider
 	conf     Config
 
@@ -31,7 +31,7 @@ func NewRboot(config ...string) *Rboot {
 	}
 
 	bot := &Rboot{
-		es: newStream(),
+		es:         newStream(),
 		conf:       NewConf(conf),
 		signalChan: make(chan os.Signal, 1),
 	}

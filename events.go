@@ -2,10 +2,10 @@ package rboot
 
 import (
 	"path"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
-	"strings"
-	"strconv"
 )
 
 type Event struct {
