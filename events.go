@@ -99,7 +99,7 @@ func (es *eventStream) Hook(f func(Event)) {
 	es.hook = f
 }
 
-func (es *eventStream) Loop() {
+func (es *eventStream) loop() {
 	for e := range es.stream {
 		func(a Event) {
 			es.RLock()
@@ -123,11 +123,13 @@ type TimerData struct {
 func newTimerCh(du time.Duration) chan Event {
 	t := make(chan Event)
 
+	println(du.String())
+
 	go func(a chan Event) {
 		n := uint64(0)
 		for {
 			n++
-			time.After(du)
+			time.Sleep(du)
 			e := Event{}
 			e.Type = "timer"
 			e.Path = "/timer/" + du.String()
@@ -200,4 +202,12 @@ func (bot *Rboot) Timer(du time.Duration) {
 // 注册定时发送事件
 func (bot *Rboot) Timing(hm string) {
 	bot.es.merge(`timing`, newTimingCh(hm))
+}
+
+func (bot *Rboot) Handle(path string, handler func(Event)) {
+	bot.es.Handle(path, handler)
+}
+
+func (bot *Rboot) Hook(f func(Event)) {
+	bot.es.Hook(f)
 }

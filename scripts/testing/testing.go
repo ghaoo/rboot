@@ -1,6 +1,8 @@
 package testing
 
-import "rboot"
+import (
+	"rboot"
+)
 
 func setup(res *rboot.Response) error {
 	switch res.Matcher {

@@ -51,10 +51,13 @@ func (bot *Rboot) Conf() Config {
 	return bot.conf
 }
 
+// 皮皮虾，我们走~~~~~~~~~
 func (bot *Rboot) Go() {
 	bot.initialize()
 
 	go bot.provider.Run()
+
+	go bot.es.loop()
 
 	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
@@ -90,9 +93,6 @@ func (bot *Rboot) Name() string {
 }
 
 func (bot *Rboot) initialize() {
-	bot.es.init()
-
-	bot.es.merge("custom", usrEvent)
 
 	if bot.conf.Name == `` {
 		bot.name = DefaultRobotName
@@ -114,4 +114,8 @@ func (bot *Rboot) initialize() {
 	}
 
 	bot.provider = con
+
+	bot.es.init()
+
+	bot.es.merge("custom", usrEvent)
 }
