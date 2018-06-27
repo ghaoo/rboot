@@ -7,7 +7,7 @@ import (
 var (
 	availableScripts = make(map[string]*Script)
 
-	availableProviders = make(map[string]func(*Response) Provider)
+	availableProviders = make(map[string]func(*Robot) Provider)
 
 	rulesets = make(map[string]map[string]string)
 )
@@ -15,12 +15,13 @@ var (
 type Script struct {
 	Action      SetupFunc         // 操作函数
 	Ruleset     map[string]string // 指令集
+	Hook        func(*Robot)       //
 	Description string            // 简介
 }
 
-type SetupFunc func(*Response) error
+type SetupFunc func(*Robot) error
 
-// 注册插件
+// 注册脚本
 func RegisterScript(name string, script *Script) {
 
 	if name == "" {
@@ -56,13 +57,13 @@ type Provider interface {
 	Close() error          // 关闭适配器
 }
 
-func RegisterProvider(name string, f func(*Response) Provider) {
+func RegisterProvider(name string, f func(*Robot) Provider) {
 	availableProviders[name] = f
 }
 
-func getProvider(res *Response, name string) (Provider, error) {
+func getProvider(bot *Robot, name string) (Provider, error) {
 	if c, ok := availableProviders[name]; ok {
-		return c(res), nil
+		return c(bot), nil
 	}
 
 	if len(availableProviders) == 0 {
@@ -72,7 +73,7 @@ func getProvider(res *Response, name string) (Provider, error) {
 	if name == "" {
 		if len(availableProviders) == 1 {
 			for _, c := range availableProviders {
-				return c(res), nil
+				return c(bot), nil
 			}
 		}
 		return nil, fmt.Errorf("multiple connecters available; must choose one")

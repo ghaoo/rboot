@@ -1,9 +1,13 @@
 package rboot
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
+	"regexp"
+	"sync"
 	"syscall"
 )
 
@@ -13,16 +17,19 @@ const (
 	DefaultRobotProvider = `cli`
 )
 
-type Rboot struct {
+type Robot struct {
 	name     string
 	es       *eventStream
 	provider Provider
 	conf     Config
 
+	Matcher string
+
+	sync.Mutex
 	signalChan chan os.Signal
 }
 
-func NewRboot(config ...string) *Rboot {
+func NewRboot(config ...string) *Robot {
 
 	var conf = DefaultRbootConf
 
@@ -30,7 +37,7 @@ func NewRboot(config ...string) *Rboot {
 		conf = config[0]
 	}
 
-	bot := &Rboot{
+	bot := &Robot{
 		es:         newStream(),
 		conf:       NewConf(conf),
 		signalChan: make(chan os.Signal, 1),
@@ -39,20 +46,20 @@ func NewRboot(config ...string) *Rboot {
 	return bot
 }
 
-func (bot *Rboot) SetName(name string) {
+func (bot *Robot) SetName(name string) {
 	bot.name = name
 }
 
-func (bot *Rboot) SetProvider(provider Provider) {
+func (bot *Robot) SetProvider(provider Provider) {
 	bot.provider = provider
 }
 
-func (bot *Rboot) Conf() Config {
+func (bot *Robot) Conf() Config {
 	return bot.conf
 }
 
 // 皮皮虾，我们走~~~~~~~~~
-func (bot *Rboot) Go() {
+func (bot *Robot) Go() {
 	bot.initialize()
 
 	go bot.provider.Run()
@@ -77,7 +84,7 @@ func (bot *Rboot) Go() {
 	bot.Stop()
 }
 
-func (bot *Rboot) Stop() error {
+func (bot *Robot) Stop() error {
 
 	log.Printf("stopping %s connecter", bot.provider.Name())
 	if err := bot.provider.Close(); err != nil {
@@ -88,11 +95,89 @@ func (bot *Rboot) Stop() error {
 	return nil
 }
 
-func (bot *Rboot) Name() string {
+func (bot *Robot) Name() string {
 	return bot.name
 }
 
-func (bot *Rboot) initialize() {
+func (bot *Robot) Receive(msg *Message) error {
+	bot.Lock()
+	defer bot.Unlock()
+
+	b, err := msg.Read()
+	if err != nil {
+		return fmt.Errorf(`Receive: message read error %v `, err)
+	}
+
+	if msg.Header.From() == `` {
+		msg.Header.Set(`From`, `System`)
+	}
+
+	if msg.Header.To() == `` {
+		msg.Header.Set(`To`, `Nil`)
+	}
+
+	text := string(b)
+
+	scrName, ok := bot.matchRuleset(text)
+
+	if ok {
+
+		action, err := DirectiveAction(scrName)
+
+		if err != nil {
+			return err
+		}
+
+		return action(bot)
+	}
+
+	return fmt.Errorf(`Receive: no matching scripts... `)
+}
+
+func (bot *Robot) ReceiveWithReader(in io.Reader) error {
+	msg, err := ReadMessage(in)
+
+	if err != nil {
+		return err
+	}
+
+	return bot.Receive(msg)
+}
+
+func (bot *Robot) matchRuleset(msg string) (string, bool) {
+	for scr, rules := range rulesets {
+		for matcher, rule := range rules {
+			if bot.match(rule, msg) {
+				bot.Matcher = matcher
+				return scr, true
+			}
+		}
+	}
+
+	log.Printf(`no match script`)
+	return ``, false
+}
+
+func (bot *Robot) match(pattern, msg string) bool {
+
+	reg := regexp.MustCompile(pattern)
+
+	if reg.MatchString(msg) {
+		return true
+	}
+
+	return false
+}
+
+func (bot *Robot) Send(strs ...string) error {
+	return bot.provider.Send(strs...)
+}
+
+func (bot *Robot) Reply(strs ...string) error {
+	return bot.provider.Reply(strs...)
+}
+
+func (bot *Robot) initialize() {
 
 	if bot.conf.Name == `` {
 		bot.name = DefaultRobotName
@@ -100,14 +185,13 @@ func (bot *Rboot) initialize() {
 		bot.name = bot.conf.Name
 	}
 
-	res := NewResponse(bot)
 	botConName := DefaultRobotProvider
 
 	if bot.conf.Connecter != `` {
 		botConName = bot.conf.Connecter
 	}
 
-	con, err := getProvider(res, botConName)
+	con, err := getProvider(bot, botConName)
 
 	if err != nil {
 		panic(`initialize error: ` + err.Error())

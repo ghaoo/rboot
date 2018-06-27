@@ -4,25 +4,30 @@ import (
 	"rboot"
 )
 
-func setup(res *rboot.Response) error {
-	switch res.Matcher {
+func parse(bot *rboot.Robot) error {
+	switch bot.Matcher {
 	case `123`:
-		res.Send(`1 or 2 or 3`)
+		bot.Send(`1 or 2 or 3`)
 
 	case `abc`:
-		res.Send(`a or b or c`)
+		bot.Send(`a or b or c`)
 
 	}
 
 	return nil
 }
 
+func hook(bot *rboot.Robot) {
+	//
+}
+
 func init() {
 	rboot.RegisterScript(`testing`, &rboot.Script{
-		Action: setup,
+		Action: parse,
 		Ruleset: map[string]string{
 			`123`: `1|2|3`,
 			`abc`: `a|b|c`,
 		},
+		Hook: hook,
 	})
 }

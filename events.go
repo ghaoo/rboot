@@ -195,19 +195,19 @@ func SendCustomEvent(path string, data interface{}) {
 }
 
 // 注册计时器
-func (bot *Rboot) Timer(du time.Duration) {
+func (bot *Robot) Timer(du time.Duration) {
 	bot.es.merge(`timer`, newTimerCh(du))
 }
 
 // 注册定时发送事件
-func (bot *Rboot) Timing(hm string) {
+func (bot *Robot) Timing(hm string) {
 	bot.es.merge(`timing`, newTimingCh(hm))
 }
 
-func (bot *Rboot) Handle(path string, handler func(Event)) {
+func (bot *Robot) Handle(path string, handler func(Event)) {
 	bot.es.Handle(path, handler)
 }
 
-func (bot *Rboot) Hook(f func(Event)) {
+func (bot *Robot) Hook(f func(Event)) {
 	bot.es.Hook(f)
 }
