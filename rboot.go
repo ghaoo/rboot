@@ -1,119 +1,89 @@
 package rboot
 
 import (
-	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/signal"
-	"regexp"
 	"sync"
 	"syscall"
 )
 
 const (
-	DefaultRbootConf     = `config.yml`
-	DefaultRobotName     = `Rboot`
+	DefaultRbootConf = `config.yml`
+	DefaultRobotName = `Rboot`
 	DefaultRobotProvider = `cli`
 )
 
-// Robot 封装了一个机器人运行的所有必要状态
 type Robot struct {
-	name    string       // 机器人名称
-	es      *eventStream // 事件处理器
-	prov    Provider     // 脚本消息提供器
-	conf    Config       // 机器人配置信息
-	Matcher string       // 脚本匹配信息
+	name    string
+	es      *eventStream
+	conf    Config
 
-	sync.Mutex
+	providerIn  chan Message
+	providerOut chan Message
+
 	signalChan chan os.Signal
+	sync.Mutex
 }
 
-// 新建Rboot机器人
-func New(config ...string) *Robot {
+func New(confpath ...string) *Robot {
 
 	var conf = DefaultRbootConf
 
-	if len(config) > 0 {
-		conf = config[0]
+	if len(confpath) > 0 {
+		conf = confpath[0]
 	}
 
 	bot := &Robot{
-		es:         newStream(),
-		conf:       NewConf(conf),
-		signalChan: make(chan os.Signal, 1),
+		es:          newStream(),
+		conf:        NewConf(conf),
+		providerIn:  make(chan Message),
+		providerOut: make(chan Message),
+		signalChan:  make(chan os.Signal, 1),
 	}
 
 	return bot
 }
 
-// 设置名称
 func (bot *Robot) SetName(name string) {
 	bot.name = name
 }
 
-// 设置消息提供者
-func (bot *Robot) SetProvider(provider Provider) {
-	bot.prov = provider
-}
-
-// 配置
 func (bot *Robot) Conf() Config {
 	return bot.conf
 }
 
-var processOnce sync.Once
-
 // 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
-	processOnce.Do(func() {
-		// 初始化基础信息
-		bot.initialize()
+	bot.initialize()
 
-		// 脚本Hook
-		for _, script := range availableScripts {
-			script.Hook(*bot)
-		}
+	go bot.Process()
 
-		// 开启消息提供者
-		go bot.prov.Run()
+	go bot.es.loop()
 
-		// 运行事件处理器
-		go bot.es.loop()
+	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
-		go func(){
-			for in := range bot.prov.Incoming() {
-				bot.handleMessage(in)
-			}
-		}()
-
-		signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-
-		stop := false
-		for !stop {
-			select {
-			case sig := <-bot.signalChan:
-				switch sig {
-				case syscall.SIGINT, syscall.SIGTERM:
-					stop = true
-				}
+	stop := false
+	for !stop {
+		select {
+		case sig := <-bot.signalChan:
+			switch sig {
+			case syscall.SIGINT, syscall.SIGTERM:
+				stop = true
 			}
 		}
+	}
 
-		signal.Stop(bot.signalChan)
+	signal.Stop(bot.signalChan)
 
-		bot.Stop()
-	})
-
+	bot.Stop()
 }
 
-// 皮皮虾，快停下......
-func (bot *Robot) Stop() error {
+func (bot *Robot) Send(msg Message) {
+	bot.providerOut <- msg
+}
 
-	log.Printf("stopping %s provider", bot.prov.Name())
-	if err := bot.prov.Close(); err != nil {
-		return err
-	}
+func (bot *Robot) Stop() error {
 
 	log.Printf("stopping %s", DefaultRobotName)
 	return nil
@@ -123,104 +93,16 @@ func (bot *Robot) Name() string {
 	return bot.name
 }
 
-// 处理消息
-func (bot *Robot) handleMessage(msg Message) error {
-	bot.Lock()
-	defer bot.Unlock()
-
-	b, err := msg.Read()
-	if err != nil {
-		return fmt.Errorf(`Receive: message read error %v `, err)
-	}
-
-	if msg.Header.From() == `` {
-		msg.Header.Set(`From`, `System`)
-	}
-
-	if msg.Header.To() == `` {
-		msg.Header.Set(`To`, `Nil`)
-	}
-
-	text := string(b)
-
-	scrName, ok := bot.matchRuleset(text)
-
-	if ok {
-
-		action, err := DirectiveAction(scrName)
-
-		if err != nil {
-			return err
-		}
-
-		return action(bot)
-	}
-
-	return fmt.Errorf(`Receive: no matching scripts... `)
-}
-
-// 处理 Reader 类型消息
-func (bot *Robot) handleWithReader(in io.Reader) error {
-	msg, err := ReadMessage(in)
-
-	if err != nil {
-		return err
-	}
-
-	return bot.handleMessage(msg)
-}
-
-// 匹配脚本规则集
-func (bot *Robot) matchRuleset(msg string) (string, bool) {
-	for scr, rules := range rulesets {
-		for matcher, rule := range rules {
-			if bot.match(rule, msg) {
-				bot.Matcher = matcher
-				return scr, true
-			}
-		}
-	}
-
-	log.Printf(`no match script`)
-	return ``, false
-}
-
-// 匹配消息
-func (bot *Robot) match(pattern, msg string) bool {
-
-	reg := regexp.MustCompile(pattern)
-
-	if reg.MatchString(msg) {
-		return true
-	}
-
-	return false
-}
-
-// 发送消息
-func (bot *Robot) Send(strs ...string) error {
-	return bot.prov.Send(strs...)
-}
-
-// 回复消息
-func (bot *Robot) Reply(strs ...string) error {
-	return bot.prov.Reply(strs...)
-}
-
-// 初始化
 func (bot *Robot) initialize() {
 
-	// 设置名称
 	if bot.conf.Name == `` {
 		bot.name = DefaultRobotName
 	} else {
 		bot.name = bot.conf.Name
 	}
 
-	// 初始化事件处理器
 	bot.es.init()
 
-	// 加载自定义事件处理器
 	bot.es.merge("custom", usrEvent)
 
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
@@ -236,5 +118,6 @@ func (bot *Robot) initialize() {
 		panic(`Detect error: ` + err.Error())
 	}
 
-	bot.prov = prov(bot)
+	bot.providerIn = prov.Incoming()
+	bot.providerOut = prov.Outgoing()
 }

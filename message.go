@@ -11,26 +11,27 @@ import (
 
 // 参考 net/mail
 type Message struct {
-	Header Header
-	Body   io.Reader
-}
-
-func (msg *Message) Read() ([]byte, error) {
-	return ioutil.ReadAll(msg.Body)
+	Header  Header
+	Content string
 }
 
 // 读消息
-func ReadMessage(r io.Reader) (msg Message, err error) {
+func ReadMessage(r io.Reader) (msg *Message, err error) {
 	tp := textproto.NewReader(bufio.NewReader(r))
 
 	hdr, err := tp.ReadMIMEHeader()
 	if err != nil {
-		return Message{}, err
+		return nil, err
 	}
 
-	return Message{
-		Header: Header(hdr),
-		Body:   tp.R,
+	mb, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Message{
+		Header:  Header(hdr),
+		Content: string(mb),
 	}, nil
 }
 

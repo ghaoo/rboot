@@ -2,103 +2,77 @@ package cli
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"rboot"
 	"strings"
 )
 
 type cli struct {
-	*rboot.Robot
 	in     chan rboot.Message
-	quit   chan bool
+	out    chan rboot.Message
 	writer *bufio.Writer
 }
 
 // 初始化cli连接器
-func NewCli(bot *rboot.Robot) rboot.Provider {
+func NewCli() rboot.Provider {
 	c := &cli{
-		Robot:  bot,
 		in:     make(chan rboot.Message),
-		quit:   make(chan bool),
+		out:    make(chan rboot.Message),
 		writer: bufio.NewWriter(os.Stdout),
 	}
+
+	go c.run()
 	return c
-}
-
-func (c *cli) Name() string {
-	return `CLI`
-}
-
-func (c *cli) Send(strings ...string) error {
-	for _, str := range strings {
-		err := c.writeString(str)
-		if err != nil {
-			log.Printf("send message error: %v", err)
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (c *cli) Reply(strings ...string) error {
-	for _, str := range strings {
-		err := c.writeString(str)
-		if err != nil {
-			log.Printf("reply message error: %v", err)
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (c *cli) Incoming() chan rboot.Message {
 	return c.in
 }
 
-func (c *cli) Run() error {
+func (c *cli) Outgoing() chan rboot.Message {
+	return c.out
+}
 
+func (c *cli) Error() error {
+	return nil
+}
+
+func (c *cli) run() {
 	go func() {
-		for {
-
-			prompt()
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-
-			line := scanner.Bytes()
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
 
 			header := make(rboot.Header)
 			header.Add(`From`, `CLI`)
 			header.Add(`To`, `CLI`)
 
 			c.in <- rboot.Message{
-				Header: header,
-				Body:   bytes.NewReader(line),
+				Header:  header,
+				Content: scanner.Text(),
 			}
 
-			continue
+		forLoop:
+			for {
+				select {
+				case msg := <-c.out:
+					c.writeString(msg.Content)
+				default:
+					break forLoop
+				}
+			}
 		}
 	}()
 
-	<-c.quit
-	return nil
-}
-
-func (c *cli) Close() error {
-	c.quit <- true
-	return nil
-}
-
-func prompt() {
-	fmt.Print("> ")
+	go func() {
+		for msg := range c.out {
+			c.writeString(msg.Content)
+		}
+	}()
 }
 
 func (c *cli) writeString(str string) error {
-	msg := fmt.Sprintf("%s\n", strings.TrimSpace(str))
+	msg := fmt.Sprintf("> %s\n", strings.TrimSpace(str))
 
 	if _, err := c.writer.WriteString(msg); err != nil {
 		return err

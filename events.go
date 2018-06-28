@@ -120,23 +120,27 @@ type TimerData struct {
 	Count    uint64
 }
 
-func newTimerCh(du time.Duration) chan Event {
+func newTickerCh(du time.Duration) chan Event {
 	t := make(chan Event)
 
 	go func(a chan Event) {
 		n := uint64(0)
+
+		ticker := time.NewTicker(du)
 		for {
-			n++
-			time.Sleep(du)
-			e := Event{}
-			e.Type = "timer"
-			e.Path = "/timer/" + du.String()
-			e.Data = TimerData{
-				Duration: du,
-				Count:    n,
+			select {
+			case <-ticker.C:
+				n++
+				e := Event{}
+				e.Type = "ticker"
+				e.Path = "/ticker/" + du.String()
+				e.Data = TimerData{
+					Duration: du,
+					Count:    n,
+				}
+				e.Time = time.Now().Unix()
+				t <- e
 			}
-			e.Time = time.Now().Unix()
-			t <- e
 		}
 	}(t)
 	return t
@@ -168,8 +172,10 @@ func newTimingCh(hm string) chan Event {
 				next = next.Add(time.Hour * 24)
 			}
 
+			timer := time.NewTimer(next.Sub(now))
+			<-timer.C
+
 			n++
-			time.Sleep(next.Sub(now))
 			e := Event{}
 			e.Path = `/timing/` + hm
 			e.Data = TimingData{
@@ -193,8 +199,8 @@ func SendCustomEvent(path string, data interface{}) {
 }
 
 // 注册计时器
-func (bot *Robot) Timer(du time.Duration) {
-	bot.es.merge(`timer`, newTimerCh(du))
+func (bot *Robot) Ticker(du time.Duration) {
+	bot.es.merge(`ticker`, newTickerCh(du))
 }
 
 // 注册定时发送事件

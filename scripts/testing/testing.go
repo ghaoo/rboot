@@ -1,39 +1,52 @@
 package testing
 
 import (
+	"fmt"
 	"rboot"
 	"time"
 )
 
-func parse(bot *rboot.Robot) error {
-	switch bot.Matcher {
-	case `123`:
-		bot.Send(`1 or 2 or 3`)
+func parse(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 
-	case `abc`:
-		bot.Send(`a or b or c`)
-
+	if msg.Content == `11` {
+		return []rboot.Message{
+			{Content: `22222222222222222`},
+		}
+	}
+	if msg.Content == `2` {
+		return []rboot.Message{
+			{Content: `11111111111111111`},
+		}
 	}
 
 	return nil
 }
 
 func hook(bot rboot.Robot) {
-	bot.Timer(10 * time.Second)
-	bot.Handle(`/timer/10s`, func(evt rboot.Event) {
-		//data := evt.Data.(rboot.TimerData)
 
-		bot.Send(`10s`)
+	bot.Ticker(2 * time.Second)
+	bot.Handle(`/ticker/2s`, func(evt rboot.Event) {
+		data := evt.Data.(rboot.TimerData)
+
+		str := fmt.Sprintf(
+			`
+time: %v
+count: %d
+`, time.Now().Local(), data.Count)
+
+		bot.Send(rboot.Message{Content: str})
+	})
+
+	bot.Timing(`15:14`)
+	bot.Handle(`/timing/15:13`, func(evt rboot.Event) {
+
+		bot.Send(rboot.Message{Content: time.Now().Local().String()})
 	})
 }
 
 func init() {
 	rboot.RegisterScript(`testing`, &rboot.Script{
 		Action: parse,
-		Ruleset: map[string]string{
-			`123`: `1|2|3`,
-			`abc`: `a|b|c`,
-		},
-		Hook: hook,
+		Hook:   hook,
 	})
 }

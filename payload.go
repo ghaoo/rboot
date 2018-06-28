@@ -1,60 +1,29 @@
 package rboot
 
 import (
+	"log"
+	"sync"
 	"fmt"
 )
 
 var (
 	availableScripts = make(map[string]*Script)
 
-	availableProviders = make(map[string]func(*Robot) Provider)
-
-	rulesets = make(map[string]map[string]string)
+	availableProviders = make(map[string]ProvFunc)
 )
 
-type Provider interface {
-	Name() string           // 适配器名称
-	Incoming() chan Message // 接收消息
-	Run() error             // 运行适配器
-	Send(...string) error   // 发送消息
-	Reply(...string) error  // 回复消息
-	Close() error           // 关闭适配器
-}
-
-func RegisterProvider(name string, f func(*Robot) Provider) {
-	availableProviders[name] = f
-}
-
-func Detect(name string) (func(*Robot) Provider, error) {
-	if c, ok := availableProviders[name]; ok {
-		return c, nil
-	}
-
-	if len(availableProviders) == 0 {
-		return nil, fmt.Errorf("no provider available")
-	}
-
-	if name == "" {
-		if len(availableProviders) == 1 {
-			for _, c := range availableProviders {
-				return c, nil
-			}
-		}
-		return nil, fmt.Errorf("multiple providers available; must choose one")
-	}
-	return nil, fmt.Errorf("unknown provider '%s'", name)
-}
+type ProvFunc func() Provider
 
 type Script struct {
-	Action      SetupFunc         // 操作函数
-	Ruleset     map[string]string // 指令集
-	Hook        func(Robot)       //
-	Description string            // 简介
+	Action      ParseFunc   // 操作函数
+	Hook        func(Robot) // 钩子
+	Usage       string      // 使用方法
+	Description string      // 简介
 }
 
-type SetupFunc func(*Robot) error
+type ParseFunc func(Robot, Message) []Message
 
-// 注册脚本
+// 注册插件
 func RegisterScript(name string, script *Script) {
 
 	if name == "" {
@@ -65,19 +34,66 @@ func RegisterScript(name string, script *Script) {
 	}
 
 	availableScripts[name] = script
-
-	if len(script.Ruleset) > 0 {
-
-		rulesets[name] = script.Ruleset
-	}
 }
 
-func DirectiveAction(name string) (SetupFunc, error) {
+type Provider interface {
+	Incoming() chan Message
+	Outgoing() chan Message
+	Error() error
+}
 
-	if script, ok := availableScripts[name]; ok {
-		return script.Action, nil
+// register provider
+func RegisterProvider(name string, f ProvFunc) {
+	availableProviders[name] = f
+}
+
+// get provider by name
+func Detect(name string) (Provider, error) {
+	if f, ok := availableProviders[name]; ok {
+		return f(), nil
 	}
 
-	return nil, fmt.Errorf("DirectiveAction: no action found in script '%s' (missing a script?)", name)
+	if len(availableProviders) == 0 {
+		return nil, fmt.Errorf("no provider available")
+	}
 
+	if name == "" {
+		if len(availableProviders) == 1 {
+			for _, f := range availableProviders {
+				return f(), nil
+			}
+		}
+		return nil, fmt.Errorf("multiple providers available; must choose one")
+	}
+	return nil, fmt.Errorf("unknown provider '%s'", name)
+}
+
+var processOnce sync.Once
+
+func (bot *Robot) Process() {
+	processOnce.Do(func() {
+
+		for _, script := range availableScripts {
+			script.Hook(*bot)
+		}
+
+		for in := range bot.providerIn {
+			go func(bot Robot, msg Message) {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
+					}
+				}()
+
+				for _, script := range availableScripts {
+					responses := script.Action(bot, in)
+
+					for _, r := range responses {
+						bot.providerOut <- r
+					}
+				}
+
+			}(*bot, in)
+		}
+	})
 }

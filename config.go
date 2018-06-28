@@ -22,9 +22,9 @@ scripts:
 `
 
 type Config struct {
-	Name     string   `yaml:"name"`
-	Provider string   `yaml:"provider"`
-	Scripts  []string `yaml:"scripts"`
+	Name    string   `yaml:"name"`
+	Provider   string `yaml:"provider"`
+	Scripts []string `yaml:"scripts"`
 }
 
 func load(confpath string) ([]byte, error) {
