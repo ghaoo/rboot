@@ -20,15 +20,15 @@ func (msg *Message) Read() ([]byte, error) {
 }
 
 // 读消息
-func ReadMessage(r io.Reader) (msg *Message, err error) {
+func ReadMessage(r io.Reader) (msg Message, err error) {
 	tp := textproto.NewReader(bufio.NewReader(r))
 
 	hdr, err := tp.ReadMIMEHeader()
 	if err != nil {
-		return nil, err
+		return Message{}, err
 	}
 
-	return &Message{
+	return Message{
 		Header: Header(hdr),
 		Body:   tp.R,
 	}, nil

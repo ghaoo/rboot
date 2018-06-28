@@ -23,7 +23,7 @@ scripts:
 
 type Config struct {
 	Name      string   `yaml:"name"`
-	Connecter string   `yaml:"connecter"`
+	Provider string   `yaml:"provider"`
 	Scripts   []string `yaml:"scripts"`
 }
 

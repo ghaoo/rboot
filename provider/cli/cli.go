@@ -12,6 +12,7 @@ import (
 
 type cli struct {
 	*rboot.Robot
+	in chan rboot.Message
 	quit   chan bool
 	writer *bufio.Writer
 }
@@ -19,9 +20,9 @@ type cli struct {
 // 初始化cli连接器
 func NewCli(res *rboot.Robot) rboot.Provider {
 	c := &cli{
-		Robot: res,
-		quit:     make(chan bool),
-		writer:   bufio.NewWriter(os.Stdout),
+		Robot:  res,
+		quit:   make(chan bool),
+		writer: bufio.NewWriter(os.Stdout),
 	}
 	return c
 }
@@ -54,6 +55,10 @@ func (c *cli) Reply(strings ...string) error {
 	return nil
 }
 
+func (c *cli) Incoming() chan rboot.Message {
+	return c.in
+}
+
 func (c *cli) Run() error {
 
 	go func() {
@@ -69,12 +74,10 @@ func (c *cli) Run() error {
 			header.Add(`From`, `CLI`)
 			header.Add(`To`, `CLI`)
 
-			msg := &rboot.Message{
+			c.in <- rboot.Message{
 				Header: header,
 				Body:   bytes.NewReader(line),
 			}
-
-			c.Receive(msg)
 
 			continue
 		}

@@ -2,6 +2,7 @@ package testing
 
 import (
 	"rboot"
+	"time"
 )
 
 func parse(bot *rboot.Robot) error {
@@ -18,7 +19,12 @@ func parse(bot *rboot.Robot) error {
 }
 
 func hook(bot *rboot.Robot) {
-	//
+	bot.Timer(2 * time.Second)
+	bot.Handle(`/timer/2s`, func(evt rboot.Event) {
+		//data := evt.Data.(rboot.TimerData)
+
+		bot.Send(`11111111111111`)
+	})
 }
 
 func init() {
