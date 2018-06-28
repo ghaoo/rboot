@@ -19,11 +19,11 @@ const (
 
 // Robot 封装了一个机器人运行的所有必要状态
 type Robot struct {
-	name     string// 机器人名称
-	es       *eventStream// 事件处理器
-	prov Provider// 脚本消息提供器
-	conf     Config // 机器人配置信息
-	Matcher string // 脚本匹配信息
+	name    string       // 机器人名称
+	es      *eventStream // 事件处理器
+	prov    Provider     // 脚本消息提供器
+	conf    Config       // 机器人配置信息
+	Matcher string       // 脚本匹配信息
 
 	sync.Mutex
 	signalChan chan os.Signal
@@ -62,33 +62,49 @@ func (bot *Robot) Conf() Config {
 	return bot.conf
 }
 
+var processOnce sync.Once
+
 // 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
-	// 初始化基础信息
-	bot.initialize()
+	processOnce.Do(func() {
+		// 初始化基础信息
+		bot.initialize()
 
-	// 开启消息提供者
-	go bot.prov.Run()
+		// 脚本Hook
+		for _, script := range availableScripts {
+			script.Hook(*bot)
+		}
 
-	// 运行事件处理器
-	go bot.es.loop()
+		// 开启消息提供者
+		go bot.prov.Run()
 
-	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+		// 运行事件处理器
+		go bot.es.loop()
 
-	stop := false
-	for !stop {
-		select {
-		case sig := <-bot.signalChan:
-			switch sig {
-			case syscall.SIGINT, syscall.SIGTERM:
-				stop = true
+		go func(){
+			for in := range bot.prov.Incoming() {
+				bot.handleMessage(in)
+			}
+		}()
+
+		signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+
+		stop := false
+		for !stop {
+			select {
+			case sig := <-bot.signalChan:
+				switch sig {
+				case syscall.SIGINT, syscall.SIGTERM:
+					stop = true
+				}
 			}
 		}
-	}
 
-	signal.Stop(bot.signalChan)
+		signal.Stop(bot.signalChan)
 
-	bot.Stop()
+		bot.Stop()
+	})
+
 }
 
 // 皮皮虾，快停下......

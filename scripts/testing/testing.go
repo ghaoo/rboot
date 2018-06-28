@@ -18,12 +18,12 @@ func parse(bot *rboot.Robot) error {
 	return nil
 }
 
-func hook(bot *rboot.Robot) {
-	bot.Timer(2 * time.Second)
-	bot.Handle(`/timer/2s`, func(evt rboot.Event) {
+func hook(bot rboot.Robot) {
+	bot.Timer(10 * time.Second)
+	bot.Handle(`/timer/10s`, func(evt rboot.Event) {
 		//data := evt.Data.(rboot.TimerData)
 
-		bot.Send(`11111111111111`)
+		bot.Send(`10s`)
 	})
 }
 

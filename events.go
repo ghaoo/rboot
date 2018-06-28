@@ -123,8 +123,6 @@ type TimerData struct {
 func newTimerCh(du time.Duration) chan Event {
 	t := make(chan Event)
 
-	println(du.String())
-
 	go func(a chan Event) {
 		n := uint64(0)
 		for {

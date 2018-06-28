@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	bot := rboot.NewRboot()
+	bot := rboot.New()
 
 	bot.Go()
 }

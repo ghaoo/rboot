@@ -48,7 +48,7 @@ func Detect(name string) (func(*Robot) Provider, error) {
 type Script struct {
 	Action      SetupFunc         // 操作函数
 	Ruleset     map[string]string // 指令集
-	Hook        func(*Robot)      //
+	Hook        func(Robot)       //
 	Description string            // 简介
 }
 

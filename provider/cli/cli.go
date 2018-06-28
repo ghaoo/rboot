@@ -12,15 +12,16 @@ import (
 
 type cli struct {
 	*rboot.Robot
-	in chan rboot.Message
+	in     chan rboot.Message
 	quit   chan bool
 	writer *bufio.Writer
 }
 
 // 初始化cli连接器
-func NewCli(res *rboot.Robot) rboot.Provider {
+func NewCli(bot *rboot.Robot) rboot.Provider {
 	c := &cli{
-		Robot:  res,
+		Robot:  bot,
+		in:     make(chan rboot.Message),
 		quit:   make(chan bool),
 		writer: bufio.NewWriter(os.Stdout),
 	}
