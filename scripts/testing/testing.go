@@ -26,7 +26,7 @@ func hook(bot rboot.Robot) {
 
 	bot.Ticker(2 * time.Second)
 	bot.Handle(`/ticker/2s`, func(evt rboot.Event) {
-		data := evt.Data.(rboot.TimerData)
+		data := evt.Data.(rboot.TickerData)
 
 		str := fmt.Sprintf(
 			`

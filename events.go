@@ -115,7 +115,7 @@ func (es *eventStream) loop() {
 }
 
 // Timer ...
-type TimerData struct {
+type TickerData struct {
 	Duration time.Duration
 	Count    uint64
 }
@@ -134,7 +134,7 @@ func newTickerCh(du time.Duration) chan Event {
 				e := Event{}
 				e.Type = "ticker"
 				e.Path = "/ticker/" + du.String()
-				e.Data = TimerData{
+				e.Data = TickerData{
 					Duration: du,
 					Count:    n,
 				}
