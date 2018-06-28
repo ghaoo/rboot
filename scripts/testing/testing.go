@@ -24,8 +24,8 @@ func parse(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 
 func hook(bot rboot.Robot) {
 
-	bot.Ticker(2 * time.Second)
-	bot.Handle(`/ticker/2s`, func(evt rboot.Event) {
+	bot.Ticker(63 * time.Second)
+	bot.Handle(`/ticker/1m3s`, func(evt rboot.Event) {
 		data := evt.Data.(rboot.TickerData)
 
 		str := fmt.Sprintf(
