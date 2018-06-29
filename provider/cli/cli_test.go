@@ -19,12 +19,12 @@ func TestCli(t *testing.T) {
 	cli := NewCli()
 
 	in := <-cli.Incoming()
-	if in.Content != rawMsg {
+	if in.Content() != rawMsg {
 		t.Error("cli provider not ingesting incoming messages")
 	}
 
 	out := cli.Outgoing()
-	out <- rboot.Message{Content: rawMsg}
+	out <- rboot.Message{Body: stdin}
 	close(out)
 
 	to := time.After(5 * time.Second)

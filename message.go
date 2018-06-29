@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/textproto"
 	"time"
+	"log"
 )
 
 // 参考 net/mail
@@ -23,6 +24,7 @@ func (msg *Message) Content() string {
 	b, err := msg.Read()
 
 	if err != nil {
+		log.Printf(`read message error: %v`, err)
 		return ``
 	}
 

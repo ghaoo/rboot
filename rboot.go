@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"regexp"
 	"sync"
 	"syscall"
-	"regexp"
 )
 
 const (
