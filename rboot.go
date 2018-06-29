@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"sync"
 	"syscall"
+
+	"github.com/ghaoo/rboot/env"
 )
 
 const (
