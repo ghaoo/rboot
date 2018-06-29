@@ -63,7 +63,7 @@ var processOnce sync.Once
 func (bot *Robot) process() {
 	processOnce.Do(func() {
 
-		for _, script := range availableScripts {
+		for _, script := range scripts {
 			script.Hook(*bot)
 		}
 
@@ -75,7 +75,7 @@ func (bot *Robot) process() {
 					}
 				}()
 
-				for _, script := range availableScripts {
+				for _, script := range scripts {
 					responses := script.Action(bot, in)
 
 					for _, r := range responses {
