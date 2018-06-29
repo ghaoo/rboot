@@ -2,8 +2,6 @@ package rboot
 
 import (
 	"fmt"
-	"log"
-	"sync"
 )
 
 var (
@@ -68,32 +66,3 @@ func Detect(name string) (Provider, error) {
 	return nil, fmt.Errorf("unknown provider '%s'", name)
 }
 
-var processOnce sync.Once
-
-func (bot *Robot) Process() {
-	processOnce.Do(func() {
-
-		for _, script := range availableScripts {
-			script.Hook(*bot)
-		}
-
-		for in := range bot.providerIn {
-			go func(bot Robot, msg Message) {
-				defer func() {
-					if r := recover(); r != nil {
-						log.Printf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
-					}
-				}()
-
-				for _, script := range availableScripts {
-					responses := script.Action(bot, in)
-
-					for _, r := range responses {
-						bot.providerOut <- r
-					}
-				}
-
-			}(*bot, in)
-		}
-	})
-}

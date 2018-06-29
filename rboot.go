@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"regexp"
 	"sync"
 	"syscall"
+	"regexp"
 )
 
 const (
@@ -54,11 +54,45 @@ func (bot *Robot) Conf() Config {
 	return bot.conf
 }
 
+func (bot *Robot) Send(msg Message) {
+	bot.providerOut <- msg
+}
+
+var processOnce sync.Once
+
+func (bot *Robot) process() {
+	processOnce.Do(func() {
+
+		for _, script := range availableScripts {
+			script.Hook(*bot)
+		}
+
+		for in := range bot.providerIn {
+			go func(bot Robot, msg Message) {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
+					}
+				}()
+
+				for _, script := range availableScripts {
+					responses := script.Action(bot, in)
+
+					for _, r := range responses {
+						bot.providerOut <- r
+					}
+				}
+
+			}(*bot, in)
+		}
+	})
+}
+
 // 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
 	bot.initialize()
 
-	go bot.Process()
+	go bot.process()
 
 	go bot.es.loop()
 
@@ -80,10 +114,6 @@ func (bot *Robot) Go() {
 	bot.Stop()
 }
 
-func (bot *Robot) Send(msg Message) {
-	bot.providerOut <- msg
-}
-
 func (bot *Robot) Stop() error {
 
 	log.Printf("stopping %s", DefaultRobotName)
@@ -93,15 +123,6 @@ func (bot *Robot) Stop() error {
 func (bot *Robot) Name() string {
 	return bot.name
 }
-
-func regex(pattern string) *regexp.Regexp {
-	return regexp.MustCompile(pattern)
-}
-
-/*func match(pattern string, msg Message) bool {
-	reg := regex(pattern)
-
-}*/
 
 func (bot *Robot) initialize() {
 
@@ -130,4 +151,26 @@ func (bot *Robot) initialize() {
 
 	bot.providerIn = prov.Incoming()
 	bot.providerOut = prov.Outgoing()
+}
+
+func (bot *Robot) Regexp(pattern string) *regexp.Regexp {
+	return regex(pattern)
+}
+
+func (bot *Robot) MatchMessage(pattern string, msg Message) bool {
+	return match(pattern, msg)
+}
+
+func regex(pattern string) *regexp.Regexp {
+	return regexp.MustCompile(pattern)
+}
+
+func match(pattern string, msg Message) bool {
+
+	if !regex(pattern).MatchString(msg.Content()) {
+		return false
+	}
+
+	return true
+
 }
