@@ -42,14 +42,14 @@ type Provider interface {
 }
 
 // register provider
-func RegisterProvider(name string, prov Provider) {
+func RegisterProvider(name string, prov func() Provider) {
 	if name == "" {
 		panic("RegisterProvider: provider must have a name")
 	}
 	if _, ok := providers[name]; ok {
 		panic("RegisterProvider: provider named " + name + " already registered. ")
 	}
-	providers[name] = prov
+	providers[name] = prov()
 }
 
 // get provider by name
@@ -81,12 +81,12 @@ type Memorizer interface {
 	Error() error
 }
 
-func RegisterMemorizer(name string, m Memorizer) {
+func RegisterMemorizer(name string, m func() Memorizer) {
 	if name == "" {
 		panic("RegisterMemorizer: memorizer must have a name")
 	}
 	if _, ok := memorizers[name]; ok {
 		panic("RegisterMemorizer: memorizers named " + name + " already registered. ")
 	}
-	memorizers[name] = m
+	memorizers[name] = m()
 }
