@@ -10,7 +10,6 @@ var (
 	providers = make(map[string]Provider)
 
 	memorizers = make(map[string]Memorizer)
-
 )
 
 type Script struct {

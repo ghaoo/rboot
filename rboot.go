@@ -4,13 +4,12 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"regexp"
 	"sync"
 	"syscall"
-	"regexp"
 )
 
 const (
-	DefaultRbootConf     = `config.yml`
 	DefaultRobotName     = `Rboot`
 	DefaultRobotProvider = `cli`
 )
@@ -18,7 +17,6 @@ const (
 type Robot struct {
 	name string
 	es   *eventStream
-	conf Config
 
 	providerIn  chan Message
 	providerOut chan Message
@@ -27,17 +25,17 @@ type Robot struct {
 	sync.Mutex
 }
 
-func New(confpath ...string) *Robot {
+func New(envfile ...string) *Robot {
 
-	var conf = DefaultRbootConf
+	// 加载env配置
+	err := env.Load(envfile...)
 
-	if len(confpath) > 0 {
-		conf = confpath[0]
+	if err!= nil {
+		panic(err)
 	}
 
 	bot := &Robot{
 		es:          newStream(),
-		conf:        NewConf(conf),
 		providerIn:  make(chan Message),
 		providerOut: make(chan Message),
 		signalChan:  make(chan os.Signal, 1),
@@ -48,10 +46,6 @@ func New(confpath ...string) *Robot {
 
 func (bot *Robot) SetName(name string) {
 	bot.name = name
-}
-
-func (bot *Robot) Conf() Config {
-	return bot.conf
 }
 
 func (bot *Robot) Send(msg Message) {
@@ -127,21 +121,16 @@ func (bot *Robot) Name() string {
 
 func (bot *Robot) initialize() {
 
-	if bot.conf.Name == `` {
-		bot.name = DefaultRobotName
-	} else {
-		bot.name = bot.conf.Name
+	bot.name = DefaultRobotName
+	if os.Getenv(`ROBOT_NAME`) != `` {
+		bot.name = os.Getenv(`ROBOT_NAME`)
 	}
-
-	bot.es.init()
-
-	bot.es.merge("custom", usrEvent)
 
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
 	provName := DefaultRobotProvider
 
-	if bot.conf.Provider != `` {
-		provName = bot.conf.Provider
+	if os.Getenv(`ROBOT_PROVIDER`) != `` {
+		provName = os.Getenv(`ROBOT_PROVIDER`)
 	}
 
 	prov, err := Detect(provName)
@@ -149,6 +138,10 @@ func (bot *Robot) initialize() {
 	if err != nil {
 		panic(`Detect error: ` + err.Error())
 	}
+
+	bot.es.init()
+
+	bot.es.merge("custom", usrEvent)
 
 	bot.providerIn = prov.Incoming()
 	bot.providerOut = prov.Outgoing()

@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ghaoo/rboot"
 	"bytes"
+	"github.com/ghaoo/rboot"
 )
 
 var (

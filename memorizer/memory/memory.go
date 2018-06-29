@@ -1,9 +1,9 @@
 package memory
 
 import (
-	"sync"
 	"fmt"
 	"github.com/ghaoo/rboot"
+	"sync"
 )
 
 type memory struct {
@@ -14,7 +14,7 @@ type memory struct {
 // New constructs memory
 func New() rboot.Memorizer {
 	return &memory{
-		mu: sync.Mutex{},
+		mu:    sync.Mutex{},
 		items: make(map[string][]byte),
 	}
 }
