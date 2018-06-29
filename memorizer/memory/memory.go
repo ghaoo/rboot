@@ -3,6 +3,7 @@ package memory
 import (
 	"sync"
 	"fmt"
+	"github.com/ghaoo/rboot"
 )
 
 type memory struct {
@@ -72,4 +73,5 @@ func (m *memory) Error() error {
 }
 
 func init() {
+	rboot.RegisterMemorizer(`memory`, New)
 }

@@ -81,12 +81,12 @@ type Memorizer interface {
 	Error() error
 }
 
-func RegisterMemorizer(name string, f func() Memorizer) {
+func RegisterMemorizer(name string, m Memorizer) {
 	if name == "" {
 		panic("RegisterMemorizer: memorizer must have a name")
 	}
 	if _, ok := memorizers[name]; ok {
 		panic("RegisterMemorizer: memorizers named " + name + " already registered. ")
 	}
-	memorizers[name] = f()
+	memorizers[name] = m
 }
