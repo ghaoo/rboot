@@ -11,8 +11,22 @@ import (
 
 // 参考 net/mail
 type Message struct {
-	Header  Header
-	Content string
+	Header Header
+	Body   io.Reader
+}
+
+func (msg *Message) Read() ([]byte, error) {
+	return ioutil.ReadAll(msg.Body)
+}
+
+func (msg *Message) Content() string {
+	b, err := msg.Read()
+
+	if err != nil {
+		return ``
+	}
+
+	return string(b)
 }
 
 // 读消息
@@ -24,14 +38,9 @@ func ReadMessage(r io.Reader) (msg *Message, err error) {
 		return nil, err
 	}
 
-	mb, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Message{
-		Header:  Header(hdr),
-		Content: string(mb),
+		Header: Header(hdr),
+		Body:   tp.R,
 	}, nil
 }
 

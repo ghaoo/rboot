@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"regexp"
 )
 
 const (
@@ -92,6 +93,15 @@ func (bot *Robot) Stop() error {
 func (bot *Robot) Name() string {
 	return bot.name
 }
+
+func regex(pattern string) *regexp.Regexp {
+	return regexp.MustCompile(pattern)
+}
+
+/*func match(pattern string, msg Message) bool {
+	reg := regex(pattern)
+
+}*/
 
 func (bot *Robot) initialize() {
 
