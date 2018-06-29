@@ -1,9 +1,9 @@
 package rboot
 
 import (
+	"fmt"
 	"log"
 	"sync"
-	"fmt"
 )
 
 var (

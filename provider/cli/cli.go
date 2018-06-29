@@ -3,9 +3,15 @@ package cli
 import (
 	"bufio"
 	"fmt"
+	"github.com/ghaoo/rboot"
+	"io"
 	"os"
-	"rboot"
 	"strings"
+)
+
+var (
+	stdin  io.Reader = os.Stdin
+	stdout io.Writer = os.Stdout
 )
 
 type cli struct {
@@ -19,7 +25,7 @@ func NewCli() rboot.Provider {
 	c := &cli{
 		in:     make(chan rboot.Message),
 		out:    make(chan rboot.Message),
-		writer: bufio.NewWriter(os.Stdout),
+		writer: bufio.NewWriter(stdout),
 	}
 
 	go c.run()
@@ -40,7 +46,7 @@ func (c *cli) Error() error {
 
 func (c *cli) run() {
 	go func() {
-		scanner := bufio.NewScanner(os.Stdin)
+		scanner := bufio.NewScanner(stdin)
 		for scanner.Scan() {
 
 			header := make(rboot.Header)
@@ -72,7 +78,7 @@ func (c *cli) run() {
 }
 
 func (c *cli) writeString(str string) error {
-	msg := fmt.Sprintf("> %s\n", strings.TrimSpace(str))
+	msg := fmt.Sprintf("%s\n", strings.TrimSpace(str))
 
 	if _, err := c.writer.WriteString(msg); err != nil {
 		return err

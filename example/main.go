@@ -1,10 +1,10 @@
 package main
 
 import (
-	"rboot"
+	"github.com/ghaoo/rboot"
 
-	_ "rboot/provider"
-	_ "rboot/scripts"
+	_ "github.com/ghaoo/rboot/provider"
+	_ "github.com/ghaoo/rboot/scripts"
 )
 
 func main() {

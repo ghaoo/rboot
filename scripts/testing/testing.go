@@ -2,8 +2,9 @@ package testing
 
 import (
 	"fmt"
-	"rboot"
 	"time"
+
+	"github.com/ghaoo/rboot"
 )
 
 func parse(bot rboot.Robot, msg rboot.Message) []rboot.Message {

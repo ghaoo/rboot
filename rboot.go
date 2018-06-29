@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	DefaultRbootConf = `config.yml`
-	DefaultRobotName = `Rboot`
+	DefaultRbootConf     = `config.yml`
+	DefaultRobotName     = `Rboot`
 	DefaultRobotProvider = `cli`
 )
 
 type Robot struct {
-	name    string
-	es      *eventStream
-	conf    Config
+	name string
+	es   *eventStream
+	conf Config
 
 	providerIn  chan Message
 	providerOut chan Message

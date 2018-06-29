@@ -2,5 +2,5 @@ package scripts
 
 import (
 	// plug all scripts
-	_ "rboot/scripts/testing"
+	_ "github.com/ghaoo/rboot/scripts/testing"
 )
