@@ -65,6 +65,8 @@ func (m *memory) Update(key string, value []byte) error {
 	}
 
 	m.items[key] = value
+
+	return nil
 }
 
 // delete ...
