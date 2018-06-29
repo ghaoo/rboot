@@ -114,6 +114,7 @@ func (bot *Robot) Go() {
 	bot.Stop()
 }
 
+// 皮皮虾，快停下~~~~~~~~~
 func (bot *Robot) Stop() error {
 
 	log.Printf("stopping %s", DefaultRobotName)

@@ -9,7 +9,6 @@ import (
 type memory struct {
 	mu    sync.Mutex
 	items map[string][]byte
-	err error
 }
 
 // New constructs memory
@@ -20,18 +19,27 @@ func New() rboot.Memorizer {
 	}
 }
 
+func (m *memory) Open() error {
+	return nil
+}
+
+func (m *memory) Close() error {
+	return nil
+}
+
 // save ...
-func (m *memory) Save(key string, value []byte) {
+func (m *memory) Save(key string, value []byte) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	_, ok := m.items[key]
 	if !ok {
-		m.err = fmt.Errorf("key %s already existed, If you want to change its value, please use `Update`.", key)
-		return
+		return fmt.Errorf("key %s already existed, If you want to change its value, please use `Update`.", key)
 	}
 
 	m.items[key] = value
+
+	return nil
 }
 
 // read ...
@@ -47,7 +55,7 @@ func (m *memory) Read(key string) ([]byte, bool) {
 }
 
 // update ...
-func (m *memory) Update(key string, value []byte) {
+func (m *memory) Update(key string, value []byte) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -60,16 +68,13 @@ func (m *memory) Update(key string, value []byte) {
 }
 
 // delete ...
-func (m *memory) Delete(key string) {
+func (m *memory) Delete(key string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	delete(m.items, key)
-}
 
-// error ...
-func (m *memory) Error() error {
-	return m.err
+	return nil
 }
 
 func init() {

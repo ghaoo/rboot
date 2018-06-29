@@ -74,11 +74,12 @@ func Detect(name string) (Provider, error) {
 }
 
 type Memorizer interface {
-	Save(key string, value []byte)
+	Open() error
+	Save(key string, value []byte) error
 	Read(key string) ([]byte, bool)
-	Update(key string, value []byte)
-	Delete(key string)
-	Error() error
+	Update(key string, value []byte) error
+	Delete(key string) error
+	Close() error
 }
 
 func RegisterMemorizer(name string, m func() Memorizer) {
