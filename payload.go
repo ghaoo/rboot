@@ -52,7 +52,7 @@ func RegisterProvider(name string, prov func() Provider) {
 }
 
 // get provider by name
-func Detect(name string) (Provider, error) {
+func DetectProv(name string) (Provider, error) {
 	if prov, ok := providers[name]; ok {
 		return prov, nil
 	}
@@ -73,12 +73,11 @@ func Detect(name string) (Provider, error) {
 }
 
 type Memorizer interface {
-	Open() error
-	Save(key string, value []byte) error
+	Save(key string, value []byte)
 	Read(key string) ([]byte, bool)
-	Update(key string, value []byte) error
-	Delete(key string) error
-	Close() error
+	Update(key string, value []byte)
+	Delete(key string)
+	Error() error
 }
 
 func RegisterMemorizer(name string, m func() Memorizer) {
@@ -89,4 +88,25 @@ func RegisterMemorizer(name string, m func() Memorizer) {
 		panic("RegisterMemorizer: memorizers named " + name + " already registered. ")
 	}
 	memorizers[name] = m()
+}
+
+// get memorizer by name
+func DetectMemo(name string) (Memorizer, error) {
+	if memo, ok := memorizers[name]; ok {
+		return memo, memo.Error()
+	}
+
+	if len(memorizers) == 0 {
+		return nil, fmt.Errorf("no memorizer available")
+	}
+
+	if name == "" {
+		if len(memorizers) == 1 {
+			for _, memo := range memorizers {
+				return memo, nil
+			}
+		}
+		return nil, fmt.Errorf("multiple memorizers available; must choose one")
+	}
+	return nil, fmt.Errorf("unknown memorizers '%s'", name)
 }

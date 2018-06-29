@@ -8,16 +8,21 @@ import (
 	"sync"
 	"syscall"
 
+	_ "github.com/ghaoo/rboot/memorizer"
+	_ "github.com/ghaoo/rboot/provider"
+	_ "github.com/ghaoo/rboot/scripts"
 )
 
 const (
-	DefaultRobotName     = `Rboot`
-	DefaultRobotProvider = `cli`
+	DefaultRobotName      = `Rboot`
+	DefaultRobotProvider  = `cli`
+	DefaultRobotMemorizer = `memory`
 )
 
 type Robot struct {
 	name string
 	es   *eventStream
+	memo Memorizer
 
 	providerIn  chan Message
 	providerOut chan Message
@@ -109,12 +114,35 @@ func (bot *Robot) Stop() error {
 	return nil
 }
 
+// robot name
 func (bot *Robot) Name() string {
 	return bot.name
 }
 
+// memorizer save data
+func (bot *Robot) MemoSave(key string, value []byte) {
+	bot.memo.Save(key, value)
+}
+
+// memorizer read
+func (bot *Robot) MemoRead(key string) ([]byte, bool) {
+	return bot.memo.Read(key)
+}
+
+// memorizer update
+func (bot *Robot) MemoUpdate(key string, value []byte) {
+	bot.memo.Update(key, value)
+}
+
+// memorizer delete
+func (bot *Robot) MemoDel(key string) {
+	bot.memo.Delete(key)
+}
+
+// initialize ...
 func (bot *Robot) initialize() {
 
+	// 机器人名称
 	bot.name = DefaultRobotName
 	if os.Getenv(`ROBOT_NAME`) != `` {
 		bot.name = os.Getenv(`ROBOT_NAME`)
@@ -127,18 +155,37 @@ func (bot *Robot) initialize() {
 		provName = os.Getenv(`ROBOT_PROVIDER`)
 	}
 
-	prov, err := Detect(provName)
+	prov, err := DetectProv(provName)
 
 	if err != nil {
-		panic(`Detect error: ` + err.Error())
+		panic(`Detect provider error: ` + err.Error())
+	}
+
+	bot.providerIn = prov.Incoming()
+	bot.providerOut = prov.Outgoing()
+
+	// 指定储存器
+	memoName := DefaultRobotMemorizer
+
+	if os.Getenv(`ROBOT_MEMORIZER`) != `` {
+		memoName = os.Getenv(`ROBOT_MEMORIZER`)
+	}
+
+	memo, err := DetectMemo(memoName)
+
+	if err != nil {
+		panic(`Detect memorizer error: ` + err.Error())
+	}
+
+	bot.memo = memo
+
+	if bot.memo.Error() != nil {
+		log.Print(bot.memo.Error())
 	}
 
 	bot.es.init()
 
 	bot.es.merge("custom", usrEvent)
-
-	bot.providerIn = prov.Incoming()
-	bot.providerOut = prov.Outgoing()
 }
 
 func (bot *Robot) Regexp(pattern string) *regexp.Regexp {

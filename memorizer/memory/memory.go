@@ -2,13 +2,15 @@ package memory
 
 import (
 	"fmt"
-	"github.com/ghaoo/rboot"
 	"sync"
+
+	"github.com/ghaoo/rboot"
 )
 
 type memory struct {
 	mu    sync.Mutex
 	items map[string][]byte
+	err error
 }
 
 // New constructs memory
@@ -19,27 +21,18 @@ func New() rboot.Memorizer {
 	}
 }
 
-func (m *memory) Open() error {
-	return nil
-}
-
-func (m *memory) Close() error {
-	return nil
-}
-
 // save ...
-func (m *memory) Save(key string, value []byte) error {
+func (m *memory) Save(key string, value []byte) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	_, ok := m.items[key]
 	if !ok {
-		return fmt.Errorf("key %s already existed, If you want to change its value, please use `Update`.", key)
+		m.err = fmt.Errorf("key %s already existed, If you want to change its value, please use `Update`.", key)
+		return
 	}
 
 	m.items[key] = value
-
-	return nil
 }
 
 // read ...
@@ -55,7 +48,7 @@ func (m *memory) Read(key string) ([]byte, bool) {
 }
 
 // update ...
-func (m *memory) Update(key string, value []byte) error {
+func (m *memory) Update(key string, value []byte) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -65,18 +58,14 @@ func (m *memory) Update(key string, value []byte) error {
 	}
 
 	m.items[key] = value
-
-	return nil
 }
 
 // delete ...
-func (m *memory) Delete(key string) error {
+func (m *memory) Delete(key string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	delete(m.items, key)
-
-	return nil
 }
 
 func init() {
