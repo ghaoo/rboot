@@ -42,14 +42,14 @@ type Provider interface {
 }
 
 // register provider
-func RegisterProvider(name string, f func()Provider) {
+func RegisterProvider(name string, prov Provider) {
 	if name == "" {
 		panic("RegisterProvider: provider must have a name")
 	}
 	if _, ok := providers[name]; ok {
 		panic("RegisterProvider: provider named " + name + " already registered. ")
 	}
-	providers[name] = f()
+	providers[name] = prov
 }
 
 // get provider by name

@@ -13,7 +13,7 @@ type memory struct {
 }
 
 // New constructs memory
-func New() *memory {
+func New() rboot.Memorizer {
 	return &memory{
 		mu: sync.Mutex{},
 		items: make(map[string][]byte),
