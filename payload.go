@@ -15,13 +15,13 @@ var (
 type ProvFunc func() Provider
 
 type Script struct {
-	Action      ParseFunc   // 操作函数
+	Action      SetupFunc   // 执行解析或一些必要加载
 	Hook        func(Robot) // 钩子
 	Usage       string      // 使用方法
 	Description string      // 简介
 }
 
-type ParseFunc func(Robot, Message) []Message
+type SetupFunc func(Robot, Message) []Message
 
 // 注册插件
 func RegisterScript(name string, script *Script) {

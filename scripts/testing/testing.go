@@ -7,7 +7,7 @@ import (
 	"github.com/ghaoo/rboot"
 )
 
-func parse(bot rboot.Robot, msg rboot.Message) []rboot.Message {
+func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 
 	if msg.Content == `11` {
 		return []rboot.Message{
@@ -47,7 +47,7 @@ count: %d
 
 func init() {
 	rboot.RegisterScript(`testing`, &rboot.Script{
-		Action: parse,
+		Action: setup,
 		Hook:   hook,
 	})
 }
