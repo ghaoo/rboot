@@ -24,7 +24,8 @@ func TestCli(t *testing.T) {
 	}
 
 	out := cli.Outgoing()
-	out <- rboot.Message{Body: stdin}
+
+	out <- rboot.Message{Body: strings.NewReader(rawMsg)}
 	close(out)
 
 	to := time.After(5 * time.Second)
