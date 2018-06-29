@@ -3,10 +3,11 @@ package cli
 import (
 	"bufio"
 	"fmt"
-	"github.com/ghaoo/rboot"
 	"io"
 	"os"
 	"strings"
+
+	"github.com/ghaoo/rboot"
 )
 
 var (
