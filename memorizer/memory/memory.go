@@ -68,6 +68,10 @@ func (m *memory) Delete(key string) {
 	delete(m.items, key)
 }
 
+func (m *memory) Error() error {
+	return m.err
+}
+
 func init() {
 	rboot.RegisterMemorizer(`memory`, New)
 }
