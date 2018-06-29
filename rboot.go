@@ -8,7 +8,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/ghaoo/rboot/env"
 )
 
 const (
@@ -27,14 +26,7 @@ type Robot struct {
 	sync.Mutex
 }
 
-func New(envfile ...string) *Robot {
-
-	// 加载env配置
-	err := env.Load(envfile...)
-
-	if err!= nil {
-		panic(err)
-	}
+func New() *Robot {
 
 	bot := &Robot{
 		es:          newStream(),
