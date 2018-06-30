@@ -15,14 +15,14 @@ func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 		fs := reg.FindAllStringSubmatch(msg.Content(), -1)
 
 		log.Printf(
-			`msg: %s
+			`msg: %v
 fs1: %v
 fs2: %v
-`,msg.Content(), fs, reg.FindAllString(msg.Content(), -1))
+`,msg, fs, reg.FindAllString(msg.Content(), -1))
 
 		return []rboot.Message{
 			{
-				Body: strings.NewReader(`PONG`),
+				Body: strings.NewReader(`PONG ......`),
 			},
 		}
 	}
