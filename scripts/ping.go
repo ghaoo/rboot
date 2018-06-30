@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/ghaoo/rboot"
+	"log"
 )
 
 func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
@@ -13,7 +14,7 @@ func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 
 		fs := reg.FindAllStringSubmatch(msg.Content(), -1)
 
-		println(fs)
+		log.Printf(`%v`, fs)
 
 		return []rboot.Message{
 			{
