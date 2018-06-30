@@ -1,40 +1,41 @@
 package scripts
 
 import (
-	"strings"
-
 	"github.com/ghaoo/rboot"
+	"regexp"
 	"log"
+	"time"
 )
 
 func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
+	var reg *regexp.Regexp
+	reg = regexp.MustCompile(`1|2|3|4`)
 
-	println(msg.Content())
+	var match []string
 
-	if bot.MatchMessage(`ping|PING|Ping`, msg) {
-		println(msg.Content())
-		reg := bot.Regexp(`ping|PING|Ping`)
-
-		fs := reg.FindAllStringSubmatch(msg.Content(), -1)
-
-		log.Printf(
-			`msg: %v
-fs1: %v
-fs2: %v
-`,msg.Body, fs, reg.FindAllString(msg.Content(), -1))
-
-		return []rboot.Message{
-			{
-				Body: strings.NewReader(`PONG ......`),
-			},
-		}
+	if reg.MatchString(msg.Content) {
+		match = reg.FindAllStringSubmatch(msg.Content, -1)[0]
 	}
+
+	log.Printf(`%v`, match)
 
 	return nil
 }
 
+func call(bot rboot.Robot) error {
+	bot.Ticker(2 * time.Second)
+	bot.Handle(`/ticker/2s`, func(evt rboot.Event) {
+		//data := evt.Data.(rboot.TimerData)
+
+		bot.Send(rboot.NewStringMessage(`111111111`))
+	})
+	return nil
+}
+
+
 func init() {
 	rboot.RegisterScript(`ping`, &rboot.Script{
 		Action: setup,
+		Call: call,
 	})
 }

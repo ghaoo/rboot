@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"bytes"
 	"github.com/ghaoo/rboot"
 )
 
@@ -57,14 +56,14 @@ func (c *cli) run() {
 
 			c.in <- rboot.Message{
 				Header: header,
-				Body:   bytes.NewReader(scanner.Bytes()),
+				Content:   scanner.Text(),
 			}
 
 		forLoop:
 			for {
 				select {
 				case msg := <-c.out:
-					c.writeString(msg.Content())
+					c.writeString(msg.String())
 				default:
 					break forLoop
 				}
@@ -74,7 +73,7 @@ func (c *cli) run() {
 
 	go func() {
 		for msg := range c.out {
-			c.writeString(msg.Content())
+			c.writeString(msg.String())
 		}
 	}()
 }

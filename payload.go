@@ -120,3 +120,4 @@ func DetectMemo(name string) (Memorizer, error) {
 	}
 	return nil, fmt.Errorf("unknown memorizers '%s'", name)
 }
+

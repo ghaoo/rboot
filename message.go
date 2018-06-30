@@ -4,45 +4,43 @@ import (
 	"bufio"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/textproto"
 	"time"
+	"bytes"
+	"io/ioutil"
 )
 
-// 参考 net/mail
 type Message struct {
 	Header Header
-	Body   io.Reader
+	Content string
 }
 
-func (msg *Message) Read() ([]byte, error) {
-	return ioutil.ReadAll(msg.Body)
+func (msg Message) String() string {
+
+	return msg.Content
 }
 
-func (msg *Message) Content() string {
-	b, err := msg.Read()
-
-	if err != nil {
-		//log.Printf(`read message error: %v`, err)
-		return ``
-	}
-
-	return string(b)
-}
-
-// 读消息
-func ReadMessage(r io.Reader) (msg *Message, err error) {
+// 新建消息
+func NewMessage(r io.Reader) Message {
 	tp := textproto.NewReader(bufio.NewReader(r))
 
-	hdr, err := tp.ReadMIMEHeader()
+	hdr, _ := tp.ReadMIMEHeader()
+
+	content, err := ioutil.ReadAll(tp.R)
+
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	return &Message{
+	return Message{
 		Header: Header(hdr),
-		Body:   tp.R,
-	}, nil
+		Content: string(content),
+	}
+}
+
+func NewStringMessage(str string) Message {
+
+	return NewMessage(bytes.NewBufferString(str))
 }
 
 // 消息头

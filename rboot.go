@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"regexp"
 	"sync"
 	"syscall"
 )
@@ -44,12 +43,26 @@ func (bot *Robot) SetName(name string) {
 }
 
 func (bot *Robot) Send(msg Message) {
+	bot.Lock()
+	defer bot.Unlock()
+
+	log.Printf(`send msg: %s`, msg.Content)
+
 	bot.providerOut <- msg
+}
+
+func (bot *Robot) Incoming() chan Message {
+	return bot.providerIn
+}
+
+func (bot *Robot) Outgoing() chan Message {
+	return bot.providerOut
 }
 
 var processOnce sync.Once
 
 func (bot *Robot) process() {
+
 	processOnce.Do(func() {
 
 		go func(bot Robot) {
@@ -195,24 +208,3 @@ func (bot *Robot) initialize() {
 	bot.es.merge("custom", usrEvent)
 }
 
-func (bot *Robot) Regexp(pattern string) *regexp.Regexp {
-	return regex(pattern)
-}
-
-func (bot *Robot) MatchMessage(pattern string, msg Message) bool {
-	return match(pattern, msg)
-}
-
-func regex(pattern string) *regexp.Regexp {
-	return regexp.MustCompile(pattern)
-}
-
-func match(pattern string, msg Message) bool {
-
-	if !regex(pattern).MatchString(msg.Content()) {
-		return false
-	}
-
-	return true
-
-}

@@ -1,8 +1,6 @@
 package rboot
 
 import (
-	"bytes"
-	"io/ioutil"
 	"testing"
 )
 
@@ -12,21 +10,21 @@ Subject: Saying Hello
 Date: Fri, 21 Nov 1997 09:55:06 -0600
 Message-ID: <1234@local.machine.example>
 
-This is a message just to say hello.
-So, "Hello".`
+Hello.`
 
-func TestReadMessage(t *testing.T) {
-	msg, err := ReadMessage(bytes.NewBuffer([]byte(msgBody)))
-	if err != nil {
-		t.Errorf("Failed read message: %v", err)
+func TestNewStringMessage(t *testing.T) {
+	msg := NewStringMessage(msgBody)
+
+	content := msg.Content
+
+	if content != `Hello.` {
+		t.Logf(`new string message error`)
 	}
 
-	body, err := ioutil.ReadAll(msg.Body)
+	header := msg.Header
 
-	if err != nil {
-		t.Errorf("Failed reading body: %v", err)
+	if header.Get(`From`) != `John Doe <jdoe@machine.example>` {
+		t.Logf(`new string message error, header not fond`)
 	}
-
-	t.Logf(`Body: %s`, string(body))
 
 }
