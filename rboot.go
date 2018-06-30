@@ -53,7 +53,9 @@ func (bot *Robot) process() {
 	processOnce.Do(func() {
 
 		for _, script := range scripts {
-			script.Hook(*bot)
+			if script.Hook != nil {
+				script.Hook(*bot)
+			}
 		}
 
 		for in := range bot.providerIn {
