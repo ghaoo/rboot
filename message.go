@@ -1,46 +1,14 @@
 package rboot
 
 import (
-	"bufio"
 	"errors"
-	"io"
 	"net/textproto"
 	"time"
-	"bytes"
-	"io/ioutil"
 )
 
 type Message struct {
 	Header Header
 	Content string
-}
-
-func (msg Message) String() string {
-
-	return msg.Content
-}
-
-// 新建消息
-func NewMessage(r io.Reader) Message {
-	tp := textproto.NewReader(bufio.NewReader(r))
-
-	hdr, _ := tp.ReadMIMEHeader()
-
-	content, err := ioutil.ReadAll(tp.R)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return Message{
-		Header: Header(hdr),
-		Content: string(content),
-	}
-}
-
-func NewStringMessage(str string) Message {
-
-	return NewMessage(bytes.NewBufferString(str))
 }
 
 // 消息头

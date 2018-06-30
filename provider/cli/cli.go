@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ghaoo/rboot"
+	"log"
 )
 
 var (
@@ -33,15 +34,39 @@ func NewCli() rboot.Provider {
 	return c
 }
 
+func (c *cli) Name() string {
+	return `CLI`
+}
+
 func (c *cli) Incoming() chan rboot.Message {
 	return c.in
 }
 
-func (c *cli) Outgoing() chan rboot.Message {
-	return c.out
+func (c *cli) Send(msg ...rboot.Message) error {
+	for _, m := range msg {
+		err := c.writeString(m.Content)
+		if err != nil {
+			log.Printf("send message error: %v", err)
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (c *cli) Error() error {
+func (c *cli) Reply(msg ...rboot.Message) error {
+	for _, m := range msg {
+		err := c.writeString(m.Content)
+		if err != nil {
+			log.Printf("send message error: %v", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *cli) Close() error {
 	return nil
 }
 
