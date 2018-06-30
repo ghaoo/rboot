@@ -12,6 +12,7 @@ func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 	println(msg.Content())
 
 	if bot.MatchMessage(`ping|PING|Ping`, msg) {
+		println(msg.Content())
 		reg := bot.Regexp(`ping|PING|Ping`)
 
 		fs := reg.FindAllStringSubmatch(msg.Content(), -1)
