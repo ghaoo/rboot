@@ -9,6 +9,8 @@ import (
 
 func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 
+	println(msg.Content())
+
 	if bot.MatchMessage(`ping|PING|Ping`, msg) {
 		reg := bot.Regexp(`ping|PING|Ping`)
 
