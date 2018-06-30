@@ -6,8 +6,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"fmt"
-	"regexp"
 )
 
 const (
@@ -20,51 +18,40 @@ type Robot struct {
 	name string
 	es   *eventStream
 	memo Memorizer
-	prov Provider
-	Pattern string
 
-	inMessage  chan Message
+	providerIn  chan Message
+	providerOut chan Message
 
 	signalChan chan os.Signal
 	sync.Mutex
-
-	err chan error
 }
 
 func New() *Robot {
 
 	bot := &Robot{
 		es:          newStream(),
-		inMessage:  make(chan Message),
+		providerIn:  make(chan Message),
+		providerOut: make(chan Message),
 		signalChan:  make(chan os.Signal, 1),
 	}
 
 	return bot
 }
 
-// robot name
-func (bot *Robot) Name() string {
-	return bot.name
-}
-
 func (bot *Robot) SetName(name string) {
 	bot.name = name
 }
 
+func (bot *Robot) Send(msg Message) {
+	bot.providerOut <- msg
+}
+
 func (bot *Robot) Incoming() chan Message {
-	return bot.inMessage
+	return bot.providerIn
 }
 
-func (bot *Robot) Send(msg ...Message) {
-	bot.prov.Send(msg...)
-}
-
-func (bot *Robot) Reply(msg ...Message) {
-	bot.prov.Reply(msg...)
-}
-
-func (bot *Robot) Error(err error) {
-	bot.err <- err
+func (bot *Robot) Outgoing() chan Message {
+	return bot.providerOut
 }
 
 var processOnce sync.Once
@@ -73,100 +60,41 @@ func (bot *Robot) process() {
 
 	processOnce.Do(func() {
 
-		go func(bot *Robot) {
+		go func(bot Robot) {
 			defer func() {
 				if r := recover(); r != nil {
-					bot.err <- fmt.Errorf("panic recovered when executing script call: %v", r)
+					log.Printf("panic recovered when executing script call: %v", r)
 				}
 			}()
 			for sname, call := range execCall {
 				err := call(bot)
 
 				if err != nil {
-					bot.err <- fmt.Errorf(`executing script(%s) call error: %v`, sname, err)
+					log.Printf(`executing script(%s) call error: %v`, sname, err)
 				}
 			}
+		}(*bot)
 
-			// 处理错误信息
-			for err := range bot.err {
-				log.Print(err)
-			}
-		}(bot)
-
-		for in := range bot.inMessage {
-			go func(bot *Robot, msg Message) {
-				defer func() {
+		for in := range bot.providerIn {
+			go func(bot Robot, msg Message) {
+				/*defer func() {
 					if r := recover(); r != nil {
 						log.Printf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
 					}
-				}()
+				}()*/
 
-				err := bot.handleMessage(in)
+				for _, script := range scripts {
+					responses := script.Action(bot, in)
 
-				if err != nil {
-					bot.err <- err
+					for _, r := range responses {
+						bot.providerOut <- r
+					}
 				}
 
-			}(bot, in)
+			}(*bot, in)
 		}
 	})
 }
-
-// 处理消息
-func (bot *Robot) handleMessage(msg Message) error {
-	bot.Lock()
-	defer bot.Unlock()
-
-	if msg.Header.From() == `` {
-		msg.Header.Set(`From`, `System`)
-	}
-
-	if msg.Header.To() == `` {
-		msg.Header.Set(`To`, `Nil`)
-	}
-
-	scrName, ok := bot.matchRuleset(msg.Content)
-
-	if ok {
-
-		action, err := DirectiveAction(scrName)
-
-		if err != nil {
-			return err
-		}
-
-		return action(bot)
-	}
-
-	return fmt.Errorf(`Receive: no matching scripts... `)
-}
-
-// 匹配脚本规则集
-func (bot *Robot) matchRuleset(msg string) (string, bool) {
-	for scr, rules := range rulesets {
-		for pattern, rule := range rules {
-			if bot.match(rule, msg) {
-				bot.Pattern = pattern
-				return scr, true
-			}
-		}
-	}
-
-	return ``, false
-}
-
-// 匹配消息
-func (bot *Robot) match(pattern, msg string) bool {
-
-	reg := regexp.MustCompile(pattern)
-
-	if reg.MatchString(msg) {
-		return true
-	}
-
-	return false
-}
-
 
 // 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
@@ -197,11 +125,13 @@ func (bot *Robot) Go() {
 // 皮皮虾，快停下~~~~~~~~~
 func (bot *Robot) Stop() error {
 
-	log.Printf(`stopping provider %s`, bot.prov.Name())
-	bot.prov.Close()
-
-	log.Printf("stopping %s", bot.name)
+	log.Printf("stopping %s", DefaultRobotName)
 	return nil
+}
+
+// robot name
+func (bot *Robot) Name() string {
+	return bot.name
 }
 
 // memorizer save data
@@ -246,8 +176,8 @@ func (bot *Robot) initialize() {
 		panic(`Detect provider error: ` + err.Error())
 	}
 
-	bot.inMessage = prov.Incoming()
-	bot.prov = prov
+	bot.providerIn = prov.Incoming()
+	bot.providerOut = prov.Outgoing()
 
 	// 指定储存器
 	memoName := DefaultRobotMemorizer
@@ -265,7 +195,7 @@ func (bot *Robot) initialize() {
 	bot.memo = memo
 
 	if bot.memo.Error() != nil {
-		bot.err <- bot.memo.Error()
+		log.Print(bot.memo.Error())
 	}
 
 	bot.es.init()

@@ -2,24 +2,28 @@ package scripts
 
 import (
 	"github.com/ghaoo/rboot"
+	"regexp"
 	"time"
 )
 
-func setup(bot *rboot.Robot) error {
-	switch bot.Pattern {
-	case `ping`:
-		bot.Send(rboot.NewStringMessage(`PONG...`))
+func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
+	var reg *regexp.Regexp
+	reg = regexp.MustCompile(`ping|PING`)
+
+	if reg.MatchString(msg.Content) {
+		bot.Send(rboot.Message{Content:`PONG`})
+		//match = reg.FindAllStringSubmatch(msg.Content, -1)[0]
 	}
 
 	return nil
 }
 
-func call(bot *rboot.Robot) error {
+func call(bot rboot.Robot) error {
 	bot.Ticker(2 * time.Second)
 	bot.Handle(`/ticker/2s`, func(evt rboot.Event) {
 		//data := evt.Data.(rboot.TimerData)
 
-		bot.Send(rboot.NewStringMessage(`111111111`))
+		bot.Send(rboot.Message{Content:`111111111`})
 	})
 	return nil
 }
@@ -28,9 +32,6 @@ func call(bot *rboot.Robot) error {
 func init() {
 	rboot.RegisterScript(`ping`, &rboot.Script{
 		Action: setup,
-		Ruleset: map[string]string{
-			`ping`:`ping|PING|Ping`,
-		},
 		Call: call,
 	})
 }

@@ -11,20 +11,20 @@ var (
 
 	memorizers = make(map[string]Memorizer)
 
-	execCall = make(map[string]SetupFunc)
-
-	rulesets = make(map[string]map[string]string)
+	execCall = make(map[string]Call)
 )
 
 type Script struct {
 	Action      SetupFunc // 执行解析或一些必要加载
-	Ruleset     map[string]string // 指令集
-	Call        SetupFunc      // 直接调用运行
+	Call        Call      // 直接调用运行
 	Usage       string    // 使用方法
 	Description string    // 简介
 }
 
-type SetupFunc func(*Robot) error
+type SetupFunc func(Robot, Message) []Message
+
+// 用于直接调用运行的函数
+type Call func(Robot) error
 
 // 注册脚本
 func RegisterScript(name string, script *Script) {
@@ -38,32 +38,15 @@ func RegisterScript(name string, script *Script) {
 
 	scripts[name] = script
 
-	if len(script.Ruleset) > 0 {
-
-		rulesets[name] = script.Ruleset
-	}
-
 	if script.Call != nil {
 		execCall[name] = script.Call
 	}
 }
 
-func DirectiveAction(name string) (SetupFunc, error) {
-
-	if script, ok := scripts[name]; ok {
-		return script.Action, nil
-	}
-
-	return nil, fmt.Errorf("DirectiveAction: no action found in script '%s' (missing a script?)", name)
-
-}
-
 type Provider interface {
-	Name() string
 	Incoming() chan Message
-	Send(...Message) error   // 发送消息
-	Reply(...Message) error  // 回复消息
-	Close() error           // 关闭适配器
+	Outgoing() chan Message
+	Error() error
 }
 
 // 注册消息适配器
@@ -90,7 +73,7 @@ func DetectProv(name string) (Provider, error) {
 	if name == "" {
 		if len(providers) == 1 {
 			for _, prov := range providers {
-				return prov, nil
+				return prov, prov.Error()
 			}
 		}
 		return nil, fmt.Errorf("multiple providers available; must choose one")
