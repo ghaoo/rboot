@@ -10,7 +10,7 @@ import (
 type memory struct {
 	mu    sync.Mutex
 	items map[string][]byte
-	err error
+	err   error
 }
 
 // New constructs memory

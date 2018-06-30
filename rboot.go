@@ -52,11 +52,20 @@ var processOnce sync.Once
 func (bot *Robot) process() {
 	processOnce.Do(func() {
 
-		for _, script := range scripts {
-			if script.Hook != nil {
-				script.Hook(*bot)
+		go func(bot Robot) {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("panic recovered when executing script call: %v", r)
+				}
+			}()
+			for sname, call := range execCall {
+				err := call(bot)
+
+				if err != nil {
+					log.Printf(`executing script(%s) call error: %v`, sname, err)
+				}
 			}
-		}
+		}(*bot)
 
 		for in := range bot.providerIn {
 			go func(bot Robot, msg Message) {

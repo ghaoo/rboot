@@ -10,18 +10,23 @@ var (
 	providers = make(map[string]Provider)
 
 	memorizers = make(map[string]Memorizer)
+
+	execCall = make(map[string]Call)
 )
 
 type Script struct {
-	Action      SetupFunc   // 执行解析或一些必要加载
-	Hook        func(Robot) // 钩子
-	Usage       string      // 使用方法
-	Description string      // 简介
+	Action      SetupFunc // 执行解析或一些必要加载
+	Call        Call      // 直接调用运行
+	Usage       string    // 使用方法
+	Description string    // 简介
 }
 
 type SetupFunc func(Robot, Message) []Message
 
-// 注册插件
+// 用于直接调用运行的函数
+type Call func(Robot) error
+
+// 注册脚本
 func RegisterScript(name string, script *Script) {
 
 	if name == "" {
@@ -32,6 +37,10 @@ func RegisterScript(name string, script *Script) {
 	}
 
 	scripts[name] = script
+
+	if script.Call != nil {
+		execCall[name] = script.Call
+	}
 }
 
 type Provider interface {
@@ -40,7 +49,7 @@ type Provider interface {
 	Error() error
 }
 
-// register provider
+// 注册消息适配器
 func RegisterProvider(name string, prov func() Provider) {
 	if name == "" {
 		panic("RegisterProvider: provider must have a name")
@@ -80,6 +89,7 @@ type Memorizer interface {
 	Error() error
 }
 
+// 注册存储器
 func RegisterMemorizer(name string, m func() Memorizer) {
 	if name == "" {
 		panic("RegisterMemorizer: memorizer must have a name")
