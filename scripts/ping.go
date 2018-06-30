@@ -18,7 +18,7 @@ func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 			`msg: %v
 fs1: %v
 fs2: %v
-`,msg, fs, reg.FindAllString(msg.Content(), -1))
+`,msg.Body, fs, reg.FindAllString(msg.Content(), -1))
 
 		return []rboot.Message{
 			{
