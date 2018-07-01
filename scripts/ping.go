@@ -1,11 +1,12 @@
 package scripts
 
 import (
-	"github.com/ghaoo/rboot"
 	"regexp"
 	"time"
 	"math/rand"
 	"strconv"
+
+	"github.com/ghaoo/rboot"
 )
 
 func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
