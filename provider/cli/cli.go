@@ -79,7 +79,7 @@ func (c *cli) run() {
 }
 
 func (c *cli) writeString(str string) error {
-	msg := fmt.Sprintf("%s\n", strings.TrimSpace(str))
+	msg := fmt.Sprintf(">> %s\n", strings.TrimSpace(str))
 
 	if _, err := c.writer.WriteString(msg); err != nil {
 		return err
