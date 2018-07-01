@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"time"
 	"math/rand"
+	"strconv"
 )
 
 func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
@@ -21,9 +22,9 @@ func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 func call(bot rboot.Robot) error {
 	bot.Ticker(60 * time.Second)
 	bot.Handle(`/ticker/1m`, func(evt rboot.Event) {
-		//data := evt.Data.(rboot.TimerData)
+		data := evt.Data.(rboot.TickerData)
 
-		bot.Send(rboot.Message{Content:`This is a minute-long task: PONG........`})
+		bot.Send(rboot.Message{Content:`This is a minute-long task: PONG..., the ` + strconv.Itoa(int(data.Count)) + `th time`})
 	})
 	return nil
 }
@@ -49,6 +50,6 @@ func randReply() string {
 func init() {
 	rboot.RegisterScript(`ping`, &rboot.Script{
 		Action: setup,
-		Call: call,
+		//Call: call,
 	})
 }
