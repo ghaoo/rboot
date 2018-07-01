@@ -77,11 +77,11 @@ func (bot *Robot) process() {
 
 		for in := range bot.providerIn {
 			go func(bot Robot, msg Message) {
-				/*defer func() {
+				defer func() {
 					if r := recover(); r != nil {
 						log.Printf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
 					}
-				}()*/
+				}()
 
 				for _, script := range scripts {
 					responses := script.Action(bot, in)
