@@ -7,7 +7,7 @@ import (
 var (
 	scripts = make(map[string]*Script)
 
-	providers = make(map[string]Provider)
+	providers = make(map[string]func() Provider)
 
 	memorizers = make(map[string]Memorizer)
 
@@ -57,11 +57,11 @@ func RegisterProvider(name string, prov func() Provider) {
 	if _, ok := providers[name]; ok {
 		panic("RegisterProvider: provider named " + name + " already registered. ")
 	}
-	providers[name] = prov()
+	providers[name] = prov
 }
 
 // get provider by name
-func DetectProv(name string) (Provider, error) {
+func DetectProv(name string) (func() Provider, error) {
 	if prov, ok := providers[name]; ok {
 		return prov, nil
 	}
@@ -73,7 +73,7 @@ func DetectProv(name string) (Provider, error) {
 	if name == "" {
 		if len(providers) == 1 {
 			for _, prov := range providers {
-				return prov, prov.Error()
+				return prov, nil
 			}
 		}
 		return nil, fmt.Errorf("multiple providers available; must choose one")

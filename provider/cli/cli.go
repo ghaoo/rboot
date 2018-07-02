@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 	"strings"
-
 	"github.com/ghaoo/rboot"
+
 )
 
 var (
@@ -19,6 +19,7 @@ type cli struct {
 	in     chan rboot.Message
 	out    chan rboot.Message
 	writer *bufio.Writer
+	quit chan bool
 }
 
 // 初始化cli连接器
@@ -27,9 +28,11 @@ func NewCli() rboot.Provider {
 		in:     make(chan rboot.Message),
 		out:    make(chan rboot.Message),
 		writer: bufio.NewWriter(stdout),
+		quit: make(chan bool),
 	}
 
 	go c.run()
+
 	return c
 }
 
@@ -46,6 +49,7 @@ func (c *cli) Error() error {
 }
 
 func (c *cli) run() {
+
 	go func() {
 
 		scanner := bufio.NewScanner(stdin)
