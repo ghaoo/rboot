@@ -1,11 +1,11 @@
 package rboot
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,6 +28,8 @@ type Robot struct {
 
 func New() *Robot {
 
+	log.SetLevel(log.DebugLevel)
+
 	bot := &Robot{
 		es:          newStream(),
 		providerIn:  make(chan Message),
@@ -38,8 +40,9 @@ func New() *Robot {
 	return bot
 }
 
-func (bot *Robot) SetName(name string) {
-	bot.name = name
+// robot name
+func (bot *Robot) Name() string {
+	return bot.name
 }
 
 func (bot *Robot) Send(msg Message) {
@@ -63,14 +66,14 @@ func (bot *Robot) process() {
 		go func(bot Robot) {
 			defer func() {
 				if r := recover(); r != nil {
-					log.Printf("panic recovered when executing script call: %v", r)
+					log.Panicf("panic recovered when executing script call: %v", r)
 				}
 			}()
 			for sname, call := range execCall {
 				err := call(bot)
 
 				if err != nil {
-					log.Printf(`executing script(%s) call error: %v`, sname, err)
+					log.Errorf(`executing script(%s) call error: %v`, sname, err)
 				}
 			}
 		}(*bot)
@@ -79,7 +82,7 @@ func (bot *Robot) process() {
 			go func(bot Robot, msg Message) {
 				defer func() {
 					if r := recover(); r != nil {
-						log.Printf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
+						log.Panicf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
 					}
 				}()
 
@@ -98,11 +101,17 @@ func (bot *Robot) process() {
 
 // 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
+
 	bot.initialize()
 
-	go bot.process()
-
 	go bot.es.loop()
+
+	log.Info(`正在疏通消息通道...`)
+	go bot.process()
+	log.Info(`消息通道疏通完毕...`)
+	log.Info(`消息通道已准备好接受信息...`)
+
+	log.Info(`皮皮虾，我们走~~~~~~~`)
 
 	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
@@ -125,13 +134,8 @@ func (bot *Robot) Go() {
 // 皮皮虾，快停下~~~~~~~~~
 func (bot *Robot) Stop() error {
 
-	log.Printf("stopping %s", DefaultRobotName)
+	log.Infof(`皮皮虾，快停下~~~~~~~`)
 	return nil
-}
-
-// robot name
-func (bot *Robot) Name() string {
-	return bot.name
 }
 
 // memorizer save data
@@ -179,6 +183,8 @@ func (bot *Robot) initialize() {
 	bot.providerIn = prov.Incoming()
 	bot.providerOut = prov.Outgoing()
 
+	log.Infof(`信息适配器【%s】启动成功...`, provName)
+
 	// 指定储存器
 	memoName := DefaultRobotMemorizer
 
@@ -195,11 +201,16 @@ func (bot *Robot) initialize() {
 	bot.memo = memo
 
 	if bot.memo.Error() != nil {
-		log.Print(bot.memo.Error())
+		log.Error(bot.memo.Error())
 	}
 
+	log.Infof(`储存器【%s】启动成功...`, memoName)
+
+	log.Info(`初始化事件处理器...`)
 	bot.es.init()
 
 	bot.es.merge("custom", usrEvent)
+
+	log.Print(`事件处理器准备完毕...`)
 }
 

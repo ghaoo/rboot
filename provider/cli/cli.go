@@ -47,8 +47,10 @@ func (c *cli) Error() error {
 
 func (c *cli) run() {
 	go func() {
+
 		scanner := bufio.NewScanner(stdin)
 		for scanner.Scan() {
+			prompt()
 
 			header := make(rboot.Header)
 			header.Add(`From`, `CLI`)
@@ -58,6 +60,7 @@ func (c *cli) run() {
 				Header: header,
 				Content:   scanner.Text(),
 			}
+
 
 		forLoop:
 			for {
@@ -74,12 +77,22 @@ func (c *cli) run() {
 	go func() {
 		for msg := range c.out {
 			c.writeString(msg.Content)
+			prompt()
 		}
 	}()
+
+}
+
+func prompt() {
+	name := rboot.DefaultRobotName
+	if os.Getenv(`ROBOT_NAME`) != `` {
+		name = os.Getenv(`ROBOT_NAME`)
+	}
+	fmt.Print(Color(name, FgRed)+`> `)
 }
 
 func (c *cli) writeString(str string) error {
-	msg := fmt.Sprintf(">> %s\n", strings.TrimSpace(str))
+	msg := fmt.Sprintf("%s\n", strings.TrimSpace(str))
 
 	if _, err := c.writer.WriteString(msg); err != nil {
 		return err
