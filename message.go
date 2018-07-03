@@ -39,13 +39,6 @@ func (h Header) Date() (time.Time, error) {
 	return time.ParseInLocation("2006-01-02 15:04:05", hdr, loc)
 }
 
-// 获取消息类型
-func (h Header) ContentType() string {
-	hdr := h.Get("content-type")
-
-	return hdr
-}
-
 // 获取消息来源
 func (h Header) From() string {
 	hdr := h.Get("From")
