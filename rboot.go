@@ -6,12 +6,15 @@ import (
 	"sync"
 	"syscall"
 	log "github.com/sirupsen/logrus"
+	"net"
 )
 
 const (
 	DefaultRobotName      = `Rboot`
 	DefaultRobotProvider  = `cli`
 	DefaultRobotMemorizer = `memory`
+
+	DefaultHttpServerPort = `192.168.0.150:9900`
 )
 
 type Robot struct {
@@ -144,7 +147,7 @@ func (bot *Robot) MemoSave(key string, value []byte) {
 }
 
 // memorizer read
-func (bot *Robot) MemoRead(key string) ([]byte, bool) {
+func (bot *Robot) MemoRead(key string) []byte {
 	return bot.memo.Read(key)
 }
 
@@ -214,5 +217,22 @@ func (bot *Robot) initialize() {
 	bot.es.merge("custom", usrEvent)
 
 	log.Print(`事件处理器准备完毕...`)
+
+	//port := DefaultHttpServerPort
+
+	/*if os.Getenv(`HTTPSERVER_PORT`) != "" {
+
+		port = os.Getenv(`HTTPSERVER_PORT`)
+	}*/
+
+	l, err := net.Listen("tcp4", `127.0.0.1:80`)
+	if err != nil {
+		panic(err)
+	}
+
+	serv := NewHttpCall(l)
+
+	serv.Boot(bot)
+
 }
 

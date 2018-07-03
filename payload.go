@@ -83,7 +83,7 @@ func DetectProv(name string) (func() Provider, error) {
 
 type Memorizer interface {
 	Save(key string, value []byte)
-	Read(key string) ([]byte, bool)
+	Read(key string) []byte
 	Update(key string, value []byte)
 	Delete(key string)
 	Error() error

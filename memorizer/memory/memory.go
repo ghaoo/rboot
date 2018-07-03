@@ -36,15 +36,15 @@ func (m *memory) Save(key string, value []byte) {
 }
 
 // read ...
-func (m *memory) Read(key string) ([]byte, bool) {
+func (m *memory) Read(key string) []byte {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	v, ok := m.items[key]
 	if !ok {
-		return []byte{}, false
+		return []byte{}
 	}
-	return v, true
+	return v
 }
 
 // update ...
