@@ -34,6 +34,7 @@ func (hc *httpCall) Boot(bot *Robot) {
 	hc.memoryRead = bot.MemoRead
 	hc.memorySave = bot.MemoSave
 	hc.inMessage = bot.Incoming()
+	hc.outMessage = bot.Outgoing()
 
 	hc.mux.HandleFunc("/pop", hc.httpPop)
 	hc.mux.HandleFunc("/send", hc.httpSend)
@@ -49,11 +50,15 @@ func (hc *httpCall) httpPop(w http.ResponseWriter, req *http.Request) {
 	defer hc.mu.Unlock()
 	defer req.Body.Close()
 
-	for out := range hc.outMessage {
-		if err := json.NewEncoder(w).Encode(&out); err != nil {
-			log.Fatal(err)
+	go func() {
+		for msg := range hc.outMessage {
+			//fmt.Println(msg.Content)
+
+			if err := json.NewEncoder(w).Encode(msg.Content); err != nil {
+				log.Fatal(err)
+			}
 		}
-	}
+	}()
 }
 
 func (hc *httpCall) httpSend(w http.ResponseWriter, req *http.Request) {
