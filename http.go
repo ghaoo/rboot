@@ -17,10 +17,10 @@ type httpCall struct {
 	memorySave func(key string, value []byte)
 
 	listener net.Listener
-	outCh    chan Message
+	inMessage    chan Message
+	outMessage chan Message
 
 	mu    sync.Mutex
-	inbox []Message
 }
 
 func NewHttpCall(listener net.Listener) *httpCall {
@@ -33,7 +33,7 @@ func NewHttpCall(listener net.Listener) *httpCall {
 func (hc *httpCall) Boot(bot *Robot) {
 	hc.memoryRead = bot.MemoRead
 	hc.memorySave = bot.MemoSave
-	hc.outCh = bot.Outgoing()
+	hc.inMessage = bot.Incoming()
 
 	hc.mux.HandleFunc("/pop", hc.httpPop)
 	hc.mux.HandleFunc("/send", hc.httpSend)
@@ -49,20 +49,14 @@ func (hc *httpCall) httpPop(w http.ResponseWriter, req *http.Request) {
 	defer hc.mu.Unlock()
 	defer req.Body.Close()
 
-	var msg Message
-	if len(hc.inbox) > 1 {
-		msg, hc.inbox = hc.inbox[0], hc.inbox[1:]
-	} else if len(hc.inbox) == 1 {
-		msg = hc.inbox[0]
-		hc.inbox = []Message{}
-	} else if len(hc.inbox) == 0 {
-		fmt.Fprint(w, "{}")
-		return
+	for out := range hc.outMessage {
+		if err := json.NewEncoder(w).Encode(&out); err != nil {
+			log.Fatal(err)
+		}
 	}
 
-	if err := json.NewEncoder(w).Encode(&msg); err != nil {
-		log.Fatal(err)
-	}
+
+
 }
 
 func (hc *httpCall) httpSend(w http.ResponseWriter, req *http.Request) {
@@ -76,7 +70,7 @@ func (hc *httpCall) httpSend(w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 
 	go func(m Message) {
-		hc.outCh <- m
+		hc.inMessage <- m
 	}(msg)
 
 	fmt.Fprintln(w, "OK")

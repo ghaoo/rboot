@@ -225,7 +225,7 @@ func (bot *Robot) initialize() {
 		port = os.Getenv(`HTTPSERVER_PORT`)
 	}*/
 
-	l, err := net.Listen("tcp4", `127.0.0.1:80`)
+	l, err := net.Listen("tcp4", `127.0.0.1:8800`)
 	if err != nil {
 		panic(err)
 	}
