@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 	"github.com/ghaoo/rboot"
-
 )
 
 var (
@@ -19,7 +19,6 @@ type cli struct {
 	in     chan rboot.Message
 	out    chan rboot.Message
 	writer *bufio.Writer
-	quit chan bool
 }
 
 // 初始化cli连接器
@@ -28,7 +27,6 @@ func NewCli() rboot.Provider {
 		in:     make(chan rboot.Message),
 		out:    make(chan rboot.Message),
 		writer: bufio.NewWriter(stdout),
-		quit: make(chan bool),
 	}
 
 	go c.run()
@@ -49,6 +47,9 @@ func (c *cli) Error() error {
 }
 
 func (c *cli) run() {
+
+	time.Sleep(10 * time.Millisecond)
+	prompt()
 
 	go func() {
 

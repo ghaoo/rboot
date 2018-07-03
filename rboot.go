@@ -102,13 +102,16 @@ func (bot *Robot) process() {
 // 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
 
-	log.Info(`皮皮虾，我们走~~~~~~~`)
-
 	bot.initialize()
 
 	go bot.es.loop()
 
+	log.Info(`正在疏通消息通道...`)
 	go bot.process()
+	log.Info(`消息通道疏通完毕...`)
+	log.Info(`消息通道已准备好接受信息...`)
+
+	log.Info(`皮皮虾，我们走~~~~~~~`)
 
 	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
@@ -182,6 +185,8 @@ func (bot *Robot) initialize() {
 	bot.providerIn = prov.Incoming()
 	bot.providerOut = prov.Outgoing()
 
+	log.Infof(`信息适配器【%s】启动成功...`, provName)
+
 	// 指定储存器
 	memoName := DefaultRobotMemorizer
 
@@ -201,9 +206,13 @@ func (bot *Robot) initialize() {
 		log.Error(bot.memo.Error())
 	}
 
+	log.Infof(`储存器【%s】启动成功...`, memoName)
+
+	log.Info(`初始化事件处理器...`)
 	bot.es.init()
 
 	bot.es.merge("custom", usrEvent)
 
+	log.Print(`事件处理器准备完毕...`)
 }
 
