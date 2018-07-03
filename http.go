@@ -54,9 +54,6 @@ func (hc *httpCall) httpPop(w http.ResponseWriter, req *http.Request) {
 			log.Fatal(err)
 		}
 	}
-
-
-
 }
 
 func (hc *httpCall) httpSend(w http.ResponseWriter, req *http.Request) {
