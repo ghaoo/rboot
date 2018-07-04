@@ -6,7 +6,6 @@ import (
 	"sync"
 	"syscall"
 	log "github.com/sirupsen/logrus"
-	"net"
 )
 
 const (
@@ -223,7 +222,7 @@ func (bot *Robot) initialize() {
 	/*if os.Getenv(`HTTPSERVER_PORT`) != "" {
 
 		port = os.Getenv(`HTTPSERVER_PORT`)
-	}*/
+	}
 
 	l, err := net.Listen("tcp4", `127.0.0.1:8800`)
 	if err != nil {
@@ -232,7 +231,7 @@ func (bot *Robot) initialize() {
 
 	serv := NewHttpCall(l)
 
-	serv.Boot(bot)
+	serv.Boot(bot)*/
 
 }
 
