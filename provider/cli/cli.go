@@ -3,11 +3,12 @@ package cli
 import (
 	"bufio"
 	"fmt"
+	"github.com/ghaoo/rboot"
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
-	"github.com/ghaoo/rboot"
 )
 
 var (
@@ -19,6 +20,7 @@ type cli struct {
 	in     chan rboot.Message
 	out    chan rboot.Message
 	writer *bufio.Writer
+	sync.Mutex
 }
 
 // 初始化cli连接器
@@ -47,6 +49,8 @@ func (c *cli) Error() error {
 }
 
 func (c *cli) run() {
+	c.Lock()
+	defer c.Unlock()
 
 	time.Sleep(10 * time.Millisecond)
 	prompt()
@@ -62,10 +66,9 @@ func (c *cli) run() {
 			header.Add(`To`, `CLI`)
 
 			c.in <- rboot.Message{
-				Header: header,
-				Content:   scanner.Text(),
+				Header:  header,
+				Content: scanner.Text(),
 			}
-
 
 		forLoop:
 			for {
@@ -93,7 +96,7 @@ func prompt() {
 	if os.Getenv(`ROBOT_NAME`) != `` {
 		name = os.Getenv(`ROBOT_NAME`)
 	}
-	fmt.Print(Color(name, FgRed)+`> `)
+	fmt.Print(Color(name, FgRed) + `> `)
 }
 
 func (c *cli) writeString(str string) error {

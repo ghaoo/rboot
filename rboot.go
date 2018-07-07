@@ -1,11 +1,12 @@
 package rboot
 
 import (
+	log "github.com/sirupsen/logrus"
+	"net"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -48,14 +49,20 @@ func (bot *Robot) Name() string {
 }
 
 func (bot *Robot) Send(msg Message) {
+	bot.Lock()
+	defer bot.Unlock()
 	bot.providerOut <- msg
 }
 
 func (bot *Robot) Incoming() chan Message {
+	bot.Lock()
+	defer bot.Unlock()
 	return bot.providerIn
 }
 
 func (bot *Robot) Outgoing() chan Message {
+	bot.Lock()
+	defer bot.Unlock()
 	return bot.providerOut
 }
 
@@ -217,12 +224,12 @@ func (bot *Robot) initialize() {
 
 	log.Print(`事件处理器准备完毕...`)
 
-	//port := DefaultHttpServerPort
+	/*port := DefaultHttpServerPort
 
-	/*if os.Getenv(`HTTPSERVER_PORT`) != "" {
+	if os.Getenv(`HTTPSERVER_PORT`) != "" {
 
 		port = os.Getenv(`HTTPSERVER_PORT`)
-	}
+	}*/
 
 	l, err := net.Listen("tcp4", `127.0.0.1:8800`)
 	if err != nil {
@@ -231,7 +238,6 @@ func (bot *Robot) initialize() {
 
 	serv := NewHttpCall(l)
 
-	serv.Boot(bot)*/
+	serv.Boot(bot)
 
 }
-

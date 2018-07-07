@@ -1,10 +1,10 @@
 package scripts
 
 import (
-	"regexp"
-	"time"
 	"math/rand"
+	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/ghaoo/rboot"
 )
@@ -14,7 +14,7 @@ func setup(bot rboot.Robot, msg rboot.Message) []rboot.Message {
 	reg = regexp.MustCompile(`ping|PING`)
 
 	if reg.MatchString(msg.Content) {
-		bot.Send(rboot.Message{Content:randReply()})
+		bot.Send(rboot.Message{Content: `ping` /*randReply()*/})
 	}
 
 	return nil
@@ -25,14 +25,14 @@ func call(bot rboot.Robot) error {
 	bot.Handle(`/ticker/1m`, func(evt rboot.Event) {
 		data := evt.Data.(rboot.TickerData)
 
-		bot.Send(rboot.Message{Content:`This is a minute-long task: PONG..., the ` + strconv.Itoa(int(data.Count)) + `th time`})
+		bot.Send(rboot.Message{Content: `This is a minute-long task: PONG..., the ` + strconv.Itoa(int(data.Count)) + `th time`})
 	})
 	return nil
 }
 
 func randReply() string {
 	now := time.Now()
-	rand.Seed(int64(now.Unix()))
+	rand.Seed(int64(now.UnixNano()))
 	replies := []string{
 		"yeah um.. pong?",
 		"WHAT?! jeeze.",
