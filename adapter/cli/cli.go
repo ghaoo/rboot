@@ -45,7 +45,7 @@ func (c *cli) Send(msg rboot.Message) error {
 	return nil
 }
 
-func (c *cli) Incomming() chan rboot.Message {
+func (c *cli) Incoming() chan rboot.Message {
 	return c.in
 }
 
