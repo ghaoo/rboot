@@ -213,12 +213,12 @@ func (bot *Rboot) AddTiming(hm string) {
 	bot.evtStream.merge(`timing`, newTimingCh(hm))
 }
 
-func (bot *Rboot) sendMessageEvent(m Message) {
+func (bot *Rboot) emitMessageEvent(m Message) {
 
 	event := Event{
 		Type: `SendMessage`,
 		From: `Server`,
-		Path: `/msg/send`,
+		Path: `/msg`,
 		To:   `End`,
 		Time: time.Now().Unix(),
 		Data: m,

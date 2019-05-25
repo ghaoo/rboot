@@ -12,6 +12,8 @@ type Rboot struct {
 
 func NewBot() (*Rboot, error) {
 
+	logrus.Info(`皮皮虾我们走...`)
+
 	bot := &Rboot{
 		evtStream: newEvtStream(),
 	}
