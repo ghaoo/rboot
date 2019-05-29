@@ -6,7 +6,10 @@ import (
 )
 
 type Rboot struct {
-	input chan Message
+	Adapter Adapter
+	Match     string
+	Rule      Rule
+	input     chan Message
 	evtStream *evtStream
 }
 
@@ -20,6 +23,8 @@ func NewBot() (*Rboot, error) {
 
 	bot.evtStream.init()
 
+	bot.initialize()
+
 	bot.keepAlive()
 
 	return bot, nil
@@ -28,6 +33,10 @@ func NewBot() (*Rboot, error) {
 // Go 皮皮虾我们走
 func (bot *Rboot) Go() {
 	es := bot.evtStream
+
+	for k := range es.Handlers {
+		logrus.Debugf(k)
+	}
 
 	for e := range es.stream {
 		switch e.Path {
@@ -51,7 +60,7 @@ func (bot *Rboot) Go() {
 func (bot *Rboot) process() {
 	for in := range bot.input {
 
-		go func(msg Message) {
+		/*go func(msg Message) {
 
 			event := Event{
 				Type: `NewMessage`,
@@ -62,7 +71,46 @@ func (bot *Rboot) process() {
 				Data: msg,
 			}
 			bot.evtStream.serverEvt <- event
-		}(in)
+		}(in)*/
+
+		go func(bot Rboot, msg Message) {
+			/*defer func() {
+				if r := recover(); r != nil {
+					logrus.Errorf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
+				}
+			}()*/
+
+			event := Event{
+				Type: `NewMessage`,
+				From: `Server`,
+				Path: `/msg`,
+				To:   `End`,
+				Time: time.Now().Unix(),
+				Data: msg,
+			}
+			bot.evtStream.serverEvt <- event
+
+			if script, match, ok := bot.MatchRuleset(msg.Content); ok {
+
+				bot.Match = match
+
+				action, err := DirectiveScript(script)
+
+				if err != nil {
+					logrus.Error(err)
+				}
+
+				responses := action(&bot)
+
+				for _, resp := range responses {
+					resp.From = msg.To
+					resp.To = msg.From
+
+					bot.Adapter.Send(resp)
+				}
+			}
+
+		}(*bot, in)
 	}
 }
 
