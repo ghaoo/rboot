@@ -11,6 +11,8 @@ type Rboot struct {
 	Rule      Rule
 	input     chan Message
 	evtStream *evtStream
+
+
 }
 
 func NewBot() (*Rboot, error) {
@@ -20,6 +22,8 @@ func NewBot() (*Rboot, error) {
 	bot := &Rboot{
 		evtStream: newEvtStream(),
 	}
+
+	bot.Rule = &Regex{}
 
 	bot.evtStream.init()
 
@@ -60,20 +64,7 @@ func (bot *Rboot) Go() {
 func (bot *Rboot) process() {
 	for in := range bot.input {
 
-		/*go func(msg Message) {
-
-			event := Event{
-				Type: `NewMessage`,
-				From: `Server`,
-				Path: `/msg`,
-				To:   `End`,
-				Time: time.Now().Unix(),
-				Data: msg,
-			}
-			bot.evtStream.serverEvt <- event
-		}(in)*/
-
-		go func(bot Rboot, msg Message) {
+		go func(bot *Rboot, msg Message) {
 			/*defer func() {
 				if r := recover(); r != nil {
 					logrus.Errorf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
@@ -100,7 +91,7 @@ func (bot *Rboot) process() {
 					logrus.Error(err)
 				}
 
-				responses := action(&bot)
+				responses := action(bot)
 
 				for _, resp := range responses {
 					resp.From = msg.To
@@ -110,7 +101,7 @@ func (bot *Rboot) process() {
 				}
 			}
 
-		}(*bot, in)
+		}(bot, in)
 	}
 }
 

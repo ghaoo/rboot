@@ -1,6 +1,9 @@
 package rboot
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 var (
 	scripts  = make(map[string]Script)
@@ -14,7 +17,7 @@ type Script struct {
 	Description string // 简介
 }
 
-type SetupFunc func(*Rboot) []Message
+type SetupFunc func(context.Context, *Robot) []Message
 
 func RegisterScripts(name string, script Script) {
 
@@ -41,4 +44,3 @@ func DirectiveScript(name string) (SetupFunc, error) {
 
 	return nil, fmt.Errorf("DirectiveScript: no action found in script '%s' (missing a script?)", name)
 }
-
