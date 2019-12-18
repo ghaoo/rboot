@@ -7,7 +7,6 @@ import (
 
 	"github.com/ghaoo/rboot"
 	"github.com/sirupsen/logrus"
-
 )
 
 func main() {

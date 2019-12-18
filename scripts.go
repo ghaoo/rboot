@@ -11,10 +11,10 @@ var (
 )
 
 type Script struct {
-	Action      SetupFunc // 执行解析或一些必要加载
-	Ruleset     map[string]string
-	Usage       string // 帮助信息
-	Description string // 简介
+	Action      SetupFunc         // 执行解析或一些必要加载
+	Ruleset     map[string]string // 脚本规则集合
+	Usage       string            // 帮助信息
+	Description string            // 简介
 }
 
 type SetupFunc func(context.Context, *Robot) []Message
@@ -43,4 +43,8 @@ func DirectiveScript(name string) (SetupFunc, error) {
 	}
 
 	return nil, fmt.Errorf("DirectiveScript: no action found in script '%s' (missing a script?)", name)
+}
+
+func GetScripts() map[string]Script {
+	return scripts
 }

@@ -55,9 +55,11 @@ func init() {
 	rboot.RegisterScripts(`ping`, rboot.Script{
 		Action: setup,
 		Ruleset: map[string]string{
-			`ping`: `ping|PING`,
-			`pong`: `pong|PONG`,
-			`stop`: `stop|停止`,
+			`ping`: `^!(ping|PING)`,
+			`pong`: `^!(pong|PONG)`,
+			`stop`: `^!(stop|停止)`,
 		},
+		Usage:       "!ping: 随机返回一句话 \n!pong: 返回 PONG",
+		Description: `测试程序和脚本是否运行正常。`,
 	})
 }

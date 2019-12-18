@@ -5,11 +5,8 @@ import (
 	"os"
 	"runtime"
 	"sync"
-	"syscall"
-
 	"context"
 	"github.com/ghaoo/rboot/tools/env"
-	"os/signal"
 )
 
 var AppName string
@@ -28,7 +25,6 @@ type Robot struct {
 	inputChan  chan Message
 	outputChan chan Message
 
-	signalChan chan os.Signal
 	sync.RWMutex
 }
 
@@ -38,7 +34,6 @@ func New() *Robot {
 		inputChan:  make(chan Message),
 		outputChan: make(chan Message),
 		conf:       newConfig(),
-		signalChan: make(chan os.Signal, 1),
 		Rule:       new(Regex),
 	}
 
@@ -74,12 +69,15 @@ func process(ctx context.Context, bot *Robot) {
 
 					responses := action(ctx, &bot)
 
-					for _, resp := range responses {
-						resp.From = msg.To
-						resp.To = msg.From
+					if len(responses) > 0 {
+						for _, resp := range responses {
+							resp.From = msg.To
+							resp.To = msg.From
 
-						bot.outputChan <- resp
+							bot.outputChan <- resp
+						}
 					}
+
 				}
 
 			}(*bot, in)
@@ -104,22 +102,7 @@ func (bot *Robot) Go() {
 	defer cancel()
 
 	ctx = context.WithValue(ctx, "appname", AppName)
-	go process(ctx, bot)
-
-	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-
-	stop := false
-	for !stop {
-		select {
-		case sig := <-bot.signalChan:
-			switch sig {
-			case syscall.SIGINT, syscall.SIGTERM:
-				stop = true
-			}
-		}
-	}
-
-	signal.Stop(bot.signalChan)
+	process(ctx, bot)
 
 	bot.Stop()
 }

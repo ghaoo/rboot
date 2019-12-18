@@ -6,7 +6,7 @@ type Rule interface {
 	Match(pattern, msg string) ([]string, bool)
 }
 
-type Regex struct {}
+type Regex struct{}
 
 func (reg *Regex) Match(pattern, msg string) ([]string, bool) {
 	r := regexp.MustCompile(pattern)
