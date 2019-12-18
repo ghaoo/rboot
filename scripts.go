@@ -3,6 +3,7 @@ package rboot
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 var (
@@ -45,6 +46,60 @@ func DirectiveScript(name string) (SetupFunc, error) {
 	return nil, fmt.Errorf("DirectiveScript: no action found in script '%s' (missing a script?)", name)
 }
 
-func GetScripts() map[string]Script {
-	return scripts
+func setup(ctx context.Context, bot *Robot) []Message {
+
+	switch bot.Match {
+	case `help`:
+		if len(bot.MatchString) < 2 {
+			return []Message{
+				{
+					Content: "请在 !help 后面带上想要查看的脚本名称，比如查看 <ping> 脚本帮助信息，输入 <!help ping>",
+				},
+			}
+		} else {
+			return help(bot.MatchString[1])
+		}
+	case `script`:
+		return getScript()
+	}
+
+	return nil
+}
+
+func getScript() []Message {
+	scrs := ""
+
+	for scr, spt := range scripts {
+		scrs += fmt.Sprintf("%s: %s", scr, spt.Description)
+		scrs += "\n"
+	}
+
+	scrs = strings.TrimSpace(scrs)
+
+	return []Message{{Content: scrs}}
+}
+
+func help(scr string) []Message {
+	if script, ok := scripts[scr]; ok {
+
+		return []Message{{Content: script.Usage}}
+	} else {
+		return []Message{{Content: "help命令用法：!help <script> \n!scripts 可查看所有加载的脚本信息"}}
+	}
+
+	return nil
+}
+
+var helpRules = map[string]string{
+	`help`:   `^!help(?: *)(.*)`,
+	`script`: `^!(?:脚本|scripts)`,
+}
+
+func init() {
+	RegisterScripts(`help`, Script{
+		Action:      setup,
+		Ruleset:     helpRules,
+		Usage:       "!script 或 !脚本: 查看所有脚本 \n!help <script>: 查看脚本帮助信息",
+		Description: `查看脚本信息`,
+	})
 }
