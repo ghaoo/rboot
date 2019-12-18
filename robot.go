@@ -96,14 +96,6 @@ func (bot *Robot) Go() {
 	// 机器人名称
 	AppName = bot.conf.Name
 
-	if bot.conf.WebOpened {
-		// 开启 web 服务器
-		web := newWebserver(bot)
-
-		port := bot.conf.WebPort
-		go web.serve(port)
-	}
-
 	bot.initialize()
 
 	logrus.Debug(`皮皮虾，我们走~~~~~~~`)
