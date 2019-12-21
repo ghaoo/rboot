@@ -67,16 +67,16 @@ func setup(ctx context.Context, bot *Robot) []Message {
 }
 
 func getScript() []Message {
-	scrs := ""
+	content := ""
 
 	for scr, spt := range scripts {
-		scrs += fmt.Sprintf("%s: %s", scr, spt.Description)
-		scrs += "\n"
+		content += fmt.Sprintf("%s: %s", scr, spt.Description)
+		content += "\n"
 	}
 
-	scrs = strings.TrimSpace(scrs)
+	content = strings.TrimSpace(content)
 
-	return []Message{{Content: scrs}}
+	return []Message{{Content: content}}
 }
 
 func help(scr string) []Message {
