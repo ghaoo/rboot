@@ -11,7 +11,6 @@ const (
 	DefaultRbootAlias     = `rboot`
 	DefaultRbootAdapter   = `cli`
 	DefaultRbootMemorizer = `bolt`
-	DefaultRbootWebPort   = `8080`
 )
 
 type Config struct {
@@ -19,8 +18,6 @@ type Config struct {
 	Alias     string
 	Adapter   string
 	Memorizer string
-	WebOpened bool
-	WebPort   string
 	Debug     bool
 }
 
@@ -53,16 +50,6 @@ func newConfig() Config {
 	} else {
 		logrus.Warningf(`RBOOT_MEMORIZER not set, using default %s`, DefaultRbootMemorizer)
 		conf.Memorizer = DefaultRbootMemorizer
-	}
-
-	openWebServ, _ := strconv.ParseBool(os.Getenv(`WEB_SERVER_OPEN`))
-	conf.WebOpened = openWebServ
-
-	if os.Getenv(`WEB_SERVER_PORT`) != `` {
-		conf.WebPort = os.Getenv(`WEB_SERVER_PORT`)
-	} else {
-		logrus.Warningf(`WEB_SERVER_PORT not set, using default %s`, DefaultRbootWebPort)
-		conf.WebPort = DefaultRbootWebPort
 	}
 
 	debug, _ := strconv.ParseBool(os.Getenv(`DEBUG`))
