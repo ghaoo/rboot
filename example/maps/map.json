@@ -1,0 +1,404 @@
+{
+  "1":[
+    {
+      "name":"起点",
+      "location_x": 0,
+      "location_y":0,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":1
+    },
+    {
+      "name":"沈阳",
+      "location_x": 0,
+      "location_y": 1,
+      "level":0,
+      "fee":2000,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"天津",
+      "location_x": 0,
+      "location_y":2,
+      "level":0,
+      "fee":2300,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"发电厂",
+      "location_x": 0,
+      "location_y":3,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":101
+    },
+    {
+      "name":"北京",
+      "location_x": 1,
+      "location_y": 3,
+      "level":0,
+      "fee":5000,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"新闻",
+      "location_x": 2,
+      "location_y": 3,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":4
+    },
+    {
+      "name":"大连",
+      "location_x": 2,
+      "location_y": 4,
+      "level":0,
+      "fee":2000,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"贵阳",
+      "location_x": 2,
+      "location_y": 5,
+      "level":0,
+      "fee":1800,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"建筑公司",
+      "location_x": 2,
+      "location_y": 6,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":102
+    },
+    {
+      "name":"长沙",
+      "location_x": 1,
+      "location_y": 6,
+      "level":0,
+      "fee":1500,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"监狱",
+      "location_x": 0,
+      "location_y": 6,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":7
+    },
+    {
+      "name":"银川",
+      "location_x": 0,
+      "location_y": 7,
+      "level":0,
+      "fee":2000,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"兰州",
+      "location_x": 0,
+      "location_y": 8,
+      "level":0,
+      "fee":1300,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"大陆运输",
+      "location_x": 0,
+      "location_y": 9,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":103
+    },
+    {
+      "name":"拉萨",
+      "location_x": 1,
+      "location_y": 9,
+      "level":0,
+      "fee":1800,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"运气",
+      "location_x": 2,
+      "location_y": 9,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":3
+    },
+    {
+      "name":"杭州",
+      "location_x": 3,
+      "location_y": 9,
+      "level":0,
+      "fee":3000,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"电视台",
+      "location_x": 4,
+      "location_y": 9,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":104
+    },
+    {
+      "name":"南京",
+      "location_x": 5,
+      "location_y": 9,
+      "level":0,
+      "fee":3500,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"苏州",
+      "location_x": 6,
+      "location_y": 9,
+      "level":0,
+      "fee":2800,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"证券中心",
+      "location_x": 7,
+      "location_y": 9,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":6
+    },
+    {
+      "name":"厦门",
+      "location_x": 7,
+      "location_y": 8,
+      "level":0,
+      "fee":2500,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"台北",
+      "location_x": 7,
+      "location_y": 7,
+      "level":0,
+      "fee":3500,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"医院",
+      "location_x": 7,
+      "location_y": 6,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":10
+    },
+    {
+      "name":"航空运输",
+      "location_x": 6,
+      "location_y": 6,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":105
+    },
+    {
+      "name":"新闻",
+      "location_x": 5,
+      "location_y": 6,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":4
+    },
+    {
+      "name":"重庆",
+      "location_x": 5,
+      "location_y": 5,
+      "level":0,
+      "fee":2200,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"成都",
+      "location_x": 5,
+      "location_y": 4,
+      "level":0,
+      "fee":2500,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"饭店",
+      "location_x": 5,
+      "location_y": 3,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":8
+    },
+    {
+      "name":"深圳",
+      "location_x": 6,
+      "location_y": 3,
+      "level":0,
+      "fee":4000,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"污水处理",
+      "location_x": 7,
+      "location_y": 3,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":106
+    },
+    {
+      "name":"广州",
+      "location_x": 7,
+      "location_y": 2,
+      "level":0,
+      "fee":3900,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"三亚",
+      "location_x": 7,
+      "location_y": 1,
+      "level":0,
+      "fee":4300,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"大洋运输",
+      "location_x": 7,
+      "location_y": 0,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":107
+    },
+    {
+      "name":"香港",
+      "location_x": 6,
+      "location_y": 0,
+      "level":0,
+      "fee":4500,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"运气",
+      "location_x": 5,
+      "location_y": 0,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":3
+    },
+    {
+      "name":"澳门",
+      "location_x": 4,
+      "location_y": 0,
+      "level":0,
+      "fee":4300,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"税务",
+      "location_x": 3,
+      "location_y": 0,
+      "level":0,
+      "fee":0,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":9
+    },
+    {
+      "name":"上海",
+      "location_x": 2,
+      "location_y": 0,
+      "level":0,
+      "fee":5000,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    },
+    {
+      "name":"钓鱼岛",
+      "location_x": 1,
+      "location_y": 0,
+      "level":0,
+      "fee":5000,
+      "rent_fee": 0,
+      "enable":1,
+      "flag":2
+    }
+  ]
+}

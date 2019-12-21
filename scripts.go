@@ -48,16 +48,16 @@ func DirectiveScript(name string) (SetupFunc, error) {
 
 func setup(ctx context.Context, bot *Robot) []Message {
 
-	switch bot.Match {
+	switch bot.MatchRule {
 	case `help`:
-		if len(bot.MatchString) < 2 {
+		if len(bot.Match) < 2 {
 			return []Message{
 				{
 					Content: "请在 !help 后面带上想要查看的脚本名称，比如查看 <ping> 脚本帮助信息，输入 <!help ping>",
 				},
 			}
 		} else {
-			return help(bot.MatchString[1])
+			return help(bot.Match[1])
 		}
 	case `script`:
 		return getScript()

@@ -1,12 +1,12 @@
 package rboot
 
 import (
+	"context"
+	"github.com/ghaoo/rboot/tools/env"
 	"github.com/sirupsen/logrus"
 	"os"
 	"runtime"
 	"sync"
-	"context"
-	"github.com/ghaoo/rboot/tools/env"
 )
 
 var AppName string
@@ -14,13 +14,13 @@ var AppName string
 const Version = "3.0.0"
 
 type Robot struct {
-	Memory      Memorizer
-	Match       string
-	MatchString []string
-	Rule        Rule
-	Adapter     Adapter
-	Contacts    []User
-	conf        Config
+	Memory    Memorizer
+	MatchRule string
+	Match     []string
+	Rule      Rule
+	Adapter   Adapter
+	Contacts  []User
+	conf      Config
 
 	inputChan  chan Message
 	outputChan chan Message
@@ -49,7 +49,7 @@ func process(ctx context.Context, bot *Robot) {
 			go func(bot Robot, msg Message) {
 				defer func() {
 					if r := recover(); r != nil {
-						logrus.Errorf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
+						logrus.Errorf("panic recovered when parsing message: %#v. \nPanic: %v", msg, r)
 					}
 				}()
 
@@ -57,9 +57,9 @@ func process(ctx context.Context, bot *Robot) {
 
 				if script, match, sub, ok := bot.MatchRuleset(msg.Content); ok {
 
-					bot.Match = match
+					bot.MatchRule = match
 
-					bot.MatchString = sub
+					bot.Match = sub
 
 					action, err := DirectiveScript(script)
 
@@ -120,6 +120,8 @@ func (bot *Robot) Stop() error {
 }
 
 func (bot *Robot) SyncUsers(user []User) {
+	bot.Lock()
+	defer bot.Unlock()
 
 	if len(user) > 0 {
 		bot.Contacts = user
@@ -127,21 +129,37 @@ func (bot *Robot) SyncUsers(user []User) {
 }
 
 func (bot *Robot) SetMemo(memo Memorizer) *Robot {
+	bot.Lock()
+	defer bot.Unlock()
+
 	bot.Memory = memo
 
 	return bot
 }
 
 func (bot *Robot) Send(msg Message) {
+	bot.Lock()
+	defer bot.Unlock()
+
 	bot.outputChan <- msg
 }
 
-func (bot *Robot) SendText(text string, to User) {
-	msg := Message{
-		To:      to,
-		Content: text,
+func (bot *Robot) SendText(text string, to ...User) {
+	bot.Lock()
+	defer bot.Unlock()
+
+	if len(to) > 0 {
+		for _, user := range to {
+			msg := Message{
+				To:      user,
+				Content: text,
+			}
+			bot.outputChan <- msg
+		}
+	} else {
+		bot.outputChan <- Message{Content: text}
 	}
-	bot.outputChan <- msg
+
 }
 
 func (bot *Robot) MatchRuleset(msg string) (plug, match string, substr []string, matched bool) {
@@ -159,9 +177,6 @@ func (bot *Robot) MatchRuleset(msg string) (plug, match string, substr []string,
 
 func (bot *Robot) initialize() {
 
-	if len(adapters) > 0 {
-
-	}
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
 	adp, err := DetectAdapter(bot.conf.Adapter)
 
