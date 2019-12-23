@@ -60,7 +60,7 @@ func process(ctx context.Context, bot *Robot) {
 				ctx = context.WithValue(ctx, "input", msg)
 
 				// 匹配消息
-				if script, matchRule, match, ok := bot.MatchRuleset(msg.Content); ok {
+				if script, matchRule, match, ok := bot.MatchScript(msg.Content); ok {
 
 					// 匹配的脚本对应规则
 					bot.MatchRule = matchRule
@@ -181,9 +181,9 @@ func (bot *Robot) SendText(text string, to ...User) {
 
 }
 
-// MatchRuleset 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(match)
+// MatchScript 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(match)
 // 当消息不匹配时，matched 返回false
-func (bot *Robot) MatchRuleset(msg string) (script, matchRule string, match []string, matched bool) {
+func (bot *Robot) MatchScript(msg string) (script, matchRule string, match []string, matched bool) {
 
 	for script, rule := range rulesets {
 		for m, r := range rule {
