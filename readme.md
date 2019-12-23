@@ -39,7 +39,7 @@ BOLT_DB_FILE=.data/db/rboot.db
 # 模拟大富翁游戏地图
 MAP_FILE=maps/map.json
 ```
-> 在编写 `adapter` 或 `script` 时可自行添加配置，程序会自动加载，使用时用 `os.Getenv()` 获取
+> 配置可自行添加，程序自动加载，使用时用 `os.Getenv()` 获取
 
 创建 `main.go` 文件
 ```go
@@ -69,6 +69,12 @@ go build
 
 # 运行
 ./rboot
+```
+
+查看脚本信息
+```bash
+!scripts // 所有已经加载的脚本及介绍
+!help <script> // 查看脚本帮助信息
 ```
 
 #### 聊天系统适配器 adapter

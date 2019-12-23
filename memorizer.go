@@ -3,10 +3,15 @@ package rboot
 import "fmt"
 
 type Memorizer interface {
+	// 保存
 	Save(bucket, key string, value []byte) error
+	// 查找
 	Find(bucket, key string) []byte
+	// 查找所有
 	FindAll(bucket string) map[string][]byte
+	// 更新
 	Update(bucket, key string, value []byte) error
+	// 删除
 	Delete(bucket, key string) error
 }
 

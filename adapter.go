@@ -5,26 +5,31 @@ import (
 )
 
 type Adapter interface {
-	Name() string
+	Name() string // 适配器名称
 	Incoming() chan Message // 接收到的消息
 	Outgoing() chan Message // 回复的消息
 }
 
-var adapters = make(map[string]func(*Robot) Adapter)
+type adapterF func(*Robot) Adapter
 
-func RegisterAdapter(name string, adapter func(*Robot) Adapter) {
+var adapters = make(map[string]adapterF)
+
+// RegisterAdapter 注册适配器，名称不可重复
+// 适配器需实现 Adapter 接口
+func RegisterAdapter(name string, adp adapterF) {
 	if name == "" {
 		panic("RegisterAdapter: adapter must have a name")
 	}
 	if _, ok := adapters[name]; ok {
 		panic("RegisterAdapter: adapter named " + name + " already registered. ")
 	}
-	adapters[name] = adapter
+	adapters[name] = adp
 }
 
-func DetectAdapter(name string) (func(*Robot) Adapter, error) {
-	if adapter, ok := adapters[name]; ok {
-		return adapter, nil
+// DetectAdapter 根据适配器名称获取适配器实例
+func DetectAdapter(name string) (adapterF, error) {
+	if adp, ok := adapters[name]; ok {
+		return adp, nil
 	}
 
 	if len(adapters) == 0 {
@@ -33,8 +38,8 @@ func DetectAdapter(name string) (func(*Robot) Adapter, error) {
 
 	if name == "" {
 		if len(adapters) == 1 {
-			for _, adapter := range adapters {
-				return adapter, nil
+			for _, adp := range adapters {
+				return adp, nil
 			}
 		}
 		return nil, fmt.Errorf("multiple adapters available; must choose one")

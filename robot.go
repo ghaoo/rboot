@@ -28,6 +28,7 @@ type Robot struct {
 	sync.RWMutex
 }
 
+// New 获取Robot实例
 func New() *Robot {
 
 	bot := &Robot{
@@ -42,9 +43,11 @@ func New() *Robot {
 
 var processOnce sync.Once
 
+// process 消息处理函数
 func process(ctx context.Context, bot *Robot) {
 	processOnce.Do(func() {
 
+		// 监听传入消息
 		for in := range bot.inputChan {
 			go func(bot Robot, msg Message) {
 				defer func() {
@@ -53,24 +56,32 @@ func process(ctx context.Context, bot *Robot) {
 					}
 				}()
 
+				// 将传入消息拷贝到 ctx
 				ctx = context.WithValue(ctx, "input", msg)
 
-				if script, match, sub, ok := bot.MatchRuleset(msg.Content); ok {
+				// 匹配消息
+				if script, matchRule, match, ok := bot.MatchRuleset(msg.Content); ok {
 
-					bot.MatchRule = match
+					// 匹配的脚本对应规则
+					bot.MatchRule = matchRule
 
-					bot.Match = sub
+					// 消息匹配集合
+					bot.Match = match
 
+					// 获取脚本执行函数
 					action, err := DirectiveScript(script)
 
 					if err != nil {
 						logrus.Error(err)
 					}
 
+					// 执行脚本并获取输出，附带 ctx
 					responses := action(ctx, &bot)
 
+					// 将消息发送到 outputChan
 					if len(responses) > 0 {
 						for _, resp := range responses {
+							// 指定输出消息的接收者和发送者
 							resp.From = msg.To
 							resp.To = msg.From
 
@@ -91,17 +102,21 @@ func process(ctx context.Context, bot *Robot) {
 func (bot *Robot) Go() {
 
 	logrus.Debugf("Rboot Version %s", Version)
-	// 机器人名称
+	// 设置Robot名称
 	AppName = bot.conf.Name
 
+	// 初始化
 	bot.initialize()
 
 	logrus.Debug(`皮皮虾，我们走~~~~~~~`)
 
+	// 上下文
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	ctx = context.WithValue(ctx, "appname", AppName)
+
+	// 消息处理
 	process(ctx, bot)
 
 	bot.Stop()
@@ -119,6 +134,7 @@ func (bot *Robot) Stop() error {
 	return nil
 }
 
+// SyncUsers 同步用户
 func (bot *Robot) SyncUsers(user []User) {
 	bot.Lock()
 	defer bot.Unlock()
@@ -128,6 +144,7 @@ func (bot *Robot) SyncUsers(user []User) {
 	}
 }
 
+// SetMemo 设置储存器
 func (bot *Robot) SetMemo(memo Memorizer) *Robot {
 	bot.Lock()
 	defer bot.Unlock()
@@ -137,6 +154,7 @@ func (bot *Robot) SetMemo(memo Memorizer) *Robot {
 	return bot
 }
 
+// Send 发送消息
 func (bot *Robot) Send(msg Message) {
 	bot.Lock()
 	defer bot.Unlock()
@@ -144,6 +162,7 @@ func (bot *Robot) Send(msg Message) {
 	bot.outputChan <- msg
 }
 
+// SendText 发送文本消息
 func (bot *Robot) SendText(text string, to ...User) {
 	bot.Lock()
 	defer bot.Unlock()
@@ -162,12 +181,14 @@ func (bot *Robot) SendText(text string, to ...User) {
 
 }
 
-func (bot *Robot) MatchRuleset(msg string) (plug, match string, substr []string, matched bool) {
+// MatchRuleset 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(match)
+// 当消息不匹配时，matched 返回false
+func (bot *Robot) MatchRuleset(msg string) (script, matchRule string, match []string, matched bool) {
 
-	for plug, rule := range rulesets {
+	for script, rule := range rulesets {
 		for m, r := range rule {
-			if sub, ok := bot.Rule.Match(r, msg); ok {
-				return plug, m, sub, true
+			if match, ok := bot.Rule.Match(r, msg); ok {
+				return script, m, match, true
 			}
 		}
 	}
@@ -175,6 +196,7 @@ func (bot *Robot) MatchRuleset(msg string) (plug, match string, substr []string,
 	return ``, ``, nil, false
 }
 
+// initialize 初始化 Robot
 func (bot *Robot) initialize() {
 
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
@@ -184,8 +206,10 @@ func (bot *Robot) initialize() {
 		panic(`Detect adapter error: ` + err.Error())
 	}
 
+	// 获取适配器实例
 	adapter := adp(bot)
 
+	// 建立消息通道连接
 	bot.inputChan = adapter.Incoming()
 	bot.outputChan = adapter.Outgoing()
 
