@@ -12,6 +12,7 @@ func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 
 	switch bot.MatchRule {
 	case `ping`:
+
 		msg = []rboot.Message{
 			{
 				Content: randReply(),

@@ -22,7 +22,7 @@ var timers = make(map[int]*timer)
 func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 	in := ctx.Value("input").(rboot.Message)
 
-	switch bot.MatchRule() {
+	switch bot.MatchRule {
 	case "timer":
 		return start_timer(in, bot)
 	case "stop_timer":
@@ -43,7 +43,7 @@ func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 // 定时器开始定时
 func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
-	match := bot.MatchSub()
+	match := bot.MatchSub
 
 	// 时间
 	t, err := strconv.Atoi(match[1])
@@ -65,6 +65,12 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	// 脚本名称
 	script := match[3]
 
+	// 检测脚本是否可执行
+	_, err = rboot.DirectiveScript(script)
+	if err != nil || script == "timing" {
+		return []rboot.Message{{Content: "END"}}
+	}
+
 	// 脚本内命令名称
 	cmd := match[4]
 
@@ -80,16 +86,16 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 		select {
 		case <-myTimer.t.C:
 
-			bot.SendText(fmt.Sprintf("定时器 %d 执行脚本命令 %s.%s", n, script, cmd), in.From)
+			//bot.SendText(fmt.Sprintf("定时器 %d 执行脚本命令 %s.%s", n, script, cmd), in.From)
 
 			delete(timers, n)
 
 			sf, err := rboot.DirectiveScript(script)
 			if err != nil {
-				return []rboot.Message{{Content: fmt.Sprintf("执行 %s.%s 命令时发生错误: %v", script, cmd, err)}}
+				return []rboot.Message{{Content: fmt.Sprintf("定时器 %d 执行 %s.%s 命令时发生错误: %v", n, script, cmd, err)}}
 			}
 
-			bot.MatchRule() = cmd
+			bot.MatchRule = cmd
 
 			return sf(nil, bot)
 		}
@@ -98,7 +104,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 // 定时器结束定时
 func stop_timer(bot *rboot.Robot) []rboot.Message {
-	match := bot.MatchSub()
+	match := bot.MatchSub
 
 	tNS := match[1]
 	tNum, err := strconv.Atoi(tNS)
@@ -122,12 +128,20 @@ func stop_timer(bot *rboot.Robot) []rboot.Message {
 
 // 定时器状态
 func status_timer(bot *rboot.Robot) []rboot.Message {
-	content := "定时器状态: \n"
 
-	for k, t := range timers {
-		left := t.end.Sub(time.Now()).Seconds()
-		content += fmt.Sprintf("定时器 %d， 命令 %s 剩余时间 %s \n", k, t.cmd, toCTime(int64(left)))
+	content := ""
+	if len(timers) <= 0 {
+		content = "没有正在进行的定时器"
+	} else {
+		content = "定时器状态: \n"
+
+		for k, t := range timers {
+			left := t.end.Sub(time.Now()).Seconds()
+			content += fmt.Sprintf("定时器 %d， 命令 %s 剩余时间 %s \n", k, t.cmd, toCTime(int64(left)))
+		}
 	}
+
+
 
 	return []rboot.Message{{Content: content}}
 }
@@ -145,7 +159,7 @@ var tickers = make(map[int]*ticker)
 
 // ticker开始计时
 func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
-	match := bot.MatchSub()
+	match := bot.MatchSub
 
 	// 时间
 	t, err := strconv.Atoi(match[1])
@@ -167,6 +181,12 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	// 脚本名称
 	script := match[3]
 
+	// 检测脚本是否可执行
+	_, err = rboot.DirectiveScript(script)
+	if err!=nil || script == "timing" {
+		return []rboot.Message{{Content: "END"}}
+	}
+
 	// 脚本内命令名称
 	cmd := match[4]
 
@@ -182,7 +202,7 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 		select {
 		case <-myTicker.t.C:
 
-			bot.SendText(fmt.Sprintf("序号 %d 续断器循环执行脚本命令 %s.%s", n, script, cmd), in.From)
+			//bot.SendText(fmt.Sprintf("序号 %d 续断器循环执行脚本命令 %s.%s", n, script, cmd), in.From)
 
 			myTicker.n += 1
 
@@ -190,10 +210,12 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 			sf, err := rboot.DirectiveScript(script)
 			if err != nil {
-				return []rboot.Message{{Content: fmt.Sprintf("执行 %s.%s 命令时发生错误: %v", script, cmd, err)}}
+				myTicker.t.Stop()
+				delete(tickers, n)
+				return []rboot.Message{{Content: fmt.Sprintf("续断器 %d 执行 %s.%s 命令时发生错误: %v", n, script, cmd, err)}}
 			}
 
-			bot.MatchRule() = cmd
+			bot.MatchRule = cmd
 
 			for _, msg := range sf(nil, bot) {
 				msg.To = in.From
@@ -206,7 +228,7 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 // 关闭 ticker
 func stop_ticker(bot *rboot.Robot) []rboot.Message {
-	match := bot.MatchSub()
+	match := bot.MatchSub
 
 	tNS := match[1]
 	tNum, err := strconv.Atoi(tNS)
@@ -227,10 +249,16 @@ func stop_ticker(bot *rboot.Robot) []rboot.Message {
 }
 
 func status_ticker(bot *rboot.Robot) []rboot.Message {
-	content := "续断器状态: \n"
 
-	for k, t := range tickers {
-		content += fmt.Sprintf("续断器 %d, 命令 %s, 已经执行了 %d 次，下次执行时间 %s \n", k, t.cmd, t.n, t.next.Format("15:04:05"))
+	content := ""
+	if len(tickers) <= 0 {
+		content = "没有正在进行的续断器"
+	} else {
+		content = "续断器状态: \n"
+
+		for k, t := range tickers {
+			content += fmt.Sprintf("续断器 %d, 命令 %s, 已经执行了 %d 次，下次执行时间 %s \n", k, t.cmd, t.n, t.next.Format("15:04:05"))
+		}
 	}
 
 	return []rboot.Message{{Content: content}}

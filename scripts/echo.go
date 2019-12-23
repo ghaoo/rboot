@@ -11,7 +11,7 @@ func init() {
 			bot.SendText("Hello World!")
 			return nil
 		},
-		Ruleset:     map[string]string{"hello": "hello"},
+		Ruleset:     map[string]string{"^hello": "hello"},
 		Description: `返回 Hello World! `,
 	})
 }

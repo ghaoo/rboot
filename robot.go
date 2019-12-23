@@ -17,12 +17,11 @@ type Robot struct {
 	adapter  Adapter
 	rule     Rule
 	contacts []User
-	hooks    []Hook
-	MatchRule string
-	MatchSub []string
-
 	inputChan  chan Message
 	outputChan chan Message
+
+	MatchRule string
+	MatchSub []string
 
 	sync.RWMutex
 
@@ -76,7 +75,7 @@ func process(ctx context.Context, bot *Robot) {
 						logrus.Error(err)
 					}
 
-					// 执行脚本并获取输出，附带 ctx
+					// 执行脚本, 附带ctx, 并获取输出
 					responses := action(ctx, &bot)
 
 					// 将消息发送到 outputChan
@@ -136,6 +135,12 @@ func (bot *Robot) Stop() error {
 	return nil
 }
 
+// SetRule 设置消息处理器
+func (bot *Robot) SetRule(rule Rule) *Robot {
+	bot.rule = rule
+	return bot
+}
+
 // SyncUsers 同步用户
 func (bot *Robot) SyncUsers(user []User) {
 	bot.Lock()
@@ -143,20 +148,6 @@ func (bot *Robot) SyncUsers(user []User) {
 		bot.contacts = user
 	}
 	bot.Unlock()
-}
-
-// 消息入站
-func (bot *Robot) Incoming(msg Message) {
-	bot.Lock()
-	bot.inputChan <- msg
-	bot.Unlock()
-}
-
-func (bot *Robot) Outgoing() chan Message {
-	bot.Lock()
-	defer bot.Unlock()
-
-	return bot.outputChan
 }
 
 // Send 发送消息
@@ -180,12 +171,6 @@ func (bot *Robot) SendText(text string, to ...User) {
 	}
 
 }
-
-// 直接执行脚本命令
-/*func (bot *Robot) RunScript(script, cmd string) error {
-
-	return nil
-}*/
 
 // MatchScript 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(match)
 // 当消息不匹配时，matched 返回false
