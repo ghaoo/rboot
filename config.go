@@ -3,21 +3,18 @@ package rboot
 import (
 	"github.com/sirupsen/logrus"
 	"os"
-	"strconv"
 )
 
 const (
 	DefaultRbootName      = `RBOOT`
 	DefaultRbootAlias     = `rboot`
 	DefaultRbootAdapter   = `cli`
-	DefaultRbootMemorizer = `bolt`
 )
 
 type Config struct {
 	Name      string
 	Alias     string
 	Adapter   string
-	Memorizer string
 	Debug     bool
 }
 
@@ -44,16 +41,6 @@ func newConfig() Config {
 		logrus.Warningf(`RBOOT_ADAPTER not set, using default %s`, DefaultRbootAdapter)
 		conf.Adapter = DefaultRbootAdapter
 	}
-
-	if os.Getenv(`RBOOT_MEMORIZER`) != `` {
-		conf.Memorizer = os.Getenv(`RBOOT_MEMORIZER`)
-	} else {
-		logrus.Warningf(`RBOOT_MEMORIZER not set, using default %s`, DefaultRbootMemorizer)
-		conf.Memorizer = DefaultRbootMemorizer
-	}
-
-	debug, _ := strconv.ParseBool(os.Getenv(`DEBUG`))
-	conf.Debug = debug
 
 	return conf
 }

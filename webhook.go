@@ -5,9 +5,8 @@ type Header map[string][]string
 
 //
 type webhook struct {
-	Header Header // 头信息
-	Body []Message // 消息实体
+	Header Header    // 头信息
+	Body   []Message // 消息实体
 }
 
 //
-

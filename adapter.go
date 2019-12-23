@@ -5,7 +5,7 @@ import (
 )
 
 type Adapter interface {
-	Name() string // 适配器名称
+	Name() string           // 适配器名称
 	Incoming() chan Message // 接收到的消息
 	Outgoing() chan Message // 回复的消息
 }

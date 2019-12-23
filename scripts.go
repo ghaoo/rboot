@@ -55,14 +55,14 @@ func helpSetup(ctx context.Context, bot *Robot) []Message {
 
 	switch bot.MatchRule {
 	case `help`:
-		if len(bot.Match) < 2 {
+		if len(bot.MatchSub) < 2 {
 			return []Message{
 				{
 					Content: "请在 !help 后面带上想要查看的脚本名称，比如查看 <ping> 脚本帮助信息，输入 <!help ping>",
 				},
 			}
 		} else {
-			return help(bot.Match[1])
+			return help(bot.MatchSub[1])
 		}
 	case `script`:
 		// 获取所有脚本信息

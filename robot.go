@@ -14,18 +14,19 @@ var AppName string
 const Version = "3.1.0"
 
 type Robot struct {
-	Memory    Memorizer
+	adapter  Adapter
+	rule     Rule
+	contacts []User
+	hooks    []Hook
 	MatchRule string
-	Match     []string
-	Rule      Rule
-	Adapter   Adapter
-	Contacts  []User
-	conf      Config
+	MatchSub []string
 
 	inputChan  chan Message
 	outputChan chan Message
 
 	sync.RWMutex
+
+	conf Config
 }
 
 // New 获取Robot实例
@@ -35,7 +36,7 @@ func New() *Robot {
 		inputChan:  make(chan Message),
 		outputChan: make(chan Message),
 		conf:       newConfig(),
-		Rule:       new(Regex),
+		rule:       new(Regex),
 	}
 
 	return bot
@@ -60,13 +61,13 @@ func process(ctx context.Context, bot *Robot) {
 				ctx = context.WithValue(ctx, "input", msg)
 
 				// 匹配消息
-				if script, matchRule, match, ok := bot.MatchScript(msg.Content); ok {
+				if script, mr, ms, ok := bot.matchScript(msg.Content); ok {
 
 					// 匹配的脚本对应规则
-					bot.MatchRule = matchRule
+					bot.MatchRule = mr
 
 					// 消息匹配集合
-					bot.Match = match
+					bot.MatchSub = ms
 
 					// 获取脚本执行函数
 					action, err := DirectiveScript(script)
@@ -138,35 +139,33 @@ func (bot *Robot) Stop() error {
 // SyncUsers 同步用户
 func (bot *Robot) SyncUsers(user []User) {
 	bot.Lock()
-	defer bot.Unlock()
-
 	if len(user) > 0 {
-		bot.Contacts = user
+		bot.contacts = user
 	}
+	bot.Unlock()
 }
 
-// SetMemo 设置储存器
-func (bot *Robot) SetMemo(memo Memorizer) *Robot {
+// 消息入站
+func (bot *Robot) Incoming(msg Message) {
+	bot.Lock()
+	bot.inputChan <- msg
+	bot.Unlock()
+}
+
+func (bot *Robot) Outgoing() chan Message {
 	bot.Lock()
 	defer bot.Unlock()
 
-	bot.Memory = memo
-
-	return bot
+	return bot.outputChan
 }
 
 // Send 发送消息
 func (bot *Robot) Send(msg Message) {
-	bot.Lock()
-	defer bot.Unlock()
-
 	bot.outputChan <- msg
 }
 
 // SendText 发送文本消息
 func (bot *Robot) SendText(text string, to ...User) {
-	bot.Lock()
-	defer bot.Unlock()
 
 	if len(to) > 0 {
 		for _, user := range to {
@@ -182,13 +181,19 @@ func (bot *Robot) SendText(text string, to ...User) {
 
 }
 
+// 直接执行脚本命令
+/*func (bot *Robot) RunScript(script, cmd string) error {
+
+	return nil
+}*/
+
 // MatchScript 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(match)
 // 当消息不匹配时，matched 返回false
-func (bot *Robot) MatchScript(msg string) (script, matchRule string, match []string, matched bool) {
+func (bot *Robot) matchScript(msg string) (script, matchRule string, match []string, matched bool) {
 
 	for script, rule := range rulesets {
 		for m, r := range rule {
-			if match, ok := bot.Rule.Match(r, msg); ok {
+			if match, ok := bot.rule.Match(r, msg); ok {
 				return script, m, match, true
 			}
 		}
@@ -213,16 +218,6 @@ func (bot *Robot) initialize() {
 	// 建立消息通道连接
 	bot.inputChan = adapter.Incoming()
 	bot.outputChan = adapter.Outgoing()
-
-	// 指定储存器
-	memo, err := DetectMemorizer(bot.conf.Memorizer)
-
-	if err != nil {
-		logrus.Errorf(`Detect memorizer error: %v`, err)
-	}
-
-	bot.Memory = memo()
-
 }
 
 func init() {

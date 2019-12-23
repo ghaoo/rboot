@@ -22,7 +22,7 @@ var timers = make(map[int]*timer)
 func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 	in := ctx.Value("input").(rboot.Message)
 
-	switch bot.MatchRule {
+	switch bot.MatchRule() {
 	case "timer":
 		return start_timer(in, bot)
 	case "stop_timer":
@@ -43,15 +43,17 @@ func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 // 定时器开始定时
 func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
+	match := bot.MatchSub()
+
 	// 时间
-	t, err := strconv.Atoi(bot.Match[1])
+	t, err := strconv.Atoi(match[1])
 	if err != nil {
 		logrus.Error(err)
 		return nil
 	}
 
 	// 时间刻度
-	arc := bot.Match[2]
+	arc := match[2]
 
 	// 将时间转换为 time.Duration 类型
 	tD, err := toDuration(t, arc)
@@ -61,18 +63,18 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	}
 
 	// 脚本名称
-	script := bot.Match[3]
+	script := match[3]
 
 	// 脚本内命令名称
-	cmd := bot.Match[4]
+	cmd := match[4]
 
-	myTimer := &timer{t: time.NewTimer(tD), end: time.Now().Add(tD), cmd: script+"."+cmd}
+	myTimer := &timer{t: time.NewTimer(tD), end: time.Now().Add(tD), cmd: script + "." + cmd}
 
 	n := timerN
 	timers[timerN] = myTimer
 	timerN += 1
 
-	bot.SendText("定时器序号 " + strconv.Itoa(n), in.From)
+	bot.SendText("定时器序号 "+strconv.Itoa(n), in.From)
 
 	for {
 		select {
@@ -87,7 +89,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 				return []rboot.Message{{Content: fmt.Sprintf("执行 %s.%s 命令时发生错误: %v", script, cmd, err)}}
 			}
 
-			bot.MatchRule = cmd
+			bot.MatchRule() = cmd
 
 			return sf(nil, bot)
 		}
@@ -96,7 +98,9 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 // 定时器结束定时
 func stop_timer(bot *rboot.Robot) []rboot.Message {
-	tNS := bot.Match[1]
+	match := bot.MatchSub()
+
+	tNS := match[1]
 	tNum, err := strconv.Atoi(tNS)
 	if err != nil {
 		logrus.Error(err)
@@ -133,7 +137,7 @@ type ticker struct {
 	n    int          // 已经执行的次数
 	t    *time.Ticker // 续断器实体
 	next time.Time    // 下一次执行时间
-	cmd string // 脚本命令
+	cmd  string       // 脚本命令
 }
 
 var tickerN = 0
@@ -141,15 +145,17 @@ var tickers = make(map[int]*ticker)
 
 // ticker开始计时
 func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
+	match := bot.MatchSub()
+
 	// 时间
-	t, err := strconv.Atoi(bot.Match[1])
+	t, err := strconv.Atoi(match[1])
 	if err != nil {
 		logrus.Error(err)
 		return nil
 	}
 
 	// 时间刻度
-	arc := bot.Match[2]
+	arc := match[2]
 
 	// 将时间转换为 time.Duration 类型
 	tD, err := toDuration(t, arc)
@@ -159,18 +165,18 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	}
 
 	// 脚本名称
-	script := bot.Match[3]
+	script := match[3]
 
 	// 脚本内命令名称
-	cmd := bot.Match[4]
+	cmd := match[4]
 
-	myTicker := &ticker{n: 0, t: time.NewTicker(tD), next: time.Now().Add(tD), cmd: script+"."+cmd}
+	myTicker := &ticker{n: 0, t: time.NewTicker(tD), next: time.Now().Add(tD), cmd: script + "." + cmd}
 
 	n := tickerN
 	tickers[tickerN] = myTicker
 	tickerN += 1
 
-	bot.SendText("续断器序号 " + strconv.Itoa(n), in.From)
+	bot.SendText("续断器序号 "+strconv.Itoa(n), in.From)
 
 	for {
 		select {
@@ -187,7 +193,7 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 				return []rboot.Message{{Content: fmt.Sprintf("执行 %s.%s 命令时发生错误: %v", script, cmd, err)}}
 			}
 
-			bot.MatchRule = cmd
+			bot.MatchRule() = cmd
 
 			for _, msg := range sf(nil, bot) {
 				msg.To = in.From
@@ -200,7 +206,9 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 // 关闭 ticker
 func stop_ticker(bot *rboot.Robot) []rboot.Message {
-	tNS := bot.Match[1]
+	match := bot.MatchSub()
+
+	tNS := match[1]
 	tNum, err := strconv.Atoi(tNS)
 	if err != nil {
 		logrus.Error(err)
