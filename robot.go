@@ -11,7 +11,7 @@ import (
 
 var AppName string
 
-const Version = "3.0.0"
+const Version = "3.1.0"
 
 type Robot struct {
 	Memory    Memorizer
@@ -85,6 +85,7 @@ func process(ctx context.Context, bot *Robot) {
 							resp.From = msg.To
 							resp.To = msg.From
 
+							// send ...
 							bot.outputChan <- resp
 						}
 					}
