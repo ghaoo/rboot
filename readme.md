@@ -106,16 +106,6 @@ rboot.RegisterScripts(`echo`, rboot.Script{
 
 运行 `richman` 脚本需要配置地图文件位置 `MAP_FILE`, 默认地图文件在 `example` 文件夹下 `maps` 下
 
-#### 储存器 memorizer
-
-储存器默认实现了 `内存储存` 和 `bolt`, 也可自行编写，具体实现参考 `memorizer` 文件夹
-指定 `储存器` 后可通过 `bot.Memory` 使用相关方法
-- Save(bucket, key string, value []byte) error
-- Find(bucket, key string) []byte
-- FindAll(bucket string) map[string][]byte
-- Update(bucket, key string, value []byte) error
-- Delete(bucket, key string) error
-
 
 
 
