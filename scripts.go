@@ -53,5 +53,3 @@ func DirectiveScript(name string) (SetupFunc, error) {
 func ListScripts() map[string]Script {
 	return scripts
 }
-
-

@@ -2,6 +2,10 @@ package rboot
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"bufio"
+	"strings"
 )
 
 type Adapter interface {
@@ -45,4 +49,94 @@ func DetectAdapter(name string) (adapterF, error) {
 		return nil, fmt.Errorf("multiple adapters available; must choose one")
 	}
 	return nil, fmt.Errorf("unknown adapter '%s'", name)
+}
+
+var (
+	stdin  io.Reader = os.Stdin
+	stdout io.Writer = os.Stdout
+)
+
+type cli struct {
+	in     chan Message
+	out    chan Message
+	writer *bufio.Writer
+}
+
+// New returns an initialized adapter
+func newAdp(bot *Robot) Adapter {
+
+	c := &cli{
+		in:     make(chan Message),
+		out:    make(chan Message),
+		writer: bufio.NewWriter(stdout),
+	}
+
+	go c.run()
+
+	return c
+}
+
+func (c *cli) Name() string {
+	return `cli`
+}
+
+func (c *cli) Incoming() chan Message {
+	return c.in
+}
+
+func (c *cli) Outgoing() chan Message {
+	return c.out
+}
+
+// Run executes the adapter run loop
+func (c *cli) run() {
+
+	go func() {
+		scanner := bufio.NewScanner(stdin)
+		for scanner.Scan() {
+
+			c.in <- Message{
+				To:      User{Name: `cli`},
+				From:    User{Name: `cli`},
+				Channel: `cli`,
+				Content: scanner.Text(),
+			}
+
+		forLoop:
+			for {
+				select {
+				case msg := <-c.out:
+					c.writeString(msg.Content)
+				default:
+					break forLoop
+				}
+			}
+		}
+	}()
+
+	go func() {
+		for msg := range c.out {
+			c.writeString(msg.Content)
+		}
+	}()
+}
+
+func (c *cli) writeString(str string) error {
+
+	name := os.Getenv(`RBOOT_ALIAS`)
+	if name == `` {
+		name = os.Getenv(`RBOOT_NAME`)
+	}
+
+	msg := fmt.Sprintf(name+" > %s\n", strings.TrimSpace(str))
+
+	if _, err := c.writer.WriteString(msg); err != nil {
+		return err
+	}
+
+	return c.writer.Flush()
+}
+
+func init() {
+	RegisterAdapter(`cli`, newAdp)
 }

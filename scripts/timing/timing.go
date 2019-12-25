@@ -141,8 +141,6 @@ func status_timer(bot *rboot.Robot) []rboot.Message {
 		}
 	}
 
-
-
 	return []rboot.Message{{Content: content}}
 }
 
@@ -183,7 +181,7 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 	// 检测脚本是否可执行
 	_, err = rboot.DirectiveScript(script)
-	if err!=nil || script == "timing" {
+	if err != nil || script == "timing" {
 		return []rboot.Message{{Content: "END"}}
 	}
 

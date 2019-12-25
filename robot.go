@@ -5,8 +5,10 @@ import (
 	"github.com/ghaoo/rboot/tools/env"
 	"github.com/sirupsen/logrus"
 	"os"
+	"os/signal"
 	"runtime"
 	"sync"
+	"syscall"
 )
 
 var AppName string
@@ -14,18 +16,18 @@ var AppName string
 const Version = "3.1.0"
 
 type Robot struct {
-	adapter  Adapter
-	rule     Rule
-	contacts []User
+	adapter    Adapter
+	brain      Brain
+	rule       Rule
+	contacts   []User
 	inputChan  chan Message
 	outputChan chan Message
 
 	MatchRule string
-	MatchSub []string
+	MatchSub  []string
 
+	signalChan chan os.Signal
 	sync.RWMutex
-
-	conf Config
 }
 
 // New 获取Robot实例
@@ -34,7 +36,7 @@ func New() *Robot {
 	bot := &Robot{
 		inputChan:  make(chan Message),
 		outputChan: make(chan Message),
-		conf:       newConfig(),
+		signalChan: make(chan os.Signal),
 		rule:       new(Regex),
 	}
 
@@ -49,6 +51,7 @@ func process(ctx context.Context, bot *Robot) {
 
 		// 监听传入消息
 		for in := range bot.inputChan {
+
 			go func(bot Robot, msg Message) {
 				defer func() {
 					if r := recover(); r != nil {
@@ -104,7 +107,7 @@ func (bot *Robot) Go() {
 
 	logrus.Debugf("Rboot Version %s", Version)
 	// 设置Robot名称
-	AppName = bot.conf.Name
+	AppName = os.Getenv(`RBOOT_NAME`)
 
 	// 初始化
 	bot.initialize()
@@ -118,7 +121,22 @@ func (bot *Robot) Go() {
 	ctx = context.WithValue(ctx, "appname", AppName)
 
 	// 消息处理
-	process(ctx, bot)
+	go process(ctx, bot)
+
+	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+
+	stop := false
+	for !stop {
+		select {
+		case sig := <-bot.signalChan:
+			switch sig {
+			case syscall.SIGINT, syscall.SIGTERM:
+				stop = true
+			}
+		}
+	}
+
+	signal.Stop(bot.signalChan)
 
 	bot.Stop()
 }
@@ -136,9 +154,17 @@ func (bot *Robot) Stop() error {
 }
 
 // SetRule 设置消息处理器
-func (bot *Robot) SetRule(rule Rule) *Robot {
+func (bot *Robot) SetRule(rule Rule) {
+	bot.Lock()
 	bot.rule = rule
-	return bot
+	bot.Unlock()
+}
+
+//
+func (bot *Robot) SetBrain(brain Brain) {
+	bot.Lock()
+	bot.brain = brain
+	bot.Unlock()
 }
 
 // SyncUsers 同步用户
@@ -191,7 +217,12 @@ func (bot *Robot) matchScript(msg string) (script, matchRule string, match []str
 func (bot *Robot) initialize() {
 
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
-	adp, err := DetectAdapter(bot.conf.Adapter)
+	adp_name := os.Getenv(`RBOOT_ADAPTER`)
+	// 默认使用 cli
+	if adp_name == "" {
+		adp_name = "cli"
+	}
+	adp, err := DetectAdapter(adp_name)
 
 	if err != nil {
 		panic(`Detect adapter error: ` + err.Error())
@@ -203,6 +234,21 @@ func (bot *Robot) initialize() {
 	// 建立消息通道连接
 	bot.inputChan = adapter.Incoming()
 	bot.outputChan = adapter.Outgoing()
+
+	// 储存器
+	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
+	brain_name := os.Getenv(`RBOOT_BRAIN`)
+	// 默认使用 memory
+	if brain_name == "" {
+		brain_name = "memory"
+	}
+	brain, err := DetectBrain(brain_name)
+
+	if err != nil {
+		panic(`Detect brain error: ` + err.Error())
+	}
+
+	bot.brain = brain()
 }
 
 func init() {

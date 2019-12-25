@@ -1,7 +1,6 @@
 package bolt
 
 import (
-	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/ghaoo/rboot"
 	"github.com/sirupsen/logrus"
@@ -11,10 +10,13 @@ import (
 )
 
 const DefaultBoltDBFile = `db/rboot.db`
+const DefaultBoltBucket = `rboot`
 
 type boltMemory struct {
 	bolt   *bolt.DB
 	dbfile string
+
+	bucket string
 
 	mu sync.Mutex
 }
@@ -34,21 +36,27 @@ func pathExist(dbfile string) error {
 	return nil
 }
 
-// new bolt memory
-func Bolt() rboot.Memorizer {
+// new bolt brain ...
+func Bolt() rboot.Brain {
 
 	b := new(boltMemory)
 
 	dbfile := os.Getenv(`BOLT_DB_FILE`)
 
 	if dbfile == `` {
-		logrus.Warningf(`BOLT_DB_FILE not set, using default`)
+		logrus.Warningf(`BOLT_DB_FILE not set, using default: %s`, DefaultBoltDBFile)
 		dbfile = DefaultBoltDBFile
 	}
 	err := pathExist(dbfile)
 
 	if err != nil {
 		return nil
+	}
+
+	bucket := os.Getenv("BOLT_BUCKET")
+	if bucket == `` {
+		logrus.Warningf(`BOLT_BUCKET not set, using default: %s`, DefaultBoltBucket)
+		bucket = DefaultBoltBucket
 	}
 
 	db, err := bolt.Open(dbfile, 0600, nil)
@@ -58,16 +66,17 @@ func Bolt() rboot.Memorizer {
 
 	b.bolt = db
 	b.dbfile = dbfile
+	b.bucket = bucket
 	return b
 }
 
 // save ...
-func (b *boltMemory) Save(bucket, key string, value []byte) error {
+func (b *boltMemory) Set(key string, value []byte) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	err := b.bolt.Update(func(tx *bolt.Tx) error {
-		b, e := tx.CreateBucketIfNotExists([]byte(bucket))
+		b, e := tx.CreateBucketIfNotExists([]byte(b.bucket))
 		if e != nil {
 			logrus.Errorf("bolt: error saving:", e)
 			return e
@@ -79,13 +88,13 @@ func (b *boltMemory) Save(bucket, key string, value []byte) error {
 }
 
 // find ...
-func (b *boltMemory) Find(bucket, key string) []byte {
+func (b *boltMemory) Get(key string) []byte {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	var found []byte
 	b.bolt.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket))
+		b := tx.Bucket([]byte(b.bucket))
 		if b == nil {
 			return nil
 		}
@@ -97,61 +106,20 @@ func (b *boltMemory) Find(bucket, key string) []byte {
 	return found
 }
 
-// update ...
-func (b *boltMemory) Update(bucket, key string, value []byte) error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	err := b.bolt.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket))
-		if b == nil {
-			logrus.Warnf("bolt: bucket %s not found", bucket)
-			return fmt.Errorf("bolt: bucket %s not found", bucket)
-		}
-		return b.Put([]byte(key), value)
-	})
-
-	return err
-}
-
 // remove ...
-func (b *boltMemory) Delete(bucket, key string) error {
+func (b *boltMemory) Remove(key string) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	err := b.bolt.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket))
+		b := tx.Bucket([]byte(b.bucket))
 		return b.Delete([]byte(key))
 	})
 
 	return err
 }
 
-func (b *boltMemory) FindAll(bucket string) map[string][]byte {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	var found = make(map[string][]byte)
-
-	b.bolt.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket))
-		if b == nil {
-			return nil
-		}
-
-		b.ForEach(func(k, v []byte) error {
-
-			found[string(k)] = v
-			return nil
-		})
-
-		return nil
-	})
-
-	return found
-}
-
-// register memorizer
+// register brain ...
 func init() {
-	rboot.RegisterMemorizer(`bolt`, Bolt)
+	rboot.RegisterBrain(`bolt`, Bolt)
 }

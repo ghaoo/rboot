@@ -1,10 +1,10 @@
 package help
 
 import (
-	"fmt"
-	"strings"
-	"github.com/ghaoo/rboot"
 	"context"
+	"fmt"
+	"github.com/ghaoo/rboot"
+	"strings"
 )
 
 var scripts = rboot.ListScripts()
