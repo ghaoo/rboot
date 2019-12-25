@@ -132,3 +132,4 @@ func (hs Histories) Clear(uid string) {
 		uh.clear()
 	}
 }
+
