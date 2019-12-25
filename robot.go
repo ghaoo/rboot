@@ -160,13 +160,6 @@ func (bot *Robot) SetRule(rule Rule) {
 	bot.Unlock()
 }
 
-//
-func (bot *Robot) SetBrain(brain Brain) {
-	bot.Lock()
-	bot.brain = brain
-	bot.Unlock()
-}
-
 // SyncUsers 同步用户
 func (bot *Robot) SyncUsers(user []User) {
 	bot.Lock()
@@ -197,6 +190,29 @@ func (bot *Robot) SendText(text string, to ...User) {
 	}
 
 }
+
+// 设置储存器
+func (bot *Robot) SetBrain(brain Brain) {
+	bot.Lock()
+	bot.brain = brain
+	bot.Unlock()
+}
+
+// Brain set ...
+func (bot *Robot) BrainSet(key string, value []byte) error {
+	return bot.brain.Set(key, value)
+}
+
+// Brain get ...
+func (bot *Robot) BrainGet(key string) []byte {
+	return bot.brain.Get(key)
+}
+
+// Brain get ...
+func (bot *Robot) BrainRemove(key string) error {
+	return bot.brain.Remove(key)
+}
+
 
 // MatchScript 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(match)
 // 当消息不匹配时，matched 返回false
@@ -236,7 +252,6 @@ func (bot *Robot) initialize() {
 	bot.outputChan = adapter.Outgoing()
 
 	// 储存器
-	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
 	brain_name := os.Getenv(`RBOOT_BRAIN`)
 	// 默认使用 memory
 	if brain_name == "" {

@@ -26,8 +26,8 @@ func RegisterBrain(name string, m func() Brain) {
 }
 
 func DetectBrain(name string) (func() Brain, error) {
-	if memo, ok := brains[name]; ok {
-		return memo, nil
+	if brain, ok := brains[name]; ok {
+		return brain, nil
 	}
 
 	if len(brains) == 0 {
@@ -36,13 +36,13 @@ func DetectBrain(name string) (func() Brain, error) {
 
 	if name == "" {
 		if len(brains) == 1 {
-			for _, memo := range brains {
-				return memo, nil
+			for _, brain := range brains {
+				return brain, nil
 			}
 		}
-		return nil, fmt.Errorf("multiple Brains available; must choose one")
+		return nil, fmt.Errorf("multiple brains available; must choose one")
 	}
-	return nil, fmt.Errorf("unknown Brain '%s'", name)
+	return nil, fmt.Errorf("unknown brain '%s'", name)
 }
 
 // memory brain
