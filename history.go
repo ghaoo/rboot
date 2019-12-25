@@ -2,29 +2,29 @@ package rboot
 
 import "sync"
 
-type Element struct {
-	prev *Element
+type History struct {
+	prev     *History
 	incoming Message
 	outgoing []Message
 }
 
-func (e *Element) Incoming() Message {
-	return e.incoming
+func (h *History) Incoming() Message {
+	return h.incoming
 }
 
-func (e *Element) Outgoing() []Message {
-	return e.outgoing
+func (h *History) Outgoing() []Message {
+	return h.outgoing
 }
 
 // 获取上一条历史
-func (e *Element) Prev() *Element {
-	return e.prev
+func (h *History) Prev() *History {
+	return h.prev
 }
 
 type history struct {
-	root Element
-	len int
-	m sync.Mutex
+	root History
+	len  int
+	m    sync.Mutex
 }
 
 // 清空或初始化 history
@@ -40,7 +40,7 @@ func newHistory() *history {
 }
 
 // 向 history 中插入数据
-func (h *history) insert(e Element) *history {
+func (h *history) insert(e History) *history {
 	e.prev = &h.root
 	h.root = e
 	h.len++
@@ -48,7 +48,7 @@ func (h *history) insert(e Element) *history {
 }
 
 // 获取当前历史信息
-func (h *history) current() *Element {
+func (h *history) current() *History {
 	h.m.Lock()
 	defer h.m.Unlock()
 
@@ -60,7 +60,7 @@ func (h *history) push(in Message, out []Message) *history {
 	h.m.Lock()
 	defer h.m.Unlock()
 
-	e := Element{incoming:in, outgoing:out}
+	e := History{incoming: in, outgoing: out}
 
 	return h.insert(e)
 }
@@ -73,10 +73,11 @@ func (h *history) clear() *history {
 	return h.init()
 }
 
-type History map[string]*history
+// 用户历史消息计记录器
+type UserHistory map[string]*history
 
 // 将用户操作写入历史，每位用户有一个 History 实例，当消息来源(用户)未知时将消息写入键值为 other 的 History 中，其他写入对应用户 History 中
-func (h History) Push(in Message, out []Message) {
+func (h UserHistory) Push(in Message, out []Message) {
 	u := "other"
 	if in.From.ID != "" {
 		u = in.From.ID
@@ -93,7 +94,7 @@ func (h History) Push(in Message, out []Message) {
 }
 
 // 用户历史信息
-func (h History) Current(uid string) *Element {
+func (h UserHistory) Current(uid string) *History {
 	if _, ok := h[uid]; !ok {
 		return nil
 	}
@@ -102,7 +103,7 @@ func (h History) Current(uid string) *Element {
 }
 
 // 用户上一条历史信息
-func (h History) Prev(uid string) *Element {
+func (h UserHistory) Prev(uid string) *History {
 	if _, ok := h[uid]; !ok {
 		return nil
 	}
@@ -111,7 +112,7 @@ func (h History) Prev(uid string) *Element {
 }
 
 // 用户前几条历史信息
-func (h History) History(uid string, n int) []*Element {
+func (h UserHistory) PrevN(uid string, n int) []*History {
 	var uh *history
 	var ok bool
 
@@ -119,10 +120,10 @@ func (h History) History(uid string, n int) []*Element {
 		return nil
 	}
 
-	var es = make([]*Element, n)
+	var es = make([]*History, n)
 
 	root := &uh.root
-	for i := 0; i < n; i ++ {
+	for i := 0; i < n; i++ {
 		root = root.prev
 		if root == nil {
 			break
@@ -134,13 +135,8 @@ func (h History) History(uid string, n int) []*Element {
 }
 
 // 清空历史记录
-func (h History) Clear(uid string) {
+func (h UserHistory) Clear(uid string) {
 	if uh, ok := h[uid]; ok {
 		uh.clear()
 	}
 }
-
-
-
-
-

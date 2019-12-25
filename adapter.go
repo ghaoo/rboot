@@ -1,10 +1,10 @@
 package rboot
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
-	"bufio"
 	"strings"
 )
 

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"sync"
 	"syscall"
 )
@@ -19,6 +20,7 @@ type Robot struct {
 	adapter    Adapter
 	brain      Brain
 	rule       Rule
+	history    UserHistory
 	contacts   []User
 	inputChan  chan Message
 	outputChan chan Message
@@ -34,6 +36,7 @@ type Robot struct {
 func New() *Robot {
 
 	bot := &Robot{
+		history: make(UserHistory),
 		inputChan:  make(chan Message),
 		outputChan: make(chan Message),
 		signalChan: make(chan os.Signal),
@@ -93,6 +96,11 @@ func process(ctx context.Context, bot *Robot) {
 						}
 					}
 
+					// 将用户操作写入历史
+					rh, _ := strconv.ParseBool(os.Getenv(`RECORD_HISTORY`))
+					if rh {
+						bot.history.Push(msg, responses)
+					}
 				}
 
 			}(*bot, in)
@@ -213,6 +221,20 @@ func (bot *Robot) BrainRemove(key string) error {
 	return bot.brain.Remove(key)
 }
 
+// 上一条信息（历史记录）
+func (bot *Robot) PrevHistory(uid string) *History {
+	return bot.history.Prev(uid)
+}
+
+// 前几条信息（历史记录）
+func (bot *Robot) PrevHistoryN(uid string, n int) []*History {
+	return bot.history.PrevN(uid, n)
+}
+
+// 清空历史消息
+func (bot *Robot) ClearHistory(uid string) {
+	bot.history.Clear(uid)
+}
 
 // MatchScript 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(match)
 // 当消息不匹配时，matched 返回false
