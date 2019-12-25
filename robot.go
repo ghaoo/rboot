@@ -294,6 +294,6 @@ func init() {
 	err := env.Load()
 
 	if err != nil {
-		panic(`Load env config error: ` + err.Error())
+		logrus.Error(`Load env config error: `, err.Error())
 	}
 }

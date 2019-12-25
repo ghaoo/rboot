@@ -3,6 +3,7 @@ package main
 import (
 	_ "github.com/ghaoo/rboot/adapter"
 	_ "github.com/ghaoo/rboot/scripts"
+	_ "github.com/ghaoo/rboot/brains/bolt"
 
 	"github.com/ghaoo/rboot"
 	"github.com/sirupsen/logrus"
