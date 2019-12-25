@@ -1,7 +1,5 @@
 package rboot
 
-import "sync"
-
 type History struct {
 	prev     *History
 	incoming Message
@@ -24,7 +22,6 @@ func (h *History) Prev() *History {
 type history struct {
 	root History
 	len  int
-	m    sync.Mutex
 }
 
 // 清空或初始化 history
@@ -49,16 +46,12 @@ func (h *history) insert(e History) *history {
 
 // 获取当前历史信息
 func (h *history) current() *History {
-	h.m.Lock()
-	defer h.m.Unlock()
 
 	return &h.root
 }
 
 // 写入
 func (h *history) push(in Message, out []Message) *history {
-	h.m.Lock()
-	defer h.m.Unlock()
 
 	e := History{incoming: in, outgoing: out}
 
@@ -67,17 +60,14 @@ func (h *history) push(in Message, out []Message) *history {
 
 // 清空历史记录
 func (h *history) clear() *history {
-	h.m.Lock()
-	defer h.m.Unlock()
-
 	return h.init()
 }
 
 // 用户历史消息计记录器
-type UserHistory map[string]*history
+type Histories map[string]*history
 
 // 将用户操作写入历史，每位用户有一个 History 实例，当消息来源(用户)未知时将消息写入键值为 other 的 History 中，其他写入对应用户 History 中
-func (h UserHistory) Push(in Message, out []Message) {
+func (hs Histories) Push(in Message, out []Message) {
 	u := "other"
 	if in.From.ID != "" {
 		u = in.From.ID
@@ -86,37 +76,39 @@ func (h UserHistory) Push(in Message, out []Message) {
 	var uh *history
 	var ok bool
 
-	if uh, ok = h[u]; !ok {
+	if uh, ok = hs[u]; !ok {
 		uh = newHistory()
 	}
 
 	uh.push(in, out)
+
+	hs[u] = uh
 }
 
 // 用户历史信息
-func (h UserHistory) Current(uid string) *History {
-	if _, ok := h[uid]; !ok {
-		return nil
+func (hs Histories) Current(uid string) *History {
+	if _, ok := hs[uid]; !ok {
+		return hs[uid].current()
 	}
 
-	return h[uid].current()
+	return nil
 }
 
 // 用户上一条历史信息
-func (h UserHistory) Prev(uid string) *History {
-	if _, ok := h[uid]; !ok {
-		return nil
+func (hs Histories) Prev(uid string) *History {
+	if _, ok := hs[uid]; ok {
+		return hs[uid].root.Prev()
 	}
 
-	return h[uid].root.Prev()
+	return nil
 }
 
 // 用户前几条历史信息
-func (h UserHistory) PrevN(uid string, n int) []*History {
+func (hs Histories) PrevN(uid string, n int) []*History {
 	var uh *history
 	var ok bool
 
-	if uh, ok = h[uid]; !ok {
+	if uh, ok = hs[uid]; !ok {
 		return nil
 	}
 
@@ -135,8 +127,8 @@ func (h UserHistory) PrevN(uid string, n int) []*History {
 }
 
 // 清空历史记录
-func (h UserHistory) Clear(uid string) {
-	if uh, ok := h[uid]; ok {
+func (hs Histories) Clear(uid string) {
+	if uh, ok := hs[uid]; ok {
 		uh.clear()
 	}
 }

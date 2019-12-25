@@ -21,8 +21,8 @@ func Go() {
 
 // 创建游戏
 func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg []rboot.Message) {
-	if in.Mate["GroupMsg"].(bool) {
-		if !in.Mate["AtMe"].(bool) {
+	if in.Mate["GroupMsg"] != nil && in.Mate["GroupMsg"].(bool) {
+		if in.Mate["AtMe"] != nil && !in.Mate["AtMe"].(bool) {
 			return nil
 		}
 	}
@@ -55,7 +55,7 @@ func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg []rboot.Message) {
 
 	if len(match) >= 2 {
 
-		if !in.Mate["GroupMsg"].(bool) {
+		if in.Mate["GroupMsg"] != nil && !in.Mate["GroupMsg"].(bool) {
 			return []rboot.Message{{Content: "多人游戏请在群组创建。"}}
 		}
 
@@ -84,7 +84,7 @@ func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg []rboot.Message) {
 	GM.GameRooms[in.From.ID] = room
 	GM.User[in.Sender.ID] = user
 
-	if !in.Mate["GroupMsg"].(bool) {
+	if in.Mate["GroupMsg"] != nil && !in.Mate["GroupMsg"].(bool) {
 		// 将ai加入游戏
 		ai := &User{
 			ID:   in.To.ID,
@@ -182,7 +182,7 @@ func StopGame(in rboot.Message) []rboot.Message {
 // 加入游戏
 func JoinRoom(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
-	if !in.Mate["GroupMsg"].(bool) && !in.Mate["AtMe"].(bool) {
+	if in.Mate["GroupMsg"] != nil && in.Mate["AtMe"] != nil && !in.Mate["GroupMsg"].(bool) && !in.Mate["AtMe"].(bool) {
 		return nil
 	}
 
@@ -221,8 +221,8 @@ func JoinRoom(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 // 暂离游戏
 func AFK(in rboot.Message, bot *rboot.Robot) []rboot.Message {
-	if in.Mate["GroupMsg"].(bool) {
-		if !in.Mate["AtMe"].(bool) {
+	if in.Mate["GroupMsg"] != nil && in.Mate["GroupMsg"].(bool) {
+		if in.Mate["AtMe"] != nil && !in.Mate["AtMe"].(bool) {
 			return nil
 		}
 	}
@@ -253,8 +253,8 @@ func AFK(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 // 退出游戏房间
 func QuitGame(in rboot.Message, bot *rboot.Robot) []rboot.Message {
-	if in.Mate["GroupMsg"].(bool) {
-		if !in.Mate["AtMe"].(bool) {
+	if in.Mate["GroupMsg"] != nil && in.Mate["GroupMsg"].(bool) {
+		if in.Mate["AtMe"] != nil && !in.Mate["AtMe"].(bool) {
 			return nil
 		}
 	}
@@ -283,8 +283,8 @@ func QuitGame(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 // 开始游戏
 func StartGame(in rboot.Message, bot *rboot.Robot) []rboot.Message {
-	if in.Mate["GroupMsg"].(bool) {
-		if !in.Mate["AtMe"].(bool) {
+	if in.Mate["GroupMsg"] != nil && in.Mate["GroupMsg"].(bool) {
+		if in.Mate["AtMe"] != nil && !in.Mate["AtMe"].(bool) {
 			return nil
 		}
 	}

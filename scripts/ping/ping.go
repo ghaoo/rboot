@@ -29,7 +29,7 @@ func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 	case `history`:
 		msg = []rboot.Message {
 			{
-				Content: "" + bot.PrevHistory("").Incoming().Content,
+				Content: "Prev: " + bot.PrevHistory("cli").Incoming().Content,
 			},
 		}
 	}

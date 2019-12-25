@@ -8,7 +8,7 @@ import (
 func setup(ctx context.Context, bot *rboot.Robot) (msg []rboot.Message) {
 	in := ctx.Value("input").(rboot.Message)
 
-	if in.Mate["SendByMySelf"].(bool) {
+	if in.Mate["SendByMySelf"] != nil && in.Mate["SendByMySelf"].(bool) {
 		return nil
 	}
 
