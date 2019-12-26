@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"github.com/sirupsen/logrus"
 )
 
 type GameMap struct {
@@ -52,14 +53,14 @@ func (g *Game) ReadMaps() map[int][]MapElement {
 	b, err := ioutil.ReadFile(file)
 
 	if err != nil {
-		panic("地图读取失败:" + err.Error())
+		logrus.Error("richman 地图读取失败:" + err.Error())
 		return nil
 	}
 
 	err = json.Unmarshal(b, &maps)
 
 	if err != nil {
-		panic("地图解析失败: " + err.Error())
+		logrus.Error("richman 地图解析失败: " + err.Error())
 		return nil
 	}
 

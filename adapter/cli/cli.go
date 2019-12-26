@@ -55,7 +55,7 @@ func (c *cli) run() {
 
 			c.in <- rboot.Message{
 				To:      rboot.User{Name: `cli`},
-				From:    rboot.User{Name: `cli`},
+				From:    rboot.User{Name: `robot`},
 				Channel: `cli`,
 				Content: scanner.Text(),
 			}
