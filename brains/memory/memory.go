@@ -1,8 +1,8 @@
 package memory
 
 import (
-	"sync"
 	"github.com/ghaoo/rboot"
+	"sync"
 )
 
 // memory brain

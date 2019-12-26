@@ -3,9 +3,9 @@ package richman
 import (
 	"container/ring"
 	"encoding/json"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
-	"github.com/sirupsen/logrus"
 )
 
 type GameMap struct {

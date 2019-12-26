@@ -5,7 +5,6 @@ import (
 	"github.com/ghaoo/rboot"
 	"math/rand"
 	"time"
-	"strconv"
 )
 
 func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
@@ -26,20 +25,6 @@ func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 				Content: `Pong!`,
 			},
 		}
-
-	case `history`:
-		//var prev = bot.PrevHistory("other") // 上一条历史记录
-		var prev = bot.PrevHistoryN("other", 5) // 最后5条历史记录
-
-		if prev != nil {
-			for k, h := range prev {
-				msg = append(msg, rboot.Message {Content: "Prev: " + strconv.Itoa(k) + "===" + h.Incoming().Content})
-			}
-
-		} else {
-			msg = []rboot.Message {{Content: "Prev: NULL"}}
-		}
-
 	}
 
 	return msg
@@ -70,7 +55,6 @@ func init() {
 		Ruleset: map[string]string{
 			`ping`: `^!(ping|PING)`,
 			`pong`: `^!(pong|PONG)`,
-			`history`: `^!(?:history|历史)`,
 		},
 		Usage:       "!ping: 随机返回一句话 \n!pong: 返回 PONG",
 		Description: `测试程序和脚本是否运行正常。`,

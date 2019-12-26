@@ -43,5 +43,3 @@ func DetectBrain(name string) (func() Brain, error) {
 	}
 	return nil, fmt.Errorf("unknown brain '%s'", name)
 }
-
-

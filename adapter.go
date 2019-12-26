@@ -1,8 +1,6 @@
 package rboot
 
-import
-	"errors"
-
+import "errors"
 
 type Adapter interface {
 	Name() string           // 适配器名称
@@ -46,4 +44,3 @@ func DetectAdapter(name string) (adapterF, error) {
 	}
 	return nil, errors.New("unknown adapter " + name)
 }
-
