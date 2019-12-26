@@ -78,7 +78,7 @@ func (b *boltMemory) Set(key string, value []byte) error {
 	err := b.bolt.Update(func(tx *bolt.Tx) error {
 		b, e := tx.CreateBucketIfNotExists([]byte(b.bucket))
 		if e != nil {
-			logrus.Errorf("bolt: error saving:", e)
+			logrus.Error("bolt: error saving:", e)
 			return e
 		}
 		return b.Put([]byte(key), value)
