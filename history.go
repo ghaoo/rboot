@@ -1,6 +1,5 @@
+// like container/list
 package rboot
-
-import "fmt"
 
 type History struct {
 	prev     *History
@@ -22,13 +21,14 @@ func (h *History) Prev() *History {
 }
 
 type history struct {
-	root History
+	root *History
 	len  int
 }
 
 // 清空或初始化 history
 func (h *history) init() *history {
-	h.root.prev = &h.root
+	h.root = &History{}
+	h.root.prev = h.root
 	h.len = 0
 	return h
 }
@@ -40,16 +40,11 @@ func newHistory() *history {
 
 // 向 history 中插入数据
 func (h *history) insert(e History) *history {
-	e.prev = &h.root
-	h.root = e
+	e.prev = h.root
+	h.root = &e
 	h.len++
+
 	return h
-}
-
-// 获取当前历史信息
-func (h *history) current() *History {
-
-	return &h.root
 }
 
 // 写入
@@ -90,7 +85,7 @@ func (hs Histories) Push(in Message, out []Message) {
 // 用户历史信息
 func (hs Histories) Current(uid string) *History {
 	if _, ok := hs[uid]; !ok {
-		return hs[uid].current()
+		return hs[uid].root
 	}
 
 	return nil
@@ -98,9 +93,7 @@ func (hs Histories) Current(uid string) *History {
 
 // 用户上一条历史信息
 func (hs Histories) Prev(uid string) *History {
-	fmt.Println("aaaaa")
 	if _, ok := hs[uid]; ok {
-		fmt.Println("bbbbb")
 		return hs[uid].root.Prev()
 	}
 
@@ -116,15 +109,16 @@ func (hs Histories) PrevN(uid string, n int) []*History {
 		return nil
 	}
 
+	if n > uh.len {
+		n = uh.len
+	}
+
 	var es = make([]*History, n)
 
-	root := &uh.root
+	root := uh.root
 	for i := 0; i < n; i++ {
+		es[i] = root
 		root = root.prev
-		if root == nil {
-			break
-		}
-		es = append(es, root)
 	}
 
 	return es
