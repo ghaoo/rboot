@@ -28,8 +28,8 @@ func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 		}
 
 	case `history`:
-		//var prev = bot.PrevHistory("other")
-		var prev = bot.PrevHistoryN("other", 5)
+		//var prev = bot.PrevHistory("other") // 上一条历史记录
+		var prev = bot.PrevHistoryN("other", 5) // 最后5条历史记录
 
 		if prev != nil {
 			for k, h := range prev {
@@ -70,7 +70,7 @@ func init() {
 		Ruleset: map[string]string{
 			`ping`: `^!(ping|PING)`,
 			`pong`: `^!(pong|PONG)`,
-			`history`: `^!(?:history|历史)([ \d]?)`,
+			`history`: `^!(?:history|历史)`,
 		},
 		Usage:       "!ping: 随机返回一句话 \n!pong: 返回 PONG",
 		Description: `测试程序和脚本是否运行正常。`,

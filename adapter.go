@@ -1,8 +1,8 @@
 package rboot
 
-import (
-	"fmt"
-)
+import
+	"errors"
+
 
 type Adapter interface {
 	Name() string           // 适配器名称
@@ -33,7 +33,7 @@ func DetectAdapter(name string) (adapterF, error) {
 	}
 
 	if len(adapters) == 0 {
-		return nil, fmt.Errorf("no adapter available")
+		return nil, errors.New("no adapter available")
 	}
 
 	if name == "" {
@@ -42,8 +42,8 @@ func DetectAdapter(name string) (adapterF, error) {
 				return adp, nil
 			}
 		}
-		return nil, fmt.Errorf("multiple adapters available; must choose one")
+		return nil, errors.New("multiple adapters available; must choose one")
 	}
-	return nil, fmt.Errorf("unknown adapter '%s'", name)
+	return nil, errors.New("unknown adapter " + name)
 }
 

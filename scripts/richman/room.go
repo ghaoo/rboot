@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"container/ring"
 	"fmt"
-	"github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"sort"
 	"strconv"
@@ -15,7 +14,7 @@ import (
 
 type GameRoom struct {
 	// 房间唯一标识
-	ID string
+	//ID string
 
 	// 玩家状态
 	User map[*User]GAME_USER_ENUM
@@ -92,9 +91,7 @@ type history struct {
 }
 
 func NewRoom(num int) *GameRoom {
-	uid, _ := uuid.NewV4()
 	room := &GameRoom{
-		ID:            uid.String(),
 		User:          make(map[*User]GAME_USER_ENUM),
 		Money:         make(map[*User]int64),
 		LuckCards:     make(map[LUCK_CARD_TYPE_ENUM]bool, int(LUCK_CARD_TYPE__MAX)),
