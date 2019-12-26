@@ -1,5 +1,7 @@
 package rboot
 
+import "fmt"
+
 type History struct {
 	prev     *History
 	incoming Message
@@ -96,7 +98,9 @@ func (hs Histories) Current(uid string) *History {
 
 // 用户上一条历史信息
 func (hs Histories) Prev(uid string) *History {
+	fmt.Println("aaaaa")
 	if _, ok := hs[uid]; ok {
+		fmt.Println("bbbbb")
 		return hs[uid].root.Prev()
 	}
 

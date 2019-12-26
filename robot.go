@@ -36,7 +36,7 @@ type Robot struct {
 func New() *Robot {
 
 	bot := &Robot{
-		history: Histories{},
+		history: make(Histories),
 		inputChan:  make(chan Message),
 		outputChan: make(chan Message),
 		signalChan: make(chan os.Signal),

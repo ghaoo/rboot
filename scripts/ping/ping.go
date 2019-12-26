@@ -27,11 +27,22 @@ func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 		}
 
 	case `history`:
-		msg = []rboot.Message {
-			{
-				Content: "Prev: " + bot.PrevHistory("cli").Incoming().Content,
-			},
+		var prev = bot.PrevHistory("cli")
+
+		if prev != nil {
+			msg = []rboot.Message {
+				{
+					Content: "Prev: " + prev.Incoming().Content,
+				},
+			}
+		} else {
+			msg = []rboot.Message {
+				{
+					Content: "Prev: NULL",
+				},
+			}
 		}
+
 	}
 
 	return msg
@@ -62,7 +73,7 @@ func init() {
 		Ruleset: map[string]string{
 			`ping`: `^!(ping|PING)`,
 			`pong`: `^!(pong|PONG)`,
-			`history`: `^!(history|历史)`,
+			`history`: `^!(?:history|历史) (\d+)`,
 		},
 		Usage:       "!ping: 随机返回一句话 \n!pong: 返回 PONG",
 		Description: `测试程序和脚本是否运行正常。`,
