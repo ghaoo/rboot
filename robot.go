@@ -39,8 +39,8 @@ type Robot struct {
 	inputChan  chan Message
 	outputChan chan Message
 
-	MatchRule string
-	MatchSub  []string
+	Ruleset string
+	Args    []string
 
 	signalChan chan os.Signal
 	sync.RWMutex
@@ -82,10 +82,10 @@ func process(ctx context.Context, bot *Robot) {
 				if script, mr, ms, ok := bot.matchScript(msg.Content); ok {
 
 					// 匹配的脚本对应规则
-					bot.MatchRule = mr
+					bot.Ruleset = mr
 
-					// 消息匹配集合
-					bot.MatchSub = ms
+					// 消息匹配参数
+					bot.Args = ms
 
 					// 获取脚本执行函数
 					action, err := DirectiveScript(script)
@@ -166,13 +166,6 @@ func (bot *Robot) Stop() error {
 	os.Exit(0)
 
 	return nil
-}
-
-// SetRule 设置消息处理器
-func (bot *Robot) SetRule(rule Rule) {
-	bot.Lock()
-	bot.rule = rule
-	bot.Unlock()
 }
 
 // SyncUsers 同步用户
