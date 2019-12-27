@@ -51,15 +51,15 @@ func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg []rboot.Message) {
 	num := 0
 	var err error
 
-	match := bot.MatchSub
+	args := bot.Args
 
-	if len(match) >= 2 {
+	if len(args) >= 2 {
 
 		if in.Mate["GroupMsg"] != nil && !in.Mate["GroupMsg"].(bool) {
 			return []rboot.Message{{Content: "多人游戏请在群组创建。"}}
 		}
 
-		num, err = strconv.Atoi(match[1])
+		num, err = strconv.Atoi(args[1])
 		if num < 2 {
 			return []rboot.Message{{Content: "人数小于2，创建游戏失败。\n单人游戏可私聊创建。"}}
 		}
@@ -357,16 +357,16 @@ func Dice(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 		return nil
 	}
 
-	match := bot.MatchSub
+	args := bot.Args
 
 	// 获取骰子点数
-	if len(match) < 2 {
+	if len(args) < 2 {
 		return nil
 	}
 
 	var dice int
 
-	dice, err := strconv.Atoi(match[1])
+	dice, err := strconv.Atoi(args[1])
 	if err != nil {
 		logrus.Errorf("骰子解析失败：%v", err)
 		return nil

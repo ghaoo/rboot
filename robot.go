@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -75,6 +76,8 @@ func process(ctx context.Context, bot *Robot) {
 					}
 				}()
 
+				msg.Content = strings.TrimSpace(msg.Content)
+
 				// 将传入消息拷贝到 ctx
 				ctx = context.WithValue(ctx, "input", msg)
 
@@ -113,12 +116,11 @@ func process(ctx context.Context, bot *Robot) {
 			}(*bot, in)
 		}
 	})
-
 }
 
 // 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
-	color.Blue(rbootLogo)
+	color.Green(rbootLogo)
 
 	logrus.Infof("Rboot Version %s", Version)
 	// 设置Robot名称

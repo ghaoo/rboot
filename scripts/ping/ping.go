@@ -10,7 +10,7 @@ import (
 func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 	var msg []rboot.Message
 
-	switch bot.MatchRule {
+	switch bot.Ruleset {
 	case `ping`:
 
 		msg = []rboot.Message{
@@ -56,7 +56,7 @@ func init() {
 			`ping`: `^!(ping|PING)`,
 			`pong`: `^!(pong|PONG)`,
 		},
-		Usage:       "!ping: 随机返回一句话 \n!pong: 返回 PONG",
+		Usage:       "> !ping: 随机返回一句话 \n> !pong: 返回 PONG",
 		Description: `测试程序和脚本是否运行正常。`,
 	})
 }

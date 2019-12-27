@@ -22,7 +22,7 @@ var timers = make(map[int]*timer)
 func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 	in := ctx.Value("input").(rboot.Message)
 
-	switch bot.MatchRule {
+	switch bot.Ruleset {
 	case "timer":
 		return start_timer(in, bot)
 	case "stop_timer":
@@ -43,17 +43,17 @@ func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 // 定时器开始定时
 func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
-	match := bot.MatchSub
+	args := bot.Args
 
 	// 时间
-	t, err := strconv.Atoi(match[1])
+	t, err := strconv.Atoi(args[1])
 	if err != nil {
 		logrus.Error(err)
 		return nil
 	}
 
 	// 时间刻度
-	arc := match[2]
+	arc := args[2]
 
 	// 将时间转换为 time.Duration 类型
 	tD, err := toDuration(t, arc)
@@ -63,7 +63,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	}
 
 	// 脚本名称
-	script := match[3]
+	script := args[3]
 
 	// 检测脚本是否可执行
 	_, err = rboot.DirectiveScript(script)
@@ -72,7 +72,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	}
 
 	// 脚本内命令名称
-	cmd := match[4]
+	cmd := args[4]
 
 	myTimer := &timer{t: time.NewTimer(tD), end: time.Now().Add(tD), cmd: script + "." + cmd}
 
@@ -95,7 +95,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 				return []rboot.Message{{Content: fmt.Sprintf("定时器 %d 执行 %s.%s 命令时发生错误: %v", n, script, cmd, err)}}
 			}
 
-			bot.MatchRule = cmd
+			bot.Ruleset = cmd
 
 			return sf(nil, bot)
 		}
@@ -104,9 +104,9 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 // 定时器结束定时
 func stop_timer(bot *rboot.Robot) []rboot.Message {
-	match := bot.MatchSub
+	args := bot.Args
 
-	tNS := match[1]
+	tNS := args[1]
 	tNum, err := strconv.Atoi(tNS)
 	if err != nil {
 		logrus.Error(err)
@@ -157,27 +157,27 @@ var tickers = make(map[int]*ticker)
 
 // ticker开始计时
 func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
-	match := bot.MatchSub
+	args := bot.Args
 
 	// 时间
-	t, err := strconv.Atoi(match[1])
+	t, err := strconv.Atoi(args[1])
 	if err != nil {
 		logrus.Error(err)
 		return nil
 	}
 
 	// 时间刻度
-	arc := match[2]
+	arc := args[2]
 
 	// 将时间转换为 time.Duration 类型
 	tD, err := toDuration(t, arc)
 	if err != nil {
-		logrus.Error(err)
+		logrus.Errorf("解析时间失败: %v", err)
 		return nil
 	}
 
 	// 脚本名称
-	script := match[3]
+	script := args[3]
 
 	// 检测脚本是否可执行
 	_, err = rboot.DirectiveScript(script)
@@ -186,7 +186,7 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	}
 
 	// 脚本内命令名称
-	cmd := match[4]
+	cmd := args[4]
 
 	myTicker := &ticker{n: 0, t: time.NewTicker(tD), next: time.Now().Add(tD), cmd: script + "." + cmd}
 
@@ -213,7 +213,7 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 				return []rboot.Message{{Content: fmt.Sprintf("续断器 %d 执行 %s.%s 命令时发生错误: %v", n, script, cmd, err)}}
 			}
 
-			bot.MatchRule = cmd
+			bot.Ruleset = cmd
 
 			for _, msg := range sf(nil, bot) {
 				msg.To = in.From
@@ -226,9 +226,9 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 // 关闭 ticker
 func stop_ticker(bot *rboot.Robot) []rboot.Message {
-	match := bot.MatchSub
+	args := bot.Args
 
-	tNS := match[1]
+	tNS := args[1]
 	tNum, err := strconv.Atoi(tNS)
 	if err != nil {
 		logrus.Error(err)
@@ -270,16 +270,16 @@ func init() {
 			`timer`:         `^@(\d+)([小时|H|h|分|分钟|M|m|秒|S|s]{1,2})后执行(.+)\.(.+)`,
 			`stop_timer`:    `^@stop timer (\d+)`,
 			`status_timer`:  `^@timer status`,
-			`ticker`:        `^@每过(\d+)([小时|H|h|分|分钟|M|m|秒|S|s]{1,2})执行(.+)\.(.+)`,
+			`ticker`:        `^@每过(\d+)([小时|H|h|分|分钟|M|m|秒|秒钟|S|s]{1,2})执行(.+)\.(.+)`,
 			`stop_ticker`:   `^@stop ticker (\d+)`,
 			`status_ticker`: `^@ticker status`,
 		},
-		Usage: "@<N小时|分|秒>后执行<脚本名称>.<命令名称>: 定时器开始定时任务并在倒计时结束时执行相应命令 \n" +
-			"@stop timer <N>: 结束对应序号定时器 \n" +
-			"@timer status: 定时器状态 \n" +
-			"@每过<N小时|分|秒>执行<脚本名称>.<命令名称>: 每过相应时间执行一次对应脚本命令（循环） \n" +
-			"@stop ticker <N>: 结束对应序号续断器 \n" +
-			"@ticker status: 续断器状态",
+		Usage: "> @<N小时|分|秒>后执行<脚本名称>.<命令名称>: 定时器开始定时任务并在倒计时结束时执行相应命令 \n" +
+			"> @stop timer <N>: 结束对应序号定时器 \n" +
+			"> @timer status: 定时器状态 \n" +
+			"> @每过<N小时|分|秒>执行<脚本名称>.<命令名称>: 每过相应时间执行一次对应脚本命令（循环） \n" +
+			"> @stop ticker <N>: 结束对应序号续断器 \n" +
+			"> @ticker status: 续断器状态",
 		Description: `定时任务脚本。查看帮助信息: !help timing`,
 	})
 }
@@ -292,7 +292,7 @@ func toDuration(t int, arc string) (time.Duration, error) {
 		return time.Duration(t) * time.Hour, nil
 	case "分", "分钟", "M", "m":
 		return time.Duration(t) * time.Minute, nil
-	case "秒", "S", "s":
+	case "秒", "秒钟", "S", "s":
 		return time.Duration(t) * time.Second, nil
 	}
 

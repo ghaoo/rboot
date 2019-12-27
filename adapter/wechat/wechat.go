@@ -135,20 +135,23 @@ func (w *wx) run() {
 				content = strings.TrimSpace(strings.TrimPrefix(content, atme))
 			}
 
-			w.in <- rboot.Message{
-				Channel: "wechat",
-				To:      to,
-				From:    from,
-				Sender:  sender,
-				Content: content,
-				Data:    msg.OriginalMsg,
-				Mate: map[string]interface{}{
-					"AtMe":         msg.AtMe,
-					"SendByMySelf": msg.IsSendedByMySelf,
-					"SendByFriend": friend,
-					"GroupMsg":     msg.IsGroupMsg,
-				},
+			if !msg.IsGroupMsg || msg.AtMe {
+				w.in <- rboot.Message{
+					Channel: "wechat",
+					To:      to,
+					From:    from,
+					Sender:  sender,
+					Content: content,
+					Data:    msg.OriginalMsg,
+					Mate: map[string]interface{}{
+						"AtMe":         msg.AtMe,
+						"SendByMySelf": msg.IsSendedByMySelf,
+						"SendByFriend": friend,
+						"GroupMsg":     msg.IsGroupMsg,
+					},
+				}
 			}
+
 		}
 
 		go func() {

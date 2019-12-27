@@ -3,8 +3,8 @@
 *.swp
 *.swo
 #*.*#
-.exe
+*.exe
 .idea
 .logs
-*.log
 .data
+*.log
