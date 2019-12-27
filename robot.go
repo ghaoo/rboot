@@ -8,13 +8,28 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/fatih/color"
 	"github.com/ghaoo/rboot/tools/env"
 	"github.com/sirupsen/logrus"
 )
 
 var AppName string
 
-const Version = "3.1.0"
+const (
+	rbootLogo = `
+===================================================================
+*   ________  ____  ____  ____  ______   ________  ____  ______   *
+*   ___/ __ \/ __ )/ __ \/ __ \/_  __/   ___/ __ )/ __ \/_  __/   *
+*   __/ /_/ / __  / / / / / / / / /      __/ __  / / / / / /      *
+*   _/ _  _/ /_/ / /_/ / /_/ / / /       _/ /_/ / /_/ / / /       *
+*   /_/ |_/_____/\____/\____/ /_/        /_____/\____/ /_/        *
+*                                                                 *
+*                      Powerful and Happy                         *
+===================================================================
+`
+
+	Version = "1.1.0"
+)
 
 type Robot struct {
 	adapter    Adapter
@@ -103,15 +118,16 @@ func process(ctx context.Context, bot *Robot) {
 
 // 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
+	color.Blue(rbootLogo)
 
-	logrus.Debugf("Rboot Version %s", Version)
+	logrus.Infof("Rboot Version %s", Version)
 	// 设置Robot名称
 	AppName = os.Getenv(`RBOOT_NAME`)
 
 	// 初始化
 	bot.initialize()
 
-	logrus.Debug(`皮皮虾，我们走~~~~~~~`)
+	logrus.Info(`皮皮虾，我们走~~~~~~~`)
 
 	// 上下文
 	ctx, cancel := context.WithCancel(context.Background())
@@ -145,7 +161,7 @@ func (bot *Robot) Stop() error {
 
 	runtime.SetFinalizer(bot, nil)
 
-	logrus.Debug(`皮皮虾，快停下~~~`)
+	logrus.Info(`皮皮虾，快停下~~~`)
 
 	os.Exit(0)
 

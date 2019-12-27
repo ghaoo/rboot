@@ -1,6 +1,8 @@
 package rboot
 
-import "regexp"
+import (
+	"regexp"
+)
 
 type Rule interface {
 	Match(pattern, msg string) ([]string, bool)
