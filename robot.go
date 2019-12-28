@@ -40,11 +40,12 @@ type Robot struct {
 	inputChan  chan Message
 	outputChan chan Message
 
+	Router  *Router
 	Ruleset string
 	Args    []string
 
 	signalChan chan os.Signal
-	sync.RWMutex
+	mu         sync.RWMutex
 }
 
 // New 获取Robot实例
@@ -56,6 +57,8 @@ func New() *Robot {
 		signalChan: make(chan os.Signal),
 		rule:       new(Regex),
 	}
+
+	bot.Router = NewRouter()
 
 	return bot
 }
@@ -159,24 +162,22 @@ func (bot *Robot) Go() {
 }
 
 // 皮皮虾，快停下~~~~~~~~~
-func (bot *Robot) Stop() error {
+func (bot *Robot) Stop() {
 
 	runtime.SetFinalizer(bot, nil)
 
 	logrus.Info(`皮皮虾，快停下~~~`)
 
 	os.Exit(0)
-
-	return nil
 }
 
 // SyncUsers 同步用户
 func (bot *Robot) SyncUsers(user []User) {
-	bot.Lock()
+	bot.mu.Lock()
 	if len(user) > 0 {
 		bot.contacts = user
 	}
-	bot.Unlock()
+	bot.mu.Unlock()
 }
 
 // Send 发送消息
@@ -203,9 +204,9 @@ func (bot *Robot) SendText(text string, to ...User) {
 
 // 设置储存器
 func (bot *Robot) SetBrain(brain Brain) {
-	bot.Lock()
+	bot.mu.Lock()
 	bot.brain = brain
-	bot.Unlock()
+	bot.mu.Unlock()
 }
 
 // Brain set ...
@@ -242,12 +243,12 @@ func (bot *Robot) matchScript(msg string) (script, matchRule string, match []str
 func (bot *Robot) initialize() {
 
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
-	adp_name := os.Getenv(`RBOOT_ADAPTER`)
+	adpName := os.Getenv(`RBOOT_ADAPTER`)
 	// 默认使用 cli
-	if adp_name == "" {
-		adp_name = "cli"
+	if adpName == "" {
+		adpName = "cli"
 	}
-	adp, err := DetectAdapter(adp_name)
+	adp, err := DetectAdapter(adpName)
 
 	if err != nil {
 		panic(`Detect adapter error: ` + err.Error())
@@ -261,18 +262,21 @@ func (bot *Robot) initialize() {
 	bot.outputChan = adapter.Outgoing()
 
 	// 储存器
-	brain_name := os.Getenv(`RBOOT_BRAIN`)
+	brainName := os.Getenv(`RBOOT_BRAIN`)
 	// 默认使用 memory
-	if brain_name == "" {
-		brain_name = "memory"
+	if brainName == "" {
+		brainName = "memory"
 	}
-	brain, err := DetectBrain(brain_name)
+	brain, err := DetectBrain(brainName)
 
 	if err != nil {
 		panic(`Detect brain error: ` + err.Error())
 	}
 
 	bot.brain = brain()
+
+	// 开启web服务
+	go bot.Router.run()
 }
 
 func init() {

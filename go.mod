@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/boltdb/bolt v1.3.1
 	github.com/fatih/color v1.7.0
+	github.com/gorilla/mux v1.7.3
 	github.com/h2non/filetype v1.0.10
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.11 // indirect
