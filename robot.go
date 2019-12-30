@@ -135,7 +135,7 @@ func (bot *Robot) Go() {
 	// 初始化
 	bot.initialize()
 
-	logrus.Info(`皮皮虾，我们走~~~~~~~`)
+	logrus.Info("皮皮虾，我们走~~~~~~~")
 
 	// 上下文
 	ctx, cancel := context.WithCancel(context.Background())
@@ -169,7 +169,7 @@ func (bot *Robot) Stop() {
 
 	runtime.SetFinalizer(bot, nil)
 
-	logrus.Info(`皮皮虾，快停下~~~`)
+	logrus.Info("皮皮虾，快停下~~~~~~~~")
 
 	os.Exit(0)
 }
@@ -251,6 +251,8 @@ func (bot *Robot) initialize() {
 	if adpName == "" {
 		adpName = "cli"
 	}
+
+	logrus.Warn("未指定 adapter，默认使用 cli")
 	adp, err := DetectAdapter(adpName)
 
 	if err != nil {
@@ -270,6 +272,7 @@ func (bot *Robot) initialize() {
 	if brainName == "" {
 		brainName = "memory"
 	}
+	logrus.Warn("未指定 brain，默认使用 memory")
 	brain, err := DetectBrain(brainName)
 
 	if err != nil {
@@ -286,9 +289,5 @@ func init() {
 	color.New(color.FgGreen).Fprintln(os.Stdout, rbootLogo)
 
 	// 加载配置
-	err := env.Load()
-
-	if err != nil {
-		logrus.Error(`Load env config error: `, err.Error())
-	}
+	env.Load()
 }

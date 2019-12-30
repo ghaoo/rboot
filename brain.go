@@ -2,6 +2,7 @@ package rboot
 
 import (
 	"fmt"
+	"sync"
 )
 
 type Brain interface {
@@ -42,4 +43,55 @@ func DetectBrain(name string) (func() Brain, error) {
 		return nil, fmt.Errorf("multiple brains available; must choose one")
 	}
 	return nil, fmt.Errorf("unknown brain '%s'", name)
+}
+
+// memory brain
+type memory struct {
+	mu    sync.Mutex
+	items map[string][]byte
+}
+
+// New constructs memory
+func newMemory() Brain {
+	return &memory{
+		mu:    sync.Mutex{},
+		items: make(map[string][]byte),
+	}
+}
+
+// save ...
+func (m *memory) Set(key string, value []byte) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.items[key] = value
+
+	return nil
+}
+
+// find ...
+func (m *memory) Get(key string) []byte {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	v, ok := m.items[key]
+	if !ok {
+		return []byte{}
+	}
+	return v
+}
+
+// delete ...
+func (m *memory) Remove(key string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	delete(m.items, key)
+
+	return nil
+}
+
+// register brain ...
+func init() {
+	RegisterBrain("memory", newMemory)
 }
