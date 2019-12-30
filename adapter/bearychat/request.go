@@ -10,7 +10,3 @@ type Request struct {
 	ChannelName string `json:"channel_name,omitempty"`
 	UserName    string `json:"user_name,omitempty"`
 }
-
-func (req Request) build() {
-
-}

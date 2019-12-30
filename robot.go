@@ -2,6 +2,7 @@ package rboot
 
 import (
 	"context"
+	"github.com/fatih/color"
 	"os"
 	"os/signal"
 	"runtime"
@@ -9,7 +10,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/fatih/color"
 	"github.com/ghaoo/rboot/tools/env"
 	"github.com/sirupsen/logrus"
 )
@@ -58,7 +58,7 @@ func New() *Robot {
 		rule:       new(Regex),
 	}
 
-	bot.Router = NewRouter()
+	bot.Router = newRouter()
 
 	return bot
 }
@@ -110,6 +110,10 @@ func process(ctx context.Context, bot *Robot) {
 							resp.From = msg.To
 							resp.To = msg.From
 
+							if resp.Channel == "" {
+								resp.Channel = msg.Channel
+							}
+
 							// send ...
 							bot.outputChan <- resp
 						}
@@ -123,7 +127,6 @@ func process(ctx context.Context, bot *Robot) {
 
 // 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
-	color.Green(rbootLogo)
 
 	logrus.Infof("Rboot Version %s", Version)
 	// 设置Robot名称
@@ -280,6 +283,7 @@ func (bot *Robot) initialize() {
 }
 
 func init() {
+	color.New(color.FgGreen).Fprintln(os.Stdout, rbootLogo)
 
 	// 加载配置
 	err := env.Load()

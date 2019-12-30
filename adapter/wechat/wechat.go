@@ -67,9 +67,9 @@ func (w *wx) run() {
 
 	go func() {
 		for msg := range w.out {
-			if len(msg.Attachment) > 0 {
-				for _, p := range msg.Attachment {
-					w.client.SendFile(p, msg.To.ID)
+			if len(msg.Attachments) > 0 {
+				for _, p := range msg.Attachments {
+					w.client.SendFile(p.Path, msg.To.ID)
 				}
 			}
 			w.client.SendTextMsg(msg.Content, msg.To.ID)
@@ -137,12 +137,10 @@ func (w *wx) run() {
 
 			if !msg.IsGroupMsg || msg.AtMe {
 				w.in <- rboot.Message{
-					Channel: "wechat",
 					To:      to,
 					From:    from,
 					Sender:  sender,
 					Content: content,
-					Data:    msg.OriginalMsg,
 					Mate: map[string]interface{}{
 						"AtMe":         msg.AtMe,
 						"SendByMySelf": msg.IsSendedByMySelf,

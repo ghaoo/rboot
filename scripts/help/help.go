@@ -27,7 +27,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 		if len(bot.Args) < 2 || bot.Args[1] == "" {
 			content := ""
 			for scr, spt := range scripts {
-				content += fmt.Sprintf("> *%s*:\n", scr)
+				content += fmt.Sprintf("> **%s**:\n", scr)
 				k := 0
 				for ruleset := range spt.Ruleset {
 					k++
@@ -44,7 +44,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 
 			scr := bot.Args[1]
 			spt := scripts[scr]
-			content := fmt.Sprintf("> *%s*:\n", scr)
+			content := fmt.Sprintf("> **%s**:\n", scr)
 			k := 0
 			for ruleset := range spt.Ruleset {
 				k++
@@ -58,7 +58,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 		content := ""
 
 		for scr, spt := range scripts {
-			content += fmt.Sprintf("*%s*: %s\n*Usage*:\n%s", scr, spt.Description, spt.Usage)
+			content += fmt.Sprintf("**%s**: %s\n**Usage**:\n%s", scr, spt.Description, spt.Usage)
 			content += "\n\n"
 		}
 
