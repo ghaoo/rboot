@@ -141,4 +141,3 @@ func (c *cli) writeString(str string) error {
 func init() {
 	RegisterAdapter(`cli`, newCli)
 }
-
