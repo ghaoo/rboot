@@ -108,7 +108,7 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 func (b *beary) run(bot *rboot.Robot) {
 	go b.listenOutgoing()
 
-	bot.Router.HandleFunc("/beary", b.listenIncoming).Methods("POST").Name("beary_listen_message")
+	bot.Router.HandleFunc("/beary", b.listenIncoming).Methods("GET").Name("beary_listen_message")
 }
 
 func init() {

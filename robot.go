@@ -252,7 +252,7 @@ func (bot *Robot) initialize() {
 		logrus.Warn("未指定 adapter，默认使用 cli")
 		adpName = "cli"
 	}
-
+	logrus.Info("已连接 ", adpName)
 	adp, err := DetectAdapter(adpName)
 
 	if err != nil {
