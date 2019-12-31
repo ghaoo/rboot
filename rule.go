@@ -19,3 +19,4 @@ func (reg *Regex) Match(pattern, msg string) ([]string, bool) {
 
 	return nil, false
 }
+
