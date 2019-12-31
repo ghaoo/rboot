@@ -357,22 +357,30 @@ func Dice(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 		return nil
 	}
 
-	args := bot.Args
-
-	// 获取骰子点数
-	if len(args) < 2 {
-		return nil
-	}
-
 	var dice int
 
-	dice, err := strconv.Atoi(args[1])
-	if err != nil {
-		logrus.Errorf("骰子解析失败：%v", err)
-		return nil
-	}
+	switch bot.Ruleset {
+	case `shake`:
+		args := bot.Args
 
-	dice -= 3
+		// 获取骰子点数
+		if len(args) < 2 {
+			return nil
+		}
+
+		dice, err := strconv.Atoi(args[1])
+		if err != nil {
+			logrus.Errorf("骰子解析失败：%v", err)
+			return nil
+		}
+
+		dice -= 3
+
+	case `roll`:
+		dice = ShakeDice()
+
+		bot.SendText(fmt.Sprintf("点数: %d", dice), in.From)
+	}
 
 	room.Dice(dice, user)
 

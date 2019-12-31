@@ -249,10 +249,10 @@ func (bot *Robot) initialize() {
 	adpName := os.Getenv(`RBOOT_ADAPTER`)
 	// 默认使用 cli
 	if adpName == "" {
+		logrus.Warn("未指定 adapter，默认使用 cli")
 		adpName = "cli"
 	}
 
-	logrus.Warn("未指定 adapter，默认使用 cli")
 	adp, err := DetectAdapter(adpName)
 
 	if err != nil {
@@ -270,9 +270,10 @@ func (bot *Robot) initialize() {
 	brainName := os.Getenv(`RBOOT_BRAIN`)
 	// 默认使用 memory
 	if brainName == "" {
+		logrus.Warn("未指定 brain，默认使用 memory")
 		brainName = "memory"
 	}
-	logrus.Warn("未指定 brain，默认使用 memory")
+
 	brain, err := DetectBrain(brainName)
 
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
-	"strings"
 )
 
 // bearychat adapter
@@ -92,10 +91,8 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.Text = strings.TrimPrefix(req.Text, os.Getenv("BEARYCHAT_TRIGGER_WORD"))
-
-	fmt.Println("in channel---", req.ChannelName)
-	fmt.Println("from user---", req.UserName)
+	// 是否需要删除 bearychat 设置的 TRIGGER_WORD（和 scripts 相关）
+	// req.Text = strings.TrimPrefix(req.Text, os.Getenv("TRIGGER_WORD"))
 
 	msg := rboot.Message{
 		Channel:     req.ChannelName,

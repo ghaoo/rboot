@@ -27,11 +27,11 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 		if len(bot.Args) < 2 || bot.Args[1] == "" {
 			content := ""
 			for scr, spt := range scripts {
-				content += fmt.Sprintf("> **%s**:\n", scr)
+				content += fmt.Sprintf("  **%s**:\n", scr)
 				k := 0
 				for ruleset := range spt.Ruleset {
 					k++
-					content += fmt.Sprintf("> %d. %s\n", k, ruleset)
+					content += fmt.Sprintf("  %d. %s\n", k, ruleset)
 				}
 
 				content += "\n"
@@ -44,11 +44,11 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 
 			scr := bot.Args[1]
 			spt := scripts[scr]
-			content := fmt.Sprintf("> **%s**:\n", scr)
+			content := fmt.Sprintf("  **%s**:\n", scr)
 			k := 0
 			for ruleset := range spt.Ruleset {
 				k++
-				content += fmt.Sprintf("> %d. %s\n", k, ruleset)
+				content += fmt.Sprintf("  %d. %s\n", k, ruleset)
 			}
 
 			return []rboot.Message{{Content: content}}

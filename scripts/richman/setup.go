@@ -15,7 +15,7 @@ func setup(ctx context.Context, bot *rboot.Robot) (msg []rboot.Message) {
 	switch bot.Ruleset {
 	case `start`:
 		return StartGame(in, bot)
-	case `shake`:
+	case `shake`, `roll`:
 		return Dice(in, bot)
 	case `create1`, `create2`:
 		return CreateGameRoom(in, bot)
@@ -46,6 +46,7 @@ func init() {
 			Ruleset: map[string]string{
 				`start`:   `^(?:开始游戏|游戏开始)$`,
 				`shake`:   `.*[&lt;]{1}gameext type="2" content="(\d+)" [&gt;]{1}`,
+				`roll`:    `^roll|掷骰子`,
 				`create1`: `^创建游戏`,
 				`create2`: `^创建(\d+)人游戏`,
 				`join`:    `^加入游戏`,
