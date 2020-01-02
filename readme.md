@@ -33,7 +33,7 @@ RBOOT_ALIAS=rboot
 # 指定适配器 wechat cli
 RBOOT_ADAPTER=wechat
 # 指定储存器
-RBOOT_MEMORIZER=memory
+RBOOT_BRAIN=memory
 # boltdb 储存文件
 BOLT_DB_FILE=.data/db/rboot.db
 # 模拟大富翁游戏地图
@@ -47,7 +47,7 @@ package main
 
 import (
 	_ "github.com/ghaoo/rboot/adapter"
-	_ "github.com/ghaoo/rboot/memorizer"
+	_ "github.com/ghaoo/rboot/brains"
 	_ "github.com/ghaoo/rboot/scripts"
 
 	"github.com/ghaoo/rboot"
