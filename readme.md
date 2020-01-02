@@ -6,7 +6,7 @@
 ## 安装
 
 ```bash
-go get -v github.com/ghaoo/rboot
+go get -v github.com/ghaoo/rboot/robot
 ```
 
 ### 快速开始
@@ -33,7 +33,7 @@ RBOOT_ALIAS=rboot
 # 指定适配器 wechat cli
 RBOOT_ADAPTER=wechat
 # 指定储存器
-RBOOT_MEMORIZER=memory
+RBOOT_BRAIN=bolt
 # boltdb 储存文件
 BOLT_DB_FILE=.data/db/rboot.db
 # 模拟大富翁游戏地图
@@ -104,7 +104,7 @@ rboot.RegisterScripts(`echo`, rboot.Script{
 - `timing`: 定时任务脚本
 - `richman`: 大富翁模拟游戏，只支持微信，只用于学习
 
-运行 `richman` 脚本需要配置地图文件位置 `MAP_FILE`, 默认地图文件在 `example` 文件夹下 `maps` 下
+运行 `richman` 脚本需要配置地图文件位置 `MAP_FILE`, 默认地图文件在 `rboot` 文件夹下 `maps` 下
 
 
 

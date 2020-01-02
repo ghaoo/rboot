@@ -2,7 +2,6 @@ package rboot
 
 import (
 	"context"
-	"github.com/fatih/color"
 	"os"
 	"os/signal"
 	"runtime"
@@ -10,6 +9,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/fatih/color"
 	"github.com/ghaoo/rboot/tools/env"
 	"github.com/sirupsen/logrus"
 )
