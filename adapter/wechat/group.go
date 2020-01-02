@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ghaoo/rboot/adapter/wechat/sdk"
 	"strconv"
 	"time"
+
+	"github.com/ghaoo/rboot/adapter/wechat/sdk"
 )
 
 type groupUser struct {

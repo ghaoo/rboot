@@ -3,10 +3,11 @@ package bearychat
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ghaoo/rboot"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+
+	"github.com/ghaoo/rboot"
+	"github.com/sirupsen/logrus"
 )
 
 // bearychat adapter

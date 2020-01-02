@@ -1,9 +1,10 @@
 package wechat
 
 import (
+	"strings"
+
 	"github.com/ghaoo/rboot"
 	"github.com/ghaoo/rboot/adapter/wechat/sdk"
-	"strings"
 )
 
 type wx struct {
