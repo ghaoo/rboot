@@ -1,13 +1,20 @@
 *.sublime-*
 .DS_Store
 .autowatcher
+
+*.exe
+*.exe~
+*.dll
+*.so
+
 *.swp
 *.swo
-#*.*#
-*.exe
+*.log
+
 .idea
 .logs
 .data
-*.log
+.vscode
+.vs
 
 rboot
