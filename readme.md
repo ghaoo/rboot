@@ -1,4 +1,4 @@
-# Rboot 
+# Rboot [![Build Status](https://travis-ci.org/ghaoo/rboot.svg?branch=master)](https://travis-ci.org/ghaoo/rboot)
 
 `rboot` 是一个使用 `golang` 写的，简单、高效的聊天机器人框架，易于扩展，它可以工作在不同的聊天服务上，并通过扩展脚本可实现 `聊天`、`工作助手`、`服务监控`、`警报触发` 等功能。
 
@@ -31,7 +31,7 @@ touch .env
 RBOOT_NAME=RBOOT
 RBOOT_ALIAS=rboot
 # 指定适配器 wechat cli
-RBOOT_ADAPTER=wechat
+RBOOT_ADAPTER=cli
 # 指定储存器
 RBOOT_BRAIN=bolt
 # boltdb 储存文件

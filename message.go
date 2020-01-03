@@ -14,6 +14,7 @@ type Message struct {
 type Attachment struct {
 	Title  string   `json:"title,omitempty"`
 	Text   string   `json:"text,omitempty"`
+	Color  string   `json:"color,omitempty"`
 	Images []string `json:"images,omitempty"`
 	Path   string   `json:"path,omitempty"`
 }
