@@ -7,13 +7,13 @@ env:
   global:
     - RBOOT_ADAPTER=cli
     - RBOOT_BRAIN=memory
-    - WEB_SERVER_ADDR=:7856
 
 install:
  - go mod tidy
 
 before_script:
-  - cd rboot
+  - go test -v
+  - cd example
 
 script:
   - go build

@@ -8,13 +8,12 @@ type Message struct {
 	Content     string                 `json:"content"`              // 内容
 	Broadcast   bool                   `json:"broadcast,omitempty"`  // 广播消息
 	Mate        map[string]interface{} `json:"mate,omitempty"`       // 附加信息
-	Attachments []Attachment           `json:"attachment,omitempty"` // 附件位置
+	Attachments []Attachment           `json:"attachment,omitempty"` // 附件
 }
 
 type Attachment struct {
 	Title  string   `json:"title,omitempty"`
 	Text   string   `json:"text,omitempty"`
-	Color  string   `json:"color,omitempty"`
 	Images []string `json:"images,omitempty"`
 	Path   string   `json:"path,omitempty"`
 }
