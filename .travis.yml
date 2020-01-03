@@ -12,7 +12,6 @@ install:
  - go mod tidy
 
 before_script:
-  - go test -v
   - cd example
 
 script:
