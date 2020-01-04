@@ -28,8 +28,6 @@ func (w *wx) createChatRoom(users []groupUser) error {
 
 	bs, _ := json.Marshal(data)
 
-	fmt.Printf("-----\n%s\n-----", data)
-
 	var resp sdk.Response
 
 	err := w.client.Execute(url, bytes.NewReader(bs), &resp)

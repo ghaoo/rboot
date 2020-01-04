@@ -68,9 +68,9 @@ func (w *wx) run() {
 
 	go func() {
 		for msg := range w.out {
-			if len(msg.Attachments) > 0 {
-				for _, p := range msg.Attachments {
-					w.client.SendFile(p.Path, msg.To.ID)
+			if msg.Mate["file"] != nil {
+				for _, p := range msg.Mate["file"].([]string) {
+					w.client.SendFile(p, msg.To.ID)
 				}
 			}
 			w.client.SendTextMsg(msg.Content, msg.To.ID)

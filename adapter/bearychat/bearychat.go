@@ -49,18 +49,16 @@ func (b *beary) listenOutgoing() {
 			User:     msg.To.ID,
 		}
 
-		fmt.Println("out channel----", msg.Channel)
-		fmt.Println("out user----", res.User)
-
-		var attCount = len(msg.Attachments)
-		var atts = make([]Attachment, len(msg.Attachments))
+		var mate = msg.Mate["images"].([]map[string]interface{})
+		var attCount = len(mate)
+		var atts = make([]Attachment, attCount)
 		if attCount > 0 {
-			for _, matt := range msg.Attachments {
+			for _, matt := range mate {
 				att := Attachment{
-					Title:  matt.Title,
-					Text:   matt.Text,
-					Color:  matt.Color,
-					Images: matt.Images,
+					Title:  matt["title"].(string),
+					Text:   matt["text"].(string),
+					Color:  matt["color"].(string),
+					Images: matt["images"].([]string),
 				}
 
 				atts = append(atts, att)
@@ -100,7 +98,6 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 		From:        rboot.User{ID: req.UserName, Name: req.UserName},
 		Sender:      rboot.User{ID: req.UserName, Name: req.UserName},
 		Content:     req.Text,
-		Attachments: nil,
 	}
 
 	b.in <- msg

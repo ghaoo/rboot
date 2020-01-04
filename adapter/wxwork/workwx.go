@@ -1,25 +1,33 @@
-package adapter
+package wxwork
 
 import (
+	"fmt"
 	"github.com/ghaoo/rboot"
 	"github.com/ghaoo/wxwork"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"net/http"
 )
 
-type wework struct {
+type workwx struct {
 	in  chan rboot.Message
 	out chan rboot.Message
+
+	agent *wxwork.Agent
 }
 
 func newWework(bot *rboot.Robot) rboot.Adapter {
-	w := &wework{
-		in:  make(chan rboot.Message),
-		out: make(chan rboot.Message),
+	wx := &workwx{
+		in:    make(chan rboot.Message),
+		out:   make(chan rboot.Message),
+		agent: agent(),
 	}
 
-	agent := agent()
-	bot.Router.HandleFunc("/wxwork", agent.CallbackVerify)
+	bot.Router.HandleFunc("/wxwork", wx.parseRecvHandle).Methods("POST", "GET")
 
-	return w
+	go wx.listenOutgoing()
+
+	return wx
 }
 
 func agent() *wxwork.Agent {
@@ -29,20 +37,68 @@ func agent() *wxwork.Agent {
 	return a
 }
 
-func (w *wework) Name() string {
+func (wx *workwx) Name() string {
 	return "wework"
 }
 
-func (w *wework) Incoming() chan rboot.Message {
-	return w.in
+func (wx *workwx) Incoming() chan rboot.Message {
+	return wx.in
 }
 
-func (w *wework) Outgoing() chan rboot.Message {
-	return w.out
+func (wx *workwx) Outgoing() chan rboot.Message {
+	return wx.out
+}
+
+func (wx *workwx) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	signature := query.Get("msg_signature")
+	timestamp := query.Get("timestamp")
+	nonce := query.Get("nonce")
+
+	defer r.Body.Close()
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logrus.Errorln("read callback msg err:", err)
+	}
+
+	recv, err := wx.agent.ParseRecvMessage(signature, timestamp, nonce, data)
+	if err != nil {
+		logrus.Errorln("parse receive msg err:", err)
+	}
+
+	msg := rboot.Message{
+		Channel: "wxwork",
+		From: rboot.User{ID: recv.FromUsername, Name: recv.FromUsername},
+		Content: recv.Content,
+		Location: rboot.Location{
+			Lat: recv.LocationX,
+			Long: recv.LocationY,
+		},
+		Mate: map[string]interface{}{"originMsg": recv},
+	}
+
+	wx.in <- msg
+
 }
 
 // 监听 rboot Outgoing
-func (w *wework) listenOutgoing() {}
+func (wx *workwx) listenOutgoing() {
+	for msg := range wx.out {
+		var wmsg *wxwork.Message
+		switch msg.Mate["msgtype"] {
+		default:
+			wmsg = wxwork.NewTextMessage(msg.Content)
+		}
+
+		wmsg.SetUser(msg.To.ID)
+
+		_, err := wx.agent.SendMessage(wmsg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
 
 func init() {
 	rboot.RegisterAdapter("wxwork", newWework)
