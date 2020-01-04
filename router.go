@@ -67,6 +67,7 @@ func (r *Router) Handle(path string, handler http.Handler) *route {
 func (r *Router) run() {
 	// 注册路由
 	r.mux.HandleFunc("/", rbootHome)
+
 	for _, route := range r.routes {
 		var routeMux *mux.Route
 		if route.handler != nil {
@@ -112,4 +113,14 @@ func rbootHome(w http.ResponseWriter, r *http.Request) {
 
 	var out = `<div style="color: green;width: 100%;text-align: center;margin-top: 10%;font-size: 18px;"><pre style="word-wrap: break-word; white-space: pre-wrap;">` + rbootLogo + `</pre></div>`
 	w.Write([]byte(out))
+}
+
+func (r *Router) List() map[string][]string {
+	var rl = make(map[string][]string, len(r.routes))
+
+	for _, route := range r.routes {
+		rl[route.path] = route.methods
+	}
+
+	return rl
 }
