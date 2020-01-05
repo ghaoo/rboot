@@ -7,6 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 type workwx struct {
@@ -31,8 +33,17 @@ func newWework(bot *rboot.Robot) rboot.Adapter {
 }
 
 func agent() *wxwork.Agent {
-	a := wxwork.NewAgent("ww7a4b068e86da007a", "Qvy3I_NYQsRDXp8btU9ips4BuflVmZUtMUiDPH4I2Rg", 1000002)
-	a.SetCallback("6OxE5PFldOqKnilqC6CWAH", "Ke6rh3wv1KJvJOJcaeOVL41Y54AN2KwiIPHq3DMxNDo")
+	corpid := os.Getenv("WORKWX_CORP_ID")
+	secret := os.Getenv("WORKWX_SECRET")
+	agentid, err := strconv.Atoi(os.Getenv("WORKWX_AGENT_ID"))
+	if err != nil {
+		panic(err)
+	}
+	a := wxwork.NewAgent(corpid, secret, agentid)
+
+	token := os.Getenv("WORKWX_RECV_TOKEN")
+	encodingAESKey := os.Getenv("WORKWX_RECV_AES_KEY")
+	a.SetCallback(token, encodingAESKey)
 
 	return a
 }
