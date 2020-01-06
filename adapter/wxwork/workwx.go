@@ -79,9 +79,13 @@ func (wx *workwx) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 		logrus.Errorln("parse receive msg err:", err)
 	}
 
+	header := rboot.Header{}
+	header.Set("agent_id", strconv.Itoa(wx.agent.AgentID))
 	msg := rboot.Message{
+		Header:  header,
 		Channel: "wxwork",
 		From:    rboot.User{ID: recv.FromUsername, Name: recv.FromUsername},
+		Sender:  rboot.User{ID: recv.FromUsername, Name: recv.FromUsername},
 		Content: recv.Content,
 		Location: rboot.Location{
 			Lat:  recv.LocationX,
@@ -98,9 +102,21 @@ func (wx *workwx) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 func (wx *workwx) listenOutgoing() {
 	for msg := range wx.out {
 		var wmsg *wxwork.Message
-		switch msg.Mate["msgtype"] {
+		msgtype := msg.Header.Get("msgtype")
+		title := msg.Header.Get("title")
+		desc := msg.Header.Get("description")
+		mediaid := msg.Header.Get("mediaid")
+		url := msg.Header.Get("url")
+		switch msgtype {
 		case MSG_TYPE_MARKDOWN:
 			wmsg = wxwork.NewMarkdownMessage(msg.Content)
+		case MSG_TYPE_IMAGE, MSG_TYPE_VOICE, MSG_TYPE_FILE:
+			wmsg = wxwork.NewMediaMessage(msgtype, msg.Header.Get("mediaid"))
+		case MSG_TYPE_VIDEO:
+			wmsg = wxwork.NewVideoMessage(title, desc, mediaid)
+		case MSG_TYPE_TEXTCARD:
+			btntxt := msg.Header.Get("btntxt")
+			wmsg = wxwork.NewTextCardMessage(title, desc, url, btntxt)
 		default:
 			wmsg = wxwork.NewTextMessage(msg.Content)
 		}

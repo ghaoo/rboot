@@ -96,8 +96,8 @@ func process(ctx context.Context, bot *Robot) {
 					bot.Args = ms
 
 					if bot.Debug {
-						df := "\n-发送人: %s\n-接收人: %s\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v"
-						logrus.Debugf(df, msg.From.ID, msg.To.ID, msg.Content, script, mr, ms[1:])
+						df := "\n- 发送人: %s\n- 接收人: %s\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n- 头信息: %v"
+						logrus.Debugf(df, msg.From.ID, msg.To.ID, msg.Content, script, mr, ms[1:], msg.Header)
 					}
 
 					// 获取脚本执行函数
@@ -210,6 +210,11 @@ func (bot *Robot) SendText(text string, to ...User) {
 		bot.outputChan <- Message{Content: text}
 	}
 
+}
+
+// 获取正在使用的适配器
+func (bot *Robot) Adapter() string {
+	return bot.adapter.Name()
 }
 
 // 设置储存器

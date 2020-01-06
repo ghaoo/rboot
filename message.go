@@ -1,6 +1,9 @@
 package rboot
 
+import "net/textproto"
+
 type Message struct {
+	Header
 	Channel   string                 `json:"channel,omitempty"`   // 通道
 	To        User                   `json:"to"`                  // 发给的用户
 	From      User                   `json:"from"`                // 来源(群组或个人)
@@ -14,4 +17,22 @@ type Message struct {
 type Location struct {
 	Lat  float64
 	Long float64
+}
+
+type Header map[string][]string
+
+func (h Header) Get(key string) string {
+	return textproto.MIMEHeader(h).Get(key)
+}
+
+func (h Header) Add(key, value string) {
+	textproto.MIMEHeader(h).Add(key, value)
+}
+
+func (h Header) Set(key, value string) {
+	textproto.MIMEHeader(h).Set(key, value)
+}
+
+func (h Header) Del(key string) {
+	textproto.MIMEHeader(h).Del(key)
 }
