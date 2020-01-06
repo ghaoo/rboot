@@ -6,12 +6,15 @@
 ## 安装
 
 ```bash
-go get -v github.com/ghaoo/rboot/robot
+go get -v github.com/ghaoo/rboot
 ```
 
 ### 快速开始
 
 `rboot` 内置了 `cli` 和 `微信网页版` 的支持，`微信网页版` 使用的是 [KevinGong2013/wechat](https://github.com/KevinGong2013/wechat) 包，稍微做了修改。
+
+v0.1.1新增了对 `bearychat` 的支持
+v0.1.2新增了对 `企业微信` 的支持，`企业微信` 暂时只支持自建应用，内容支持 `text` 和 `markdown`
 
 #### 创建
 
