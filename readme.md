@@ -2,7 +2,6 @@
 
 `rboot` 是一个使用 `golang` 写的，简单、高效的聊天机器人框架，易于扩展，它可以工作在不同的聊天服务上，并通过扩展脚本可实现 `聊天`、`工作助手`、`服务监控`、`警报触发` 等功能。
 
-
 ## 安装
 
 ```bash
@@ -14,7 +13,7 @@ go get -v github.com/ghaoo/rboot
 `rboot` 内置了 `cli` 和 `微信网页版` 的支持，`微信网页版` 使用的是 [KevinGong2013/wechat](https://github.com/KevinGong2013/wechat) 包，稍微做了修改。
 
 v0.1.1新增了对 `bearychat` 的支持
-v0.1.2新增了对 `企业微信` 的支持，`企业微信` 暂时只支持自建应用，内容支持 `text` 和 `markdown`
+v0.1.2新增了对 `企业微信` 的支持，`企业微信` 暂时只支持自建应用，内容支持 `text` 和 `markdown`，只用于测试
 
 #### 创建
 
