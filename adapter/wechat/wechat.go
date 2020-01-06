@@ -68,7 +68,7 @@ func (w *wx) run() {
 
 	go func() {
 		for msg := range w.out {
-			if msg.Mate["file"] != nil {
+			if msg.Mate.Has("file") {
 				for _, p := range msg.Mate["file"].([]string) {
 					w.client.SendFile(p, msg.To.ID)
 				}

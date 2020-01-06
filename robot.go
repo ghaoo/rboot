@@ -96,8 +96,14 @@ func process(ctx context.Context, bot *Robot) {
 					bot.Args = ms
 
 					if bot.Debug {
-						df := "\n- 发送人: %s\n- 接收人: %s\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n- 头信息: %v"
-						logrus.Debugf(df, msg.From.ID, msg.To.ID, msg.Content, script, mr, ms[1:], msg.Header)
+						logrus.Debugf("\nIncoming: \n- 发送人: %s\n- 接收人: %s\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n- 附加信息: %v",
+							msg.From.ID,
+							msg.To.ID,
+							msg.Content,
+							script,
+							mr,
+							ms[1:],
+							msg.Mate)
 					}
 
 					// 获取脚本执行函数
@@ -115,10 +121,17 @@ func process(ctx context.Context, bot *Robot) {
 						for _, resp := range responses {
 							// 指定输出消息的接收者和发送者
 							resp.From = msg.To
-							resp.To = msg.From
+
+							if resp.To.ID == "" {
+								resp.To = msg.From
+							}
 
 							if resp.Channel == "" {
 								resp.Channel = msg.Channel
+							}
+
+							if bot.Debug {
+								logrus.Debugf("\nOutgoing:\n- 接收人: %s\n- 发送人: %s\n- 内容: %s", resp.To.ID, resp.From.ID, resp.Content)
 							}
 
 							// send ...
@@ -204,6 +217,7 @@ func (bot *Robot) SendText(text string, to ...User) {
 				To:      user,
 				Content: text,
 			}
+
 			bot.outputChan <- msg
 		}
 	} else {

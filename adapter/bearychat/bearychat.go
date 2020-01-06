@@ -2,7 +2,6 @@ package bearychat
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -43,10 +42,13 @@ func (b *beary) Outgoing() chan rboot.Message {
 func (b *beary) listenOutgoing() {
 	for msg := range b.out {
 		res := Response{
-			Text:     msg.Content,
-			Markdown: true,
-			Channel:  msg.Channel,
-			User:     msg.To.ID,
+			Text:    msg.Content,
+			Channel: msg.Channel,
+			User:    msg.To.ID,
+		}
+
+		if msg.Mate.GetString("msgtype") == "markdown" {
+			res.Markdown = true
 		}
 
 		var mate = msg.Mate["images"].([]map[string]interface{})
@@ -68,7 +70,7 @@ func (b *beary) listenOutgoing() {
 		res.Attachments = atts
 
 		if err := sendMessage(res); err != nil {
-			fmt.Println(err)
+			logrus.WithField("func", "bearychat listenOutgoing").Errorf("listen outgoing message err: %v", err)
 		}
 	}
 }

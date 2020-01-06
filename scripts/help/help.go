@@ -11,15 +11,12 @@ var scripts = rboot.ListScripts()
 
 // helpSetup 帮助脚本
 func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
-	header := rboot.Header{}
-	header.Set("msgtype", "markdown")
 
 	switch bot.Ruleset {
 	case `help`:
 		if len(bot.Args) < 2 || bot.Args[1] == "" {
 			return []rboot.Message{
 				{
-					Header:  header,
 					Content: "请在 !help 后面带上想要查看的脚本名称，比如查看 <ping> 脚本帮助信息，输入 <!help ping>",
 				},
 			}
@@ -29,7 +26,6 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 				return []rboot.Message{{Content: script.Usage}}
 			} else {
 				return []rboot.Message{{
-					Header:  header,
 					Content: "> help命令用法：!help <script> \n> !scripts 可查看所有加载的脚本信息",
 				}}
 			}
@@ -50,7 +46,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 
 			content = strings.TrimSpace(content)
 
-			return []rboot.Message{{Header: header, Content: content}}
+			return []rboot.Message{{Content: content}}
 		} else {
 
 			scr := bot.Args[1]
@@ -62,7 +58,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 				content += fmt.Sprintf("  %d. %s\n", k, ruleset)
 			}
 
-			return []rboot.Message{{Header: header, Content: content}}
+			return []rboot.Message{{Content: content}}
 		}
 	case `script`:
 		// 获取所有脚本信息
@@ -76,7 +72,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 		// 去除末尾空白字符
 		content = strings.TrimSpace(content)
 
-		return []rboot.Message{{Header: header, Content: content}}
+		return []rboot.Message{{Content: content}}
 	}
 
 	return nil

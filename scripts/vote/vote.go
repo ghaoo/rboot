@@ -19,10 +19,13 @@ type Vote struct {
 	ticker    *time.Ticker      // 计时器
 }
 
+// 新建投票
 func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt string) []rboot.Message {
+	// 检查有没有进行中的投票
+	if active {
+		return []rboot.Message{{Content: "投票进行中，请稍后..."}}
+	}
 	opts := strings.Split(opt, " ")
-
-	fmt.Println(opts)
 
 	if len(opts) < 2 {
 		return []rboot.Message{{Content: "选项最少两项"}}
@@ -58,12 +61,19 @@ func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt strin
 		}
 	}()
 
-	return []rboot.Message{{Content: "请大家投票: " + name + ", 投票请直接输入@@选项"}}
+	msg := fmt.Sprintf("%s 创建了投票: %s\n> 选项:\n", user, name)
+	for i, c := range opts {
+		msg += fmt.Sprintf("> %d. `%s`\n", i+1, c)
+	}
+
+	msg += "\n*投票请直接输入@@选项*"
+
+	return []rboot.Message{{Content: msg, To: rboot.User{ID: "@all"}}}
 }
 
 func (v *Vote) Voting(user string, opt string) []rboot.Message {
 	if !active {
-		return []rboot.Message{{Content: "没有正在进行中的投票"}}
+		return []rboot.Message{{Content: "没有正在进行中的投票或投票已经结束！"}}
 	}
 	// 检查用户有没有参与
 	if iopt, ok := v.Players[user]; ok {
@@ -74,7 +84,7 @@ func (v *Vote) Voting(user string, opt string) []rboot.Message {
 
 	// 检查选项是否存在
 	if _, ok := v.Choices[opt]; !ok {
-		return []rboot.Message{{Content: "滚!"}}
+		return []rboot.Message{{Content: "投票失败！没有这个选项胸弟！"}}
 	}
 
 	v.Players[user] = opt
@@ -85,16 +95,16 @@ func (v *Vote) Voting(user string, opt string) []rboot.Message {
 
 func (v *Vote) Result() []rboot.Message {
 	if !active {
-		return []rboot.Message{{Content: "没有正在进行中的投票"}}
+		return []rboot.Message{{Content: "没有正在进行中的投票或投票已经结束"}}
 	}
 
 	content := "投票: " + v.Name + "\n      "
 
 	for choice, count := range v.Choices {
-		content += fmt.Sprintf(" %d 人选择了 <%s> , ", count, choice)
+		content += fmt.Sprintf(" %d 人选择了 `%s` \n", count, choice)
 	}
 
-	content += "\n发起人: " + v.User
+	content += "\n*发起人*: " + v.User
 
 	return []rboot.Message{{Content: content}}
 }
@@ -102,7 +112,7 @@ func (v *Vote) Result() []rboot.Message {
 func (v *Vote) Stop(user string) []rboot.Message {
 
 	if !active {
-		return []rboot.Message{{Content: "没有正在进行中的投票"}}
+		return []rboot.Message{{Content: "没有正在进行中的投票或投票已经结束"}}
 	}
 
 	if user != v.User {
