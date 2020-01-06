@@ -96,18 +96,15 @@ func (c *cli) run() {
 		scanner := bufio.NewScanner(stdin)
 		for scanner.Scan() {
 
-			c.in <- Message{
-				To:      User{Name: `cli`},
-				From:    User{Name: `robot`},
-				Channel: `cli`,
-				Content: scanner.Text(),
-			}
+			msg := NewMessage(scanner.Text())
+
+			c.in <- msg
 
 		forLoop:
 			for {
 				select {
 				case msg := <-c.out:
-					c.writeString(msg.Content)
+					c.writeString(msg.String())
 				default:
 					break forLoop
 				}
@@ -117,7 +114,7 @@ func (c *cli) run() {
 
 	go func() {
 		for msg := range c.out {
-			c.writeString(msg.Content)
+			c.writeString(msg.String())
 		}
 	}()
 }

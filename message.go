@@ -1,80 +1,98 @@
 package rboot
 
-import "errors"
+import (
+	"bufio"
+	"github.com/sirupsen/logrus"
+	"io"
+	"io/ioutil"
+	"net/textproto"
+	"strings"
+)
 
 type Message struct {
-	Channel   string      `json:"channel,omitempty"`   // 通道
-	To        User        `json:"to"`                  // 发给的用户
-	From      User        `json:"from"`                // 来源(群组或个人)
-	Sender    User        `json:"sender"`              // 发送者(个人)
-	Content   string      `json:"content"`             // 内容
-	Broadcast bool        `json:"broadcast,omitempty"` // 广播消息
-	Mate      Mate        `json:"mate,omitempty"`      // 附加信息
-	Data      interface{} `json:"data,omitempty"`      // 源消息
+	Header Header    // 头信息
+	Body   io.Reader // 消息主体
+}
+
+// ReadMessage 读取消息
+func ReadMessage(r io.Reader) (msg Message, err error) {
+	tp := textproto.NewReader(bufio.NewReader(r))
+
+	hdr, err := tp.ReadMIMEHeader()
+	msg = Message{
+		Header: Header(hdr),
+		Body:   tp.R,
+	}
+
+	return msg, err
 }
 
 func NewMessage(content string) Message {
 	return Message{
-		Channel:   "",
-		To:        User{},
-		From:      User{},
-		Sender:    User{},
-		Content:   content,
-		Broadcast: false,
-		Mate:      make(Mate),
+		Header: Header{},
+		Body:   strings.NewReader(content),
 	}
 }
 
-func (msg Message) SetTo(id, name string) {
-	msg.To = User{ID: id, Name: name}
-}
-
-func (msg Message) SetFrom(id, name string) {
-	msg.From = User{ID: id, Name: name}
-}
-
-func (msg Message) SetSender(id, name string) {
-	msg.Sender = User{ID: id, Name: name}
-}
-
-type Mate map[string]interface{}
-
-var defaultMate = Mate{}
-
-func (m Mate) Has(key string) bool {
-	_, ok := m[key]
-	return ok
-}
-
-func (m Mate) Get(key string) interface{} {
-	return m[key]
-}
-
-func (m Mate) GetString(key string) string {
-	if value, ok := m[key].(string); ok {
-		return value
+func NewMessageWithReader(body io.Reader) Message {
+	return Message{
+		Header: Header{},
+		Body:   body,
 	}
-	return ""
 }
 
-func (m Mate) GetBool(key string) bool {
-	if value, ok := m[key].(bool); ok {
-		return value
+func (m Message) String() string {
+	body, err := ioutil.ReadAll(m.Body)
+	if err != nil {
+		logrus.Error(err)
 	}
-	return false
+	return string(body)
 }
 
-func (m Mate) GetInt(key string) (int, error) {
-	if value, ok := m[key].(int); ok {
-		return value, nil
-	}
-	return 0, errors.New("not int")
+// ToUser 返回接收者
+// 当接收者为多个时以 , 隔开
+func (m Message) ToUser() []string {
+	to := m.Header.Get("to")
+	return strings.Split(to, ",")
+
 }
 
-func (m Mate) Set(key string, value interface{}) {
-	m[key] = value
+// FromUser 返回发送者
+func (m Message) FromUser() string {
+	return m.Header.Get("From")
 }
 
-func (m Mate) Del(key string) {
-	delete(m, key)
+// AddTo 设置接收者
+func (m Message) AddTo(user ...string) {
+	to := strings.Join(user, ",")
+	m.Header.Add("to", to)
+}
+
+// SetFrom 设置发送者
+func (m Message) SetFrom(user string) {
+	m.Header.Set("from", user)
+}
+
+// SetAttachment 为消息设置附件
+func (m Message) AddFile(contentType, filepath string) {
+	m.Header.Add("Content-Type", contentType)
+	m.Header.Add("file", filepath)
+}
+
+type Header map[string][]string
+
+func (h Header) Add(key, value string) {
+	textproto.MIMEHeader(h).Add(key, value)
+}
+
+func (h Header) Set(key, value string) {
+	textproto.MIMEHeader(h).Set(key, value)
+}
+
+func (h Header) Get(key string) string {
+	return textproto.MIMEHeader(h).Get(key)
+}
+
+func (h Header) Del(key string) {
+	textproto.MIMEHeader(h).Del(key)
 }

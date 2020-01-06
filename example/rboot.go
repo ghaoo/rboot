@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "github.com/ghaoo/rboot/adapter"
+	//_ "github.com/ghaoo/rboot/adapter"
 	_ "github.com/ghaoo/rboot/brains/bolt"
 	_ "github.com/ghaoo/rboot/scripts"
 

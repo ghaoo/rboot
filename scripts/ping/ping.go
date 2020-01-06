@@ -7,24 +7,15 @@ import (
 	"time"
 )
 
-func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
-	var msg []rboot.Message
+func setup(ctx context.Context, bot *rboot.Robot) rboot.Message {
+	var msg rboot.Message
 
 	switch bot.Ruleset {
 	case `ping`:
+		msg = rboot.NewMessage(randReply())
 
-		msg = []rboot.Message{
-			{
-				Content: randReply(),
-			},
-		}
 	case `pong`:
-
-		msg = []rboot.Message{
-			{
-				Content: `Pong!`,
-			},
-		}
+		msg = rboot.NewMessage(`Pong!`)
 	}
 
 	return msg

@@ -2,6 +2,7 @@ package rboot
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
@@ -37,7 +38,6 @@ type Robot struct {
 	adapter    Adapter
 	brain      Brain
 	rule       Rule
-	contacts   []User
 	inputChan  chan Message
 	outputChan chan Message
 
@@ -77,17 +77,15 @@ func process(ctx context.Context, bot *Robot) {
 			go func(bot Robot, msg Message) {
 				defer func() {
 					if r := recover(); r != nil {
-						logrus.Errorf("panic recovered when parsing message: %#v. \nPanic: %v", msg, r)
+						logrus.Errorf("panic recovered when parsing message: %#v. \nPanic: %v", fmt.Sprintf(""), r)
 					}
 				}()
-
-				msg.Content = strings.TrimSpace(msg.Content)
 
 				// 将传入消息拷贝到 ctx
 				ctx = context.WithValue(ctx, "input", msg)
 
 				// 匹配消息
-				if script, mr, ms, ok := bot.matchScript(msg.Content); ok {
+				if script, mr, ms, ok := bot.matchScript(strings.TrimSpace(msg.String())); ok {
 
 					// 匹配的脚本对应规则
 					bot.Ruleset = mr
@@ -96,14 +94,14 @@ func process(ctx context.Context, bot *Robot) {
 					bot.Args = ms
 
 					if bot.Debug {
-						logrus.Debugf("\nIncoming: \n- 发送人: %s\n- 接收人: %s\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n- 附加信息: %v",
-							msg.From.ID,
-							msg.To.ID,
-							msg.Content,
+						logrus.Debugf("\nIncoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %s\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n",
+							msg.Header.Get("Content-Type"),
+							msg.FromUser(),
+							msg.ToUser(),
+							msg.String(),
 							script,
 							mr,
-							ms[1:],
-							msg.Mate)
+							ms[1:])
 					}
 
 					// 获取脚本执行函数
@@ -114,30 +112,24 @@ func process(ctx context.Context, bot *Robot) {
 					}
 
 					// 执行脚本, 附带ctx, 并获取输出
-					responses := action(ctx, &bot)
+					resp := action(ctx, &bot)
 
 					// 将消息发送到 outputChan
-					if len(responses) > 0 {
-						for _, resp := range responses {
-							// 指定输出消息的接收者和发送者
-							resp.From = msg.To
-
-							if resp.To.ID == "" {
-								resp.To = msg.From
-							}
-
-							if resp.Channel == "" {
-								resp.Channel = msg.Channel
-							}
-
-							if bot.Debug {
-								logrus.Debugf("\nOutgoing:\n- 接收人: %s\n- 发送人: %s\n- 内容: %s", resp.To.ID, resp.From.ID, resp.Content)
-							}
-
-							// send ...
-							bot.outputChan <- resp
-						}
+					// 指定输出消息的接收者
+					if len(resp.ToUser()) <= 0 {
+						resp.AddTo(msg.FromUser())
 					}
+
+					if bot.Debug {
+						logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %s\n- 发送人: %s\n- 内容: %s\n",
+							resp.Header.Get("Content-Type"),
+							resp.ToUser(),
+							resp.FromUser(),
+							resp.String())
+					}
+
+					// send ...
+					bot.outputChan <- resp
 				}
 
 			}(*bot, in)
@@ -194,44 +186,26 @@ func (bot *Robot) Stop() {
 	os.Exit(0)
 }
 
-// SyncUsers 同步用户
-func (bot *Robot) SyncUsers(user []User) {
-	bot.mu.Lock()
-	if len(user) > 0 {
-		bot.contacts = user
-	}
-	bot.mu.Unlock()
-}
-
 // Send 发送消息
 func (bot *Robot) Send(msg Message) {
 	bot.outputChan <- msg
 }
 
 // SendText 发送文本消息
-func (bot *Robot) SendText(text string, to ...User) {
+func (bot *Robot) SendText(text string, to ...string) {
+	msg := NewMessage(text)
+	msg.AddTo(to...)
 
-	if len(to) > 0 {
-		for _, user := range to {
-			msg := Message{
-				To:      user,
-				Content: text,
-			}
-
-			bot.outputChan <- msg
-		}
-	} else {
-		bot.outputChan <- Message{Content: text}
-	}
+	bot.outputChan <- msg
 
 }
 
-// 获取正在使用的适配器
-func (bot *Robot) Adapter() string {
-	return bot.adapter.Name()
+// GetAdapter 获取正在使用的适配器
+func (bot *Robot) GetAdapter() Adapter {
+	return bot.adapter
 }
 
-// 设置储存器
+// SetBrain 设置储存器
 func (bot *Robot) SetBrain(brain Brain) {
 	bot.mu.Lock()
 	bot.brain = brain
