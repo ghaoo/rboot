@@ -16,5 +16,6 @@
 .data
 .vscode
 .vs
+.env
 
 rboot

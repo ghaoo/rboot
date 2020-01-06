@@ -25,7 +25,8 @@ func newWework(bot *rboot.Robot) rboot.Adapter {
 		agent: agent(),
 	}
 
-	bot.Router.HandleFunc("/wxwork", wx.parseRecvHandle).Methods("POST", "GET")
+	bot.Router.HandleFunc("/wxwork", wx.agent.CallbackVerify).Methods("GET")
+	bot.Router.HandleFunc("/wxwork", wx.parseRecvHandle).Methods("POST")
 
 	go wx.listenOutgoing()
 
@@ -80,10 +81,10 @@ func (wx *workwx) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 
 	msg := rboot.Message{
 		Channel: "wxwork",
-		From: rboot.User{ID: recv.FromUsername, Name: recv.FromUsername},
+		From:    rboot.User{ID: recv.FromUsername, Name: recv.FromUsername},
 		Content: recv.Content,
 		Location: rboot.Location{
-			Lat: recv.LocationX,
+			Lat:  recv.LocationX,
 			Long: recv.LocationY,
 		},
 		Mate: map[string]interface{}{"originMsg": recv},
