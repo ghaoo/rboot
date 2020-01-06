@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -43,6 +44,7 @@ type Robot struct {
 	Router  *Router
 	Ruleset string
 	Args    []string
+	Debug   bool
 
 	signalChan chan os.Signal
 	mu         sync.RWMutex
@@ -92,6 +94,11 @@ func process(ctx context.Context, bot *Robot) {
 
 					// 消息匹配参数
 					bot.Args = ms
+
+					if bot.Debug {
+						df := "\n-发送人: %s\n-接收人: %s\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v"
+						logrus.Debugf(df, msg.From.ID, msg.To.ID, msg.Content, script, mr, ms[1:])
+					}
 
 					// 获取脚本执行函数
 					action, err := DirectiveScript(script)
@@ -244,6 +251,8 @@ func (bot *Robot) matchScript(msg string) (script, matchRule string, match []str
 
 // initialize 初始化 Robot
 func (bot *Robot) initialize() {
+	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
+	bot.Debug = debug
 
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
 	adpName := os.Getenv(`RBOOT_ADAPTER`)

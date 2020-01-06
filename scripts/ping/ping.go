@@ -53,8 +53,8 @@ func init() {
 	rboot.RegisterScripts(`ping`, rboot.Script{
 		Action: setup,
 		Ruleset: map[string]string{
-			`ping`: `^!(ping|PING)`,
-			`pong`: `^!(pong|PONG)`,
+			`ping`: `^!(?:ping|PING)`,
+			`pong`: `^!(?:pong|PONG)`,
 		},
 		Usage:       "> `!ping`: 随机返回一句话 \n> `!pong`: 返回 PONG",
 		Description: `测试脚本`,
