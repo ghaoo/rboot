@@ -39,7 +39,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 
 			content = strings.TrimSpace(content)
 
-			return []rboot.Message{{Content: content}}
+			return []rboot.Message{{Content: content, Mate: map[string]interface{}{"msgtype": "markdown"}}}
 		} else {
 
 			scr := bot.Args[1]
@@ -51,7 +51,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 				content += fmt.Sprintf("  %d. %s\n", k, ruleset)
 			}
 
-			return []rboot.Message{{Content: content}}
+			return []rboot.Message{{Content: content, Mate: map[string]interface{}{"msgtype": "markdown"}}}
 		}
 	case `script`:
 		// 获取所有脚本信息
@@ -65,7 +65,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 		// 去除末尾空白字符
 		content = strings.TrimSpace(content)
 
-		return []rboot.Message{{Content: content}}
+		return []rboot.Message{{Content: content, Mate: map[string]interface{}{"msgtype": "markdown"}}}
 	}
 
 	return nil
@@ -77,7 +77,10 @@ func help(scr string) []rboot.Message {
 
 		return []rboot.Message{{Content: script.Usage}}
 	} else {
-		return []rboot.Message{{Content: "> help命令用法：!help <script> \n> !scripts 可查看所有加载的脚本信息"}}
+		return []rboot.Message{{
+			Content: "> help命令用法：!help <script> \n> !scripts 可查看所有加载的脚本信息",
+			Mate:    map[string]interface{}{"msgtype": "markdown"},
+		}}
 	}
 
 	return nil

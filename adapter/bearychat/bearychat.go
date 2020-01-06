@@ -94,10 +94,10 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	// req.Text = strings.TrimPrefix(req.Text, os.Getenv("TRIGGER_WORD"))
 
 	msg := rboot.Message{
-		Channel:     req.ChannelName,
-		From:        rboot.User{ID: req.UserName, Name: req.UserName},
-		Sender:      rboot.User{ID: req.UserName, Name: req.UserName},
-		Content:     req.Text,
+		Channel: req.ChannelName,
+		From:    rboot.User{ID: req.UserName, Name: req.UserName},
+		Sender:  rboot.User{ID: req.UserName, Name: req.UserName},
+		Content: req.Text,
 	}
 
 	b.in <- msg
