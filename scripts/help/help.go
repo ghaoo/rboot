@@ -58,7 +58,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 		content := ""
 
 		for scr, spt := range scripts {
-			content += fmt.Sprintf("**%s**: %s\n**Usage**:\n%s", scr, spt.Description, spt.Usage)
+			content += fmt.Sprintf("- **%s**: %s\n- **Usage**:\n%s", scr, spt.Description, spt.Usage)
 			content += "\n\n"
 		}
 
@@ -97,7 +97,7 @@ func init() {
 	rboot.RegisterScripts(`help`, rboot.Script{
 		Action:      helpSetup,
 		Ruleset:     helpRules,
-		Usage:       "> !scripts 或 !脚本: 查看所有脚本 \n> !help <script>: 查看脚本帮助信息",
-		Description: `查看脚本信息`,
+		Usage:       "> `!scripts` 或 `!脚本`: 查看所有脚本 \n> `!help <script>`: 查看脚本帮助信息",
+		Description: `查看脚本帮助信息`,
 	})
 }

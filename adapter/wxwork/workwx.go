@@ -99,6 +99,8 @@ func (wx *workwx) listenOutgoing() {
 	for msg := range wx.out {
 		var wmsg *wxwork.Message
 		switch msg.Mate["msgtype"] {
+		case MSG_TYPE_MARKDOWN:
+			wmsg = wxwork.NewMarkdownMessage(msg.Content)
 		default:
 			wmsg = wxwork.NewTextMessage(msg.Content)
 		}

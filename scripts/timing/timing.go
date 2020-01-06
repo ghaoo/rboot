@@ -274,12 +274,12 @@ func init() {
 			`stop_ticker`:   `^!stop ticker (\d+)`,
 			`status_ticker`: `^!ticker status`,
 		},
-		Usage: "> !<N小时|分|秒>后执行<脚本名称>.<命令名称>: 定时器开始定时任务并在倒计时结束时执行相应命令 \n" +
-			"> !stop timer <N>: 结束对应序号定时器 \n" +
-			"> !timer status: 定时器状态 \n" +
-			"> !每过<N小时|分|秒>执行<脚本名称>.<命令名称>: 每过相应时间执行一次对应脚本命令（循环） \n" +
-			"> !stop ticker <N>: 结束对应序号续断器 \n" +
-			"> !ticker status: 续断器状态",
+		Usage: "> `!<N小时|分|秒>后执行<脚本名称>.<命令名称>`: 定时器开始定时任务并在倒计时结束时执行相应命令 \n" +
+			"> `!stop timer <N>`: 结束对应序号定时器 \n" +
+			"> `!timer status`: 定时器状态 \n" +
+			"> `!每过<N小时|分|秒>执行<脚本名称>.<命令名称>`: 每过相应时间执行一次对应脚本命令（循环） \n" +
+			"> `!stop ticker <N>`: 结束对应序号续断器 \n" +
+			"> `!ticker status`: 续断器状态",
 		Description: `定时任务脚本。查看帮助信息: !help timing`,
 	})
 }

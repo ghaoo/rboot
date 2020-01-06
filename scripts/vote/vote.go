@@ -22,6 +22,8 @@ type Vote struct {
 func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt string) []rboot.Message {
 	opts := strings.Split(opt, " ")
 
+	fmt.Println(opts)
+
 	if len(opts) < 2 {
 		return []rboot.Message{{Content: "选项最少两项"}}
 	}
