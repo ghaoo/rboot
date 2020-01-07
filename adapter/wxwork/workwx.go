@@ -1,6 +1,9 @@
 package wxwork
 
 import (
+	"bytes"
+	"encoding/gob"
+	"fmt"
 	"github.com/ghaoo/rboot"
 	"github.com/ghaoo/wxwork"
 	"github.com/sirupsen/logrus"
@@ -11,16 +14,16 @@ import (
 )
 
 type workwx struct {
-	in  chan rboot.Message
-	out chan rboot.Message
+	in  chan *rboot.Message
+	out chan *rboot.Message
 
 	agent *wxwork.Agent
 }
 
 func newWework(bot *rboot.Robot) rboot.Adapter {
 	wx := &workwx{
-		in:    make(chan rboot.Message),
-		out:   make(chan rboot.Message),
+		in:    make(chan *rboot.Message),
+		out:   make(chan *rboot.Message),
 		agent: agent(),
 	}
 
@@ -52,11 +55,11 @@ func (wx *workwx) Name() string {
 	return "wxwork"
 }
 
-func (wx *workwx) Incoming() chan rboot.Message {
+func (wx *workwx) Incoming() chan *rboot.Message {
 	return wx.in
 }
 
-func (wx *workwx) Outgoing() chan rboot.Message {
+func (wx *workwx) Outgoing() chan *rboot.Message {
 	return wx.out
 }
 
@@ -75,15 +78,22 @@ func (wx *workwx) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 
 	recv, err := wx.agent.ParseRecvMessage(signature, timestamp, nonce, data)
 	if err != nil {
-		logrus.Errorln("parse receive msg err:", err)
+		logrus.WithField("func", "parseRecvHandle.ParseRecvMessage").Error(err)
 	}
 
 	msg := rboot.NewMessage(recv.Content)
+	msg.From = rboot.User{ID: recv.FromUsername, Name: recv.FromUsername}
+	msg.Sender = rboot.User{ID: recv.FromUsername, Name: recv.FromUsername}
+	msg.Header.Set("AgentId", strconv.Itoa(wx.agent.AgentID))
 
-	msg.SetFrom(recv.FromUsername, recv.FromUsername)
-	msg.SetSender(recv.FromUsername, recv.FromUsername)
-	msg.Mate.Set("agent_id", strconv.Itoa(wx.agent.AgentID))
-	msg.Data = recv
+	buf := bytes.Buffer{}
+	encoder := gob.NewEncoder(&buf)
+	if err := encoder.Encode(&recv); err != nil {
+		logrus.WithField("func", "parseRecvHandle.gob.NewEncoder").Error(err)
+	}
+	msg.Header.Set("Data", buf.String())
+
+	fmt.Println(buf.String())
 
 	wx.in <- msg
 
@@ -94,15 +104,15 @@ func (wx *workwx) listenOutgoing() {
 	for msg := range wx.out {
 		var wmsg *wxwork.Message
 
-		msgtype := msg.Mate.GetString("msgtype")
-		title := msg.Mate.GetString("title")
-		desc := msg.Mate.GetString("description")
-		mediaid := msg.Mate.GetString("mediaid")
-		url := msg.Mate.GetString("url")
+		msgtype := msg.MsgType()
+		title := msg.Header.Get("title")
+		desc := msg.Header.Get("description")
+		mediaid := msg.Header.Get("mediaid")
+		url := msg.Header.Get("url")
 
 		switch msgtype {
 		case MSG_TYPE_MARKDOWN:
-			wmsg = wxwork.NewMarkdownMessage(msg.Content)
+			wmsg = wxwork.NewMarkdownMessage(msg.String())
 
 		case MSG_TYPE_IMAGE, MSG_TYPE_VOICE, MSG_TYPE_FILE:
 			wmsg = wxwork.NewMediaMessage(msgtype, mediaid)
@@ -111,11 +121,11 @@ func (wx *workwx) listenOutgoing() {
 			wmsg = wxwork.NewVideoMessage(title, desc, mediaid)
 
 		case MSG_TYPE_TEXTCARD:
-			btntxt := msg.Mate.GetString("btntxt")
+			btntxt := msg.Header.Get("btntxt")
 			wmsg = wxwork.NewTextCardMessage(title, desc, url, btntxt)
 
 		default:
-			wmsg = wxwork.NewTextMessage(msg.Content)
+			wmsg = wxwork.NewTextMessage(msg.String())
 		}
 
 		wmsg.SetUser(msg.To.ID)
