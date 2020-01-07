@@ -11,8 +11,9 @@ import (
 )
 
 type Message struct {
-	To     []string  // 接收者
-	From   string    // 发送者
+	To     User      // 接收者
+	From   User      // 发送者
+	Sender User      // 发送者
 	Header Header    // 头信息
 	Body   io.Reader // 消息主体
 }
@@ -30,11 +31,17 @@ func ReadMessage(r io.Reader) (msg *Message, err error) {
 	return msg, err
 }
 
-func NewMessage(content string) *Message {
-	return &Message{
+func NewMessage(content string, to ...User) *Message {
+	msg := &Message{
 		Header: Header{},
 		Body:   strings.NewReader(content),
 	}
+
+	if len(to) > 0 {
+		msg.To = to[0]
+	}
+
+	return msg
 }
 
 func NewMessageWithReader(body io.Reader) *Message {

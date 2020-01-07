@@ -17,18 +17,19 @@ type Vote struct {
 	Players   map[string]string // 参与人数
 	startTime time.Time         // 开始时间
 	ticker    *time.Ticker      // 计时器
+	bot       *rboot.Robot
 }
 
 // 新建投票
-func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt string) []rboot.Message {
+func (v *Vote) New(bot *rboot.Robot, to string, name, user string, opt string) *rboot.Message {
 	// 检查有没有进行中的投票
 	if active {
-		return []rboot.Message{{Content: "投票进行中，请稍后..."}}
+		return rboot.NewMessage("投票进行中，请稍后...")
 	}
 	opts := strings.Split(opt, " ")
 
 	if len(opts) < 2 {
-		return []rboot.Message{{Content: "选项最少两项"}}
+		return rboot.NewMessage("选项最少两项")
 	}
 
 	v.Choices = make(map[string]int, len(opt))
@@ -40,6 +41,7 @@ func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt strin
 	v.User = user
 	v.Players = make(map[string]string)
 	v.startTime = time.Now()
+	v.bot = bot
 	active = true
 
 	go func() {
@@ -48,16 +50,13 @@ func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt strin
 		case <-v.ticker.C:
 			result := v.Result()
 
-			result = append(result, rboot.Message{Content: "投票结束！"})
+			bot.Send(result)
 
 			active = false
 
 			v.ticker.Stop()
 
-			for _, res := range result {
-				res.To = to
-				bot.Send(res)
-			}
+			bot.SendText(fmt.Sprintf("`%s` 投票结束！", v.Name), to)
 		}
 	}()
 
@@ -68,34 +67,34 @@ func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt strin
 
 	msg += "\n*投票请直接输入@@选项*"
 
-	return []rboot.Message{{Content: msg, To: rboot.User{ID: "@all"}}}
+	return rboot.NewMessage(msg, rboot.User{ID: "@all"})
 }
 
-func (v *Vote) Voting(user string, opt string) []rboot.Message {
+func (v *Vote) Voting(user string, opt string) *rboot.Message {
 	if !active {
-		return []rboot.Message{{Content: "没有正在进行中的投票或投票已经结束！"}}
+		return rboot.NewMessage("没有正在进行中的投票或投票已经结束！")
 	}
 	// 检查用户有没有参与
 	if iopt, ok := v.Players[user]; ok {
-		return []rboot.Message{{Content: "你已经参与了投票，你选择的是 " + iopt}}
+		return rboot.NewMessage("你已经参与了投票，你选择的是 " + iopt)
 	}
 
 	opt = strings.TrimSpace(opt)
 
 	// 检查选项是否存在
 	if _, ok := v.Choices[opt]; !ok {
-		return []rboot.Message{{Content: "投票失败！没有这个选项胸弟！"}}
+		return rboot.NewMessage("投票失败！没有这个选项胸弟！")
 	}
 
 	v.Players[user] = opt
 	v.Choices[opt] += 1
 
-	return []rboot.Message{{Content: "投票成功!"}}
+	return rboot.NewMessage("投票成功!")
 }
 
-func (v *Vote) Result() []rboot.Message {
+func (v *Vote) Result() *rboot.Message {
 	if !active {
-		return []rboot.Message{{Content: "没有正在进行中的投票或投票已经结束"}}
+		return rboot.NewMessage("没有正在进行中的投票或投票已经结束")
 	}
 
 	content := "投票: " + v.Name + "\n      "
@@ -106,26 +105,26 @@ func (v *Vote) Result() []rboot.Message {
 
 	content += "\n*发起人*: " + v.User
 
-	return []rboot.Message{{Content: content}}
+	return rboot.NewMessage(content)
 }
 
-func (v *Vote) Stop(user string) []rboot.Message {
+func (v *Vote) Stop(user string) *rboot.Message {
 
 	if !active {
-		return []rboot.Message{{Content: "没有正在进行中的投票或投票已经结束"}}
+		return rboot.NewMessage("没有正在进行中的投票或投票已经结束")
 	}
 
 	if user != v.User {
-		return []rboot.Message{{Content: "NO!"}}
+		return rboot.NewMessage("NO!")
 	}
 
 	result := v.Result()
 
-	result = append(result, rboot.Message{Content: "投票结束！"})
+	v.bot.Send(result)
 
 	active = false
 
 	v.ticker.Stop()
 
-	return result
+	return rboot.NewMessage(fmt.Sprintf("`%s` 投票结束！", v.Name), rboot.User{ID: "@all"})
 }

@@ -19,7 +19,7 @@ type timer struct {
 var timerN = 0
 var timers = make(map[int]*timer)
 
-func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
+func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
 	in := ctx.Value("input").(rboot.Message)
 
 	switch bot.Ruleset {
@@ -41,7 +41,7 @@ func setup(ctx context.Context, bot *rboot.Robot) []rboot.Message {
 }
 
 // 定时器开始定时
-func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
+func start_timer(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 
 	args := bot.Args
 
@@ -68,7 +68,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	// 检测脚本是否可执行
 	_, err = rboot.DirectiveScript(script)
 	if err != nil || script == "timing" {
-		return []rboot.Message{{Content: "END"}}
+		return rboot.NewMessage("END")
 	}
 
 	// 脚本内命令名称
@@ -80,7 +80,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	timers[timerN] = myTimer
 	timerN += 1
 
-	bot.SendText("定时器序号 "+strconv.Itoa(n), in.From)
+	bot.SendText("定时器序号 "+strconv.Itoa(n), in.From.ID)
 
 	for {
 		select {
@@ -92,7 +92,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 
 			sf, err := rboot.DirectiveScript(script)
 			if err != nil {
-				return []rboot.Message{{Content: fmt.Sprintf("定时器 %d 执行 %s.%s 命令时发生错误: %v", n, script, cmd, err)}}
+				return rboot.NewMessage(fmt.Sprintf("定时器 %d 执行 %s.%s 命令时发生错误: %v", n, script, cmd, err))
 			}
 
 			bot.Ruleset = cmd
@@ -103,7 +103,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 }
 
 // 定时器结束定时
-func stop_timer(bot *rboot.Robot) []rboot.Message {
+func stop_timer(bot *rboot.Robot) *rboot.Message {
 	args := bot.Args
 
 	tNS := args[1]
@@ -120,14 +120,14 @@ func stop_timer(bot *rboot.Robot) []rboot.Message {
 
 		delete(timers, tNum)
 
-		return []rboot.Message{{Content: "定时器 " + tNS + " 关闭"}}
+		return rboot.NewMessage("定时器 " + tNS + " 关闭")
 	} else {
-		return []rboot.Message{{Content: "未找到序号为 " + tNS + " 的定时器"}}
+		return rboot.NewMessage("未找到序号为 " + tNS + " 的定时器")
 	}
 }
 
 // 定时器状态
-func status_timer(bot *rboot.Robot) []rboot.Message {
+func status_timer(bot *rboot.Robot) *rboot.Message {
 
 	content := ""
 	if len(timers) <= 0 {
@@ -141,7 +141,7 @@ func status_timer(bot *rboot.Robot) []rboot.Message {
 		}
 	}
 
-	return []rboot.Message{{Content: content}}
+	return rboot.NewMessage(content)
 }
 
 // Ticker
@@ -156,7 +156,7 @@ var tickerN = 0
 var tickers = make(map[int]*ticker)
 
 // ticker开始计时
-func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
+func start_ticker(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 	args := bot.Args
 
 	// 时间
@@ -182,7 +182,7 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	// 检测脚本是否可执行
 	_, err = rboot.DirectiveScript(script)
 	if err != nil || script == "timing" {
-		return []rboot.Message{{Content: "END"}}
+		return rboot.NewMessage("END")
 	}
 
 	// 脚本内命令名称
@@ -194,7 +194,7 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 	tickers[tickerN] = myTicker
 	tickerN += 1
 
-	bot.SendText("续断器序号 "+strconv.Itoa(n), in.From)
+	bot.SendText("续断器序号 "+strconv.Itoa(n), in.From.ID)
 
 	for {
 		select {
@@ -210,22 +210,21 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) []rboot.Message {
 			if err != nil {
 				myTicker.t.Stop()
 				delete(tickers, n)
-				return []rboot.Message{{Content: fmt.Sprintf("续断器 %d 执行 %s.%s 命令时发生错误: %v", n, script, cmd, err)}}
+				return rboot.NewMessage(fmt.Sprintf("续断器 %d 执行 %s.%s 命令时发生错误: %v", n, script, cmd, err))
 			}
 
 			bot.Ruleset = cmd
 
-			for _, msg := range sf(nil, bot) {
-				msg.To = in.From
-				bot.Send(msg)
-			}
+			msg := sf(nil, bot)
+			msg.To = in.From
+			bot.Send(msg)
 		}
 	}
 
 }
 
 // 关闭 ticker
-func stop_ticker(bot *rboot.Robot) []rboot.Message {
+func stop_ticker(bot *rboot.Robot) *rboot.Message {
 	args := bot.Args
 
 	tNS := args[1]
@@ -240,13 +239,13 @@ func stop_ticker(bot *rboot.Robot) []rboot.Message {
 
 		delete(tickers, tNum)
 
-		return []rboot.Message{{Content: "续断器 " + tNS + " 关闭"}}
+		return rboot.NewMessage("续断器 " + tNS + " 关闭")
 	} else {
-		return []rboot.Message{{Content: "未找到序号为 " + tNS + " 的续断器"}}
+		return rboot.NewMessage("未找到序号为 " + tNS + " 的续断器")
 	}
 }
 
-func status_ticker(bot *rboot.Robot) []rboot.Message {
+func status_ticker(bot *rboot.Robot) *rboot.Message {
 
 	content := ""
 	if len(tickers) <= 0 {
@@ -259,7 +258,7 @@ func status_ticker(bot *rboot.Robot) []rboot.Message {
 		}
 	}
 
-	return []rboot.Message{{Content: content}}
+	return rboot.NewMessage(content)
 }
 
 func init() {
