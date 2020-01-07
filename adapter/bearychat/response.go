@@ -3,13 +3,14 @@ package bearychat
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
+	"path"
+	"strings"
 )
 
 const (
-	baseIncomingUrl = `https://hook.bearychat.com/=%s/incoming/%s`
+	baseIncomingUrl = `https://hook.bearychat.com`
 )
 
 // 发送消息
@@ -35,7 +36,11 @@ type Res struct {
 }
 
 func sendMessage(res Response) error {
-	url := fmt.Sprintf(baseIncomingUrl, os.Getenv("BEARYCHAT_IN_KEY"), os.Getenv("BEARYCHAT_IN_TOKEN"))
+	url := os.Getenv("BEARYCHAT_WEBHOOK")
+	if !strings.HasPrefix(url, baseIncomingUrl) {
+		url = path.Join(baseIncomingUrl, url)
+	}
+
 	msg, _ := json.Marshal(res)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(msg))

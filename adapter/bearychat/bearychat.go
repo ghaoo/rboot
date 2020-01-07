@@ -2,23 +2,24 @@ package bearychat
 
 import (
 	"encoding/json"
-	"net/http"
-	"os"
-
+	"fmt"
 	"github.com/ghaoo/rboot"
 	"github.com/sirupsen/logrus"
+	"net/http"
+	"os"
+	"strings"
 )
 
 // bearychat adapter
 type beary struct {
-	in  chan rboot.Message
-	out chan rboot.Message
+	in  chan *rboot.Message
+	out chan *rboot.Message
 }
 
 func newBeary(bot *rboot.Robot) rboot.Adapter {
 	beary := &beary{
-		in:  make(chan rboot.Message),
-		out: make(chan rboot.Message),
+		in:  make(chan *rboot.Message),
+		out: make(chan *rboot.Message),
 	}
 
 	beary.run(bot)
@@ -30,11 +31,11 @@ func (b *beary) Name() string {
 	return `bearychat`
 }
 
-func (b *beary) Incoming() chan rboot.Message {
+func (b *beary) Incoming() chan *rboot.Message {
 	return b.in
 }
 
-func (b *beary) Outgoing() chan rboot.Message {
+func (b *beary) Outgoing() chan *rboot.Message {
 	return b.out
 }
 
@@ -42,35 +43,28 @@ func (b *beary) Outgoing() chan rboot.Message {
 func (b *beary) listenOutgoing() {
 	for msg := range b.out {
 		res := Response{
-			Text:    msg.Content,
-			Channel: msg.Channel,
-			User:    msg.To.ID,
+			Text:         msg.String(),
+			Channel:      msg.Header.Get("Channel"),
+			User:         msg.Header.Get("To"),
+			Notification: msg.Header.Get("Notification"),
 		}
 
-		if msg.Mate.GetString("msgtype") == "markdown" {
+		if msg.MsgType() == "markdown" {
 			res.Markdown = true
 		}
 
-		var mate = msg.Mate["images"].([]map[string]interface{})
-		var attCount = len(mate)
-		var atts = make([]Attachment, attCount)
-		if attCount > 0 {
-			for _, matt := range mate {
-				att := Attachment{
-					Title:  matt["title"].(string),
-					Text:   matt["text"].(string),
-					Color:  matt["color"].(string),
-					Images: matt["images"].([]string),
-				}
-
-				atts = append(atts, att)
-			}
+		// 图片使用 Header 传递，图片链接用 “,” 隔开
+		hatts := msg.Header.Get("Attachments")
+		var attachments []Attachment
+		err := json.Unmarshal([]byte(hatts), &attachments)
+		if err != nil {
+			logrus.WithField("func", "bearychat listenOutgoing unmarshal attachments").Errorf("listen outgoing message err: %v", err)
 		}
 
-		res.Attachments = atts
+		res.Attachments = attachments
 
 		if err := sendMessage(res); err != nil {
-			logrus.WithField("func", "bearychat listenOutgoing").Errorf("listen outgoing message err: %v", err)
+			logrus.WithField("func", "bearychat listenOutgoing send msg").Errorf("listen outgoing message err: %v", err)
 		}
 	}
 }
@@ -78,6 +72,7 @@ func (b *beary) listenOutgoing() {
 // 监听 bearychat 传入 rboot 的消息
 func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 
+	fmt.Println("bearychat incoming ...")
 	req := Request{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -92,15 +87,13 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 是否需要删除 bearychat 设置的 TRIGGER_WORD（和 scripts 相关）
-	// req.Text = strings.TrimPrefix(req.Text, os.Getenv("TRIGGER_WORD"))
+	// 删除 bearychat 设置的 TRIGGER_WORD
+	req.Text = strings.TrimPrefix(req.Text, os.Getenv("TRIGGER_WORD"))
 
-	msg := rboot.Message{
-		Channel: req.ChannelName,
-		From:    rboot.User{ID: req.UserName, Name: req.UserName},
-		Sender:  rboot.User{ID: req.UserName, Name: req.UserName},
-		Content: req.Text,
-	}
+	msg := rboot.NewMessage(req.Text)
+	msg.Header.Set("Channel", req.ChannelName)
+	msg.Header.Set("From", req.UserName)
+	msg.Header.Set("Sender", req.UserName)
 
 	b.in <- msg
 }
@@ -108,7 +101,7 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 func (b *beary) run(bot *rboot.Robot) {
 	go b.listenOutgoing()
 
-	bot.Router.HandleFunc("/beary", b.listenIncoming).Methods("GET").Name("beary_listen_message")
+	bot.Router.HandleFunc("/beary", b.listenIncoming).Methods("POST", "GET").Name("beary_listen_message")
 }
 
 func init() {

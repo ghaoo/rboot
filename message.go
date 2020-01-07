@@ -55,15 +55,20 @@ func (m *Message) String() string {
 	return string(content)
 }
 
-// MsgType 消息类型
+// MsgType 消息类型，类型名称会转换成小写
 func (m *Message) MsgType() string {
-	return m.Header.Get("MsgType")
+	return strings.ToLower(m.Header.Get("MsgType"))
 }
 
-// SetAttachment 为消息设置附件
+// File 获取消息中的附件存放位置
+func (m *Message) FilePath() string {
+	return m.Header.Get("File")
+}
+
+// SetAttachment 为消息设置附件，多个附件以
 func (m *Message) AddFile(contentType, filepath string) {
-	m.Header.Add("MsgType", contentType)
-	m.Header.Add("File", filepath)
+	m.Header.Set("MsgType", contentType)
+	m.Header.Set("File", filepath)
 }
 
 type Header map[string][]string
