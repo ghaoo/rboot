@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -36,14 +37,16 @@ type Res struct {
 }
 
 func sendMessage(res Response) error {
-	url := os.Getenv("BEARYCHAT_WEBHOOK")
-	if !strings.HasPrefix(url, baseIncomingUrl) {
-		url = path.Join(baseIncomingUrl, url)
+	hookurl := os.Getenv("BEARYCHAT_WEBHOOK")
+	if !strings.HasPrefix(hookurl, baseIncomingUrl) {
+		base, _ := url.Parse(baseIncomingUrl)
+		base.Path = path.Join(base.Path, hookurl)
+		hookurl = base.String()
 	}
 
 	msg, _ := json.Marshal(res)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(msg))
+	req, err := http.NewRequest("POST", hookurl, bytes.NewBuffer(msg))
 	if err != nil {
 		return err
 	}

@@ -49,19 +49,21 @@ func (b *beary) listenOutgoing() {
 			Notification: msg.Header.Get("Notification"),
 		}
 
-		if msg.MsgType() == "markdown" {
-			res.Markdown = true
+		if msg.MsgType() != "" && msg.MsgType() != "markdown" {
+			res.Markdown = false
 		}
 
 		// 图片使用 Header 传递，图片链接用 “,” 隔开
 		hatts := msg.Header.Get("Attachments")
-		var attachments []Attachment
-		err := json.Unmarshal([]byte(hatts), &attachments)
-		if err != nil {
-			logrus.WithField("func", "bearychat listenOutgoing unmarshal attachments").Errorf("listen outgoing message err: %v", err)
-		}
+		if hatts != "" {
+			var attachments []Attachment
+			err := json.Unmarshal([]byte(hatts), &attachments)
+			if err != nil {
+				logrus.WithField("func", "bearychat listenOutgoing unmarshal attachments").Errorf("listen outgoing message err: %v", err)
+			}
 
-		res.Attachments = attachments
+			res.Attachments = attachments
+		}
 
 		if err := sendMessage(res); err != nil {
 			logrus.WithField("func", "bearychat listenOutgoing send msg").Errorf("listen outgoing message err: %v", err)
