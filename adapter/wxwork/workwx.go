@@ -13,7 +13,7 @@ import (
 	"strconv"
 )
 
-type workwx struct {
+type wework struct {
 	in  chan *rboot.Message
 	out chan *rboot.Message
 
@@ -21,7 +21,7 @@ type workwx struct {
 }
 
 func newWework(bot *rboot.Robot) rboot.Adapter {
-	wx := &workwx{
+	wx := &wework{
 		in:    make(chan *rboot.Message),
 		out:   make(chan *rboot.Message),
 		agent: agent(),
@@ -51,19 +51,19 @@ func agent() *wxwork.Agent {
 	return a
 }
 
-func (wx *workwx) Name() string {
-	return "wxwork"
+func (wx *wework) Name() string {
+	return "wework"
 }
 
-func (wx *workwx) Incoming() chan *rboot.Message {
+func (wx *wework) Incoming() chan *rboot.Message {
 	return wx.in
 }
 
-func (wx *workwx) Outgoing() chan *rboot.Message {
+func (wx *wework) Outgoing() chan *rboot.Message {
 	return wx.out
 }
 
-func (wx *workwx) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
+func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	signature := query.Get("msg_signature")
@@ -100,7 +100,7 @@ func (wx *workwx) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 // 监听 rboot Outgoing
-func (wx *workwx) listenOutgoing() {
+func (wx *wework) listenOutgoing() {
 	for msg := range wx.out {
 		var wmsg *wxwork.Message
 
@@ -138,5 +138,5 @@ func (wx *workwx) listenOutgoing() {
 }
 
 func init() {
-	rboot.RegisterAdapter("wxwork", newWework)
+	rboot.RegisterAdapter("wework", newWework)
 }
