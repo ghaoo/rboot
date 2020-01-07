@@ -1,4 +1,4 @@
-package wxwork
+package wework
 
 import (
 	"bytes"

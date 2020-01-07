@@ -1,4 +1,4 @@
-package wxwork
+package wework
 
 const (
 	MSG_TYPE_TEXT     = "text"     // 文本消息
