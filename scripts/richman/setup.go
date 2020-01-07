@@ -7,7 +7,7 @@ import (
 )
 
 func setup(ctx context.Context, bot *rboot.Robot) (msg *rboot.Message) {
-	in := ctx.Value("input").(rboot.Message)
+	in := ctx.Value("input").(*rboot.Message)
 
 	if sendByMySelf, _ := strconv.ParseBool(in.Header.Get("SendByMySelf")); sendByMySelf {
 		return nil
@@ -15,23 +15,23 @@ func setup(ctx context.Context, bot *rboot.Robot) (msg *rboot.Message) {
 
 	switch bot.Ruleset {
 	case `start`:
-		return StartGame(in, bot)
+		return StartGame(*in, bot)
 	case `shake`, `roll`:
-		return Dice(in, bot)
+		return Dice(*in, bot)
 	case `create1`, `create2`:
-		return CreateGameRoom(in, bot)
+		return CreateGameRoom(*in, bot)
 	case `join`:
-		return JoinRoom(in, bot)
+		return JoinRoom(*in, bot)
 	case `leave`:
-		return AFK(in, bot)
+		return AFK(*in, bot)
 	case `quit`:
-		return QuitGame(in, bot)
+		return QuitGame(*in, bot)
 	case `look`:
-		return Look(in, bot)
+		return Look(*in, bot)
 	case `status`:
-		return RoomInfo(in, bot)
+		return RoomInfo(*in, bot)
 	case `stop`:
-		return StopGame(in)
+		return StopGame(*in)
 	}
 
 	return

@@ -56,7 +56,7 @@ func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt strin
 
 			v.ticker.Stop()
 
-			bot.SendText(fmt.Sprintf("`%s` 投票结束！", v.Name), to)
+			bot.SendText(fmt.Sprintf("`%s` 投票结束！", v.Name), to.ID)
 		}
 	}()
 
