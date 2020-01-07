@@ -2,6 +2,7 @@ package rboot
 
 import (
 	"bufio"
+	"bytes"
 	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
@@ -17,11 +18,11 @@ type Message struct {
 }
 
 // ReadMessage 读取消息
-func ReadMessage(r io.Reader) (msg Message, err error) {
+func ReadMessage(r io.Reader) (msg *Message, err error) {
 	tp := textproto.NewReader(bufio.NewReader(r))
 
 	hdr, err := tp.ReadMIMEHeader()
-	msg = Message{
+	msg = &Message{
 		Header: Header(hdr),
 		Body:   tp.R,
 	}
@@ -29,35 +30,38 @@ func ReadMessage(r io.Reader) (msg Message, err error) {
 	return msg, err
 }
 
-func NewMessage(content string) Message {
-	return Message{
+func NewMessage(content string) *Message {
+	return &Message{
 		Header: Header{},
 		Body:   strings.NewReader(content),
 	}
 }
 
-func NewMessageWithReader(body io.Reader) Message {
-	return Message{
+func NewMessageWithReader(body io.Reader) *Message {
+	return &Message{
 		Header: Header{},
 		Body:   body,
 	}
 }
 
-func (m Message) String() string {
-	body, err := ioutil.ReadAll(m.Body)
+func (m *Message) String() string {
+	content, err := ioutil.ReadAll(m.Body)
 	if err != nil {
 		logrus.Error(err)
 	}
-	return string(body)
+
+	m.Body = bytes.NewBuffer(content)
+
+	return string(content)
 }
 
 // MsgType 消息类型
-func (m Message) MsgType() string {
+func (m *Message) MsgType() string {
 	return m.Header.Get("MsgType")
 }
 
 // SetAttachment 为消息设置附件
-func (m Message) AddFile(contentType, filepath string) {
+func (m *Message) AddFile(contentType, filepath string) {
 	m.Header.Add("MsgType", contentType)
 	m.Header.Add("File", filepath)
 }

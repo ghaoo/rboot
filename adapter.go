@@ -10,9 +10,9 @@ import (
 )
 
 type Adapter interface {
-	Name() string           // 适配器名称
-	Incoming() chan Message // 接收到的消息
-	Outgoing() chan Message // 回复的消息
+	Name() string            // 适配器名称
+	Incoming() chan *Message // 接收到的消息
+	Outgoing() chan *Message // 回复的消息
 }
 
 type adapterF func(*Robot) Adapter
@@ -58,8 +58,8 @@ var (
 )
 
 type cli struct {
-	in     chan Message
-	out    chan Message
+	in     chan *Message
+	out    chan *Message
 	writer *bufio.Writer
 }
 
@@ -67,8 +67,8 @@ type cli struct {
 func newCli(bot *Robot) Adapter {
 
 	c := &cli{
-		in:     make(chan Message),
-		out:    make(chan Message),
+		in:     make(chan *Message),
+		out:    make(chan *Message),
 		writer: bufio.NewWriter(stdout),
 	}
 
@@ -81,11 +81,11 @@ func (c *cli) Name() string {
 	return `cli`
 }
 
-func (c *cli) Incoming() chan Message {
+func (c *cli) Incoming() chan *Message {
 	return c.in
 }
 
-func (c *cli) Outgoing() chan Message {
+func (c *cli) Outgoing() chan *Message {
 	return c.out
 }
 
@@ -104,7 +104,7 @@ func (c *cli) run() {
 			for {
 				select {
 				case msg := <-c.out:
-					c.writeString(msg.String())
+					_ = c.writeString(msg.String())
 				default:
 					break forLoop
 				}
@@ -114,7 +114,7 @@ func (c *cli) run() {
 
 	go func() {
 		for msg := range c.out {
-			c.writeString(msg.String())
+			_ = c.writeString(msg.String())
 		}
 	}()
 }

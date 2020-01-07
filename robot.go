@@ -38,8 +38,8 @@ type Robot struct {
 	adapter    Adapter
 	brain      Brain
 	rule       Rule
-	inputChan  chan Message
-	outputChan chan Message
+	inputChan  chan *Message
+	outputChan chan *Message
 
 	Router  *Router
 	Ruleset string
@@ -54,8 +54,8 @@ type Robot struct {
 func New() *Robot {
 
 	bot := &Robot{
-		inputChan:  make(chan Message),
-		outputChan: make(chan Message),
+		inputChan:  make(chan *Message),
+		outputChan: make(chan *Message),
 		signalChan: make(chan os.Signal),
 		rule:       new(Regex),
 	}
@@ -74,7 +74,7 @@ func process(ctx context.Context, bot *Robot) {
 		// 监听传入消息
 		for in := range bot.inputChan {
 
-			go func(bot Robot, msg Message) {
+			go func(bot *Robot, msg *Message) {
 				defer func() {
 					if r := recover(); r != nil {
 						logrus.Errorf("panic recovered when parsing message: %#v. \nPanic: %v", fmt.Sprintf(""), r)
@@ -112,7 +112,7 @@ func process(ctx context.Context, bot *Robot) {
 					}
 
 					// 执行脚本, 附带ctx, 并获取输出
-					resp := action(ctx, &bot)
+					resp := action(ctx, bot)
 
 					// 将消息发送到 outputChan
 					// 指定输出消息的接收者
@@ -128,13 +128,11 @@ func process(ctx context.Context, bot *Robot) {
 							resp)
 					}
 
-					//fmt.Println(resp)
-
 					// send ...
 					bot.outputChan <- resp
 				}
 
-			}(*bot, in)
+			}(bot, in)
 		}
 	})
 }
@@ -189,7 +187,7 @@ func (bot *Robot) Stop() {
 }
 
 // Send 发送消息
-func (bot *Robot) Send(msg Message) {
+func (bot *Robot) Send(msg *Message) {
 	bot.outputChan <- msg
 }
 

@@ -1,6 +1,7 @@
 package wechat
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/ghaoo/rboot"
@@ -8,8 +9,8 @@ import (
 )
 
 type wx struct {
-	in  chan rboot.Message
-	out chan rboot.Message
+	in  chan *rboot.Message
+	out chan *rboot.Message
 
 	bot    *rboot.Robot
 	client *sdk.WeChat
@@ -24,8 +25,8 @@ func New(bot *rboot.Robot) rboot.Adapter {
 	}
 
 	w := &wx{
-		in:     make(chan rboot.Message),
-		out:    make(chan rboot.Message),
+		in:     make(chan *rboot.Message),
+		out:    make(chan *rboot.Message),
 		bot:    bot,
 		client: client,
 	}
@@ -41,26 +42,11 @@ func (w *wx) Name() string {
 	return "wechat"
 }
 
-func (w *wx) Sync() {
-	contact := w.client.AllContacts()
-	users := make([]rboot.User, len(contact))
-
-	for k, v := range contact {
-		users[k] = rboot.User{
-			ID:   v.UserName,
-			Name: v.NickName,
-			Data: map[string]interface{}{"wechatFriend": v},
-		}
-	}
-
-	w.bot.SyncUsers(users)
-}
-
-func (w *wx) Incoming() chan rboot.Message {
+func (w *wx) Incoming() chan *rboot.Message {
 	return w.in
 }
 
-func (w *wx) Outgoing() chan rboot.Message {
+func (w *wx) Outgoing() chan *rboot.Message {
 	return w.out
 }
 
@@ -68,13 +54,15 @@ func (w *wx) run() {
 
 	go func() {
 		for msg := range w.out {
-			if msg.Mate.Has("file") {
-				for _, p := range msg.Mate["file"].([]string) {
-					w.client.SendFile(p, msg.To.ID)
+			if msg.Header.Get("file") != "" {
+				for _, to := range msg.To {
+					w.client.SendFile(msg.Header.Get("file"), to)
 				}
 			}
-			w.client.SendTextMsg(msg.Content, msg.To.ID)
 
+			for _, to := range msg.To {
+				w.client.SendTextMsg(msg.String(), to)
+			}
 		}
 	}()
 
@@ -87,42 +75,11 @@ func (w *wx) run() {
 		case sdk.EVENT_NEW_MESSAGE:
 			msg := e.Data.(sdk.MsgData)
 
-			toName := w.client.MySelf.NickName
-			if msg.IsGroupMsg {
-				if c := w.client.ContactByUserName(msg.ToUserName); c != nil {
-					toName = c.NickName
-				} else {
-					toName = `无名`
-				}
-			}
+			to := []string{msg.ToUserName}
 
-			to := rboot.User{
-				ID:   msg.ToUserName,
-				Name: toName,
-			}
+			from := msg.FromUserName
 
-			fromName := ``
-			if c := w.client.ContactByUserName(msg.FromUserName); c != nil {
-				fromName = c.NickName
-			}
-
-			from := rboot.User{
-				ID:   msg.FromUserName,
-				Name: fromName,
-			}
-
-			senderName := ``
-			friend := false
-			if c := w.client.ContactByUserName(msg.SenderUserName); c != nil {
-				senderName = c.NickName
-				if c.Type == sdk.Friend || c.Type == sdk.FriendAndMember {
-					friend = true
-				}
-			}
-			sender := rboot.User{
-				ID:   msg.SenderUserName,
-				Name: senderName,
-			}
+			sender := msg.SenderUserName
 
 			content := msg.Content
 
@@ -136,35 +93,27 @@ func (w *wx) run() {
 				content = strings.TrimSpace(strings.TrimPrefix(content, atme))
 			}
 
+			isFriend := false
+			if c := w.client.ContactByUserName(msg.SenderUserName); c != nil {
+				if c.Type == sdk.Friend || c.Type == sdk.FriendAndMember {
+					isFriend = true
+				}
+			}
+
 			if !msg.IsGroupMsg || msg.AtMe {
-				w.in <- rboot.Message{
-					To:      to,
-					From:    from,
-					Sender:  sender,
-					Content: content,
-					Mate: map[string]interface{}{
-						"AtMe":         msg.AtMe,
-						"SendByMySelf": msg.IsSendedByMySelf,
-						"SendByFriend": friend,
-						"GroupMsg":     msg.IsGroupMsg,
-					},
-				}
-			}
+				rmsg := rboot.NewMessage(content)
+				rmsg.To = to
+				rmsg.From = from
+				rmsg.Header.Set("Sender", sender)
+				rmsg.Header.Set("AtMe", strconv.FormatBool(msg.AtMe))
+				rmsg.Header.Set("SendByMySelf", strconv.FormatBool(msg.IsSendedByMySelf))
+				rmsg.Header.Set("GroupMsg", strconv.FormatBool(msg.IsGroupMsg))
+				rmsg.Header.Set("IsFriend", strconv.FormatBool(isFriend))
 
+				w.in <- rmsg
+			}
 		}
 
-		go func() {
-			w.Sync()
-			for sync := range w.client.SyncNotify {
-				if sync > 0 {
-					w.Sync()
-				}
-			}
-		}()
-
-		if es.Hook != nil {
-			es.Hook(e)
-		}
 	}
 }
 

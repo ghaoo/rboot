@@ -10,7 +10,7 @@ import (
 var scripts = rboot.ListScripts()
 
 // helpSetup 帮助脚本
-func helpSetup(ctx context.Context, bot *rboot.Robot) (msg rboot.Message) {
+func helpSetup(ctx context.Context, bot *rboot.Robot) (msg *rboot.Message) {
 
 	switch bot.Ruleset {
 	case `help`:

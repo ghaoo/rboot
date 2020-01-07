@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-func setup(ctx context.Context, bot *rboot.Robot) rboot.Message {
-	var msg rboot.Message
+func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
+	var msg *rboot.Message
 
 	switch bot.Ruleset {
 	case `ping`:
