@@ -10,6 +10,8 @@ import (
 )
 
 type Message struct {
+	To     []string  // 接收者
+	From   string    // 发送者
 	Header Header    // 头信息
 	Body   io.Reader // 消息主体
 }
@@ -49,34 +51,15 @@ func (m Message) String() string {
 	return string(body)
 }
 
-// ToUser 返回接收者
-// 当接收者为多个时以 , 隔开
-func (m Message) ToUser() []string {
-	to := m.Header.Get("to")
-	return strings.Split(to, ",")
-
-}
-
-// FromUser 返回发送者
-func (m Message) FromUser() string {
-	return m.Header.Get("From")
-}
-
-// AddTo 设置接收者
-func (m Message) AddTo(user ...string) {
-	to := strings.Join(user, ",")
-	m.Header.Add("to", to)
-}
-
-// SetFrom 设置发送者
-func (m Message) SetFrom(user string) {
-	m.Header.Set("from", user)
+// MsgType 消息类型
+func (m Message) MsgType() string {
+	return m.Header.Get("MsgType")
 }
 
 // SetAttachment 为消息设置附件
 func (m Message) AddFile(contentType, filepath string) {
-	m.Header.Add("Content-Type", contentType)
-	m.Header.Add("file", filepath)
+	m.Header.Add("MsgType", contentType)
+	m.Header.Add("File", filepath)
 }
 
 type Header map[string][]string

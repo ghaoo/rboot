@@ -95,9 +95,9 @@ func process(ctx context.Context, bot *Robot) {
 
 					if bot.Debug {
 						logrus.Debugf("\nIncoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %s\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n",
-							msg.Header.Get("Content-Type"),
-							msg.FromUser(),
-							msg.ToUser(),
+							msg.Header.Get("MsgType"),
+							msg.From,
+							strings.Join(msg.To, ", "),
 							msg.String(),
 							script,
 							mr,
@@ -116,17 +116,19 @@ func process(ctx context.Context, bot *Robot) {
 
 					// 将消息发送到 outputChan
 					// 指定输出消息的接收者
-					if len(resp.ToUser()) <= 0 {
-						resp.AddTo(msg.FromUser())
+					if len(resp.To) <= 0 {
+						resp.To = []string{msg.From}
 					}
 
 					if bot.Debug {
 						logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %s\n- 发送人: %s\n- 内容: %s\n",
-							resp.Header.Get("Content-Type"),
-							resp.ToUser(),
-							resp.FromUser(),
-							resp.String())
+							resp.Header.Get("MsgType"),
+							strings.Join(resp.To, ", "),
+							resp.From,
+							resp)
 					}
+
+					//fmt.Println(resp)
 
 					// send ...
 					bot.outputChan <- resp
@@ -194,7 +196,7 @@ func (bot *Robot) Send(msg Message) {
 // SendText 发送文本消息
 func (bot *Robot) SendText(text string, to ...string) {
 	msg := NewMessage(text)
-	msg.AddTo(to...)
+	msg.To = to
 
 	bot.outputChan <- msg
 
