@@ -21,7 +21,7 @@ type Vote struct {
 }
 
 // 新建投票
-func (v *Vote) New(bot *rboot.Robot, to string, name, user string, opt string) *rboot.Message {
+func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt string) *rboot.Message {
 	// 检查有没有进行中的投票
 	if active {
 		return rboot.NewMessage("投票进行中，请稍后...")

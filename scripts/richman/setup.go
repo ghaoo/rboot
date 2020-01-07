@@ -3,12 +3,13 @@ package richman
 import (
 	"context"
 	"github.com/ghaoo/rboot"
+	"strconv"
 )
 
-func setup(ctx context.Context, bot *rboot.Robot) (msg []rboot.Message) {
+func setup(ctx context.Context, bot *rboot.Robot) (msg *rboot.Message) {
 	in := ctx.Value("input").(rboot.Message)
 
-	if in.Mate["SendByMySelf"] != nil && in.Mate["SendByMySelf"].(bool) {
+	if sendByMySelf, _ := strconv.ParseBool(in.Header.Get("SendByMySelf")); sendByMySelf {
 		return nil
 	}
 
