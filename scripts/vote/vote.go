@@ -21,7 +21,7 @@ type Vote struct {
 }
 
 // 新建投票
-func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt string) *rboot.Message {
+func (v *Vote) New(bot *rboot.Robot, to, name, user string, opt string) *rboot.Message {
 	// 检查有没有进行中的投票
 	if active {
 		return rboot.NewMessage("投票进行中，请稍后...")
@@ -56,7 +56,7 @@ func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt strin
 
 			v.ticker.Stop()
 
-			bot.SendText(fmt.Sprintf("`%s` 投票结束！", v.Name), to.ID)
+			bot.SendText(fmt.Sprintf("`%s` 投票结束！", v.Name), to)
 		}
 	}()
 
@@ -67,7 +67,7 @@ func (v *Vote) New(bot *rboot.Robot, to rboot.User, name, user string, opt strin
 
 	msg += "\n*投票请直接输入@@选项*"
 
-	return rboot.NewMessage(msg, rboot.User{ID: "@all"})
+	return rboot.NewMessage(msg, to)
 }
 
 func (v *Vote) Voting(user string, opt string) *rboot.Message {
@@ -108,7 +108,7 @@ func (v *Vote) Result() *rboot.Message {
 	return rboot.NewMessage(content)
 }
 
-func (v *Vote) Stop(user string) *rboot.Message {
+func (v *Vote) Stop(to, user string) *rboot.Message {
 
 	if !active {
 		return rboot.NewMessage("没有正在进行中的投票或投票已经结束")
@@ -126,5 +126,7 @@ func (v *Vote) Stop(user string) *rboot.Message {
 
 	v.ticker.Stop()
 
-	return rboot.NewMessage(fmt.Sprintf("`%s` 投票结束！", v.Name), rboot.User{ID: "@all"})
+	msg := rboot.NewMessage(fmt.Sprintf("`%s` 投票结束！", v.Name), to)
+
+	return msg
 }

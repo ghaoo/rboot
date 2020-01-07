@@ -8,7 +8,7 @@ import (
 var vote = new(Vote)
 
 func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
-	in := ctx.Value("input").(rboot.Message)
+	in := ctx.Value("input").(*rboot.Message)
 
 	/*if in.Mate["GroupMsg"] != nil && !in.Mate["GroupMsg"].(bool) {
 		return []rboot.Message{{Content: "投票请在群组中创建"}}
@@ -20,7 +20,7 @@ func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
 	case `new_vote`:
 		return vote.New(bot, in.From, bot.Args[1], in.Header.Get("Sender"), bot.Args[2])
 	case `stop_vote`:
-		return vote.Stop(in.Sender.Name)
+		return vote.Stop(in.From, in.Sender)
 	case `result`:
 		return vote.Result()
 	}

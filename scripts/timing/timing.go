@@ -20,7 +20,7 @@ var timerN = 0
 var timers = make(map[int]*timer)
 
 func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
-	in := ctx.Value("input").(rboot.Message)
+	in := ctx.Value("input").(*rboot.Message)
 
 	switch bot.Ruleset {
 	case "timer":
@@ -41,7 +41,7 @@ func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
 }
 
 // 定时器开始定时
-func start_timer(in rboot.Message, bot *rboot.Robot) *rboot.Message {
+func start_timer(in *rboot.Message, bot *rboot.Robot) *rboot.Message {
 
 	args := bot.Args
 
@@ -80,7 +80,7 @@ func start_timer(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 	timers[timerN] = myTimer
 	timerN += 1
 
-	bot.SendText("定时器序号 "+strconv.Itoa(n), in.From.ID)
+	bot.SendText("定时器序号 "+strconv.Itoa(n), in.From)
 
 	for {
 		select {
@@ -156,7 +156,7 @@ var tickerN = 0
 var tickers = make(map[int]*ticker)
 
 // ticker开始计时
-func start_ticker(in rboot.Message, bot *rboot.Robot) *rboot.Message {
+func start_ticker(in *rboot.Message, bot *rboot.Robot) *rboot.Message {
 	args := bot.Args
 
 	// 时间
@@ -194,7 +194,7 @@ func start_ticker(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 	tickers[tickerN] = myTicker
 	tickerN += 1
 
-	bot.SendText("续断器序号 "+strconv.Itoa(n), in.From.ID)
+	bot.SendText("续断器序号 "+strconv.Itoa(n), in.From)
 
 	for {
 		select {

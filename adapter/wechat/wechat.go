@@ -55,10 +55,10 @@ func (w *wx) run() {
 	go func() {
 		for msg := range w.out {
 			if msg.Header.Get("file") != "" {
-				w.client.SendFile(msg.Header.Get("file"), msg.To.ID)
+				w.client.SendFile(msg.Header.Get("file"), msg.To)
 			}
 
-			w.client.SendTextMsg(msg.String(), msg.To.ID)
+			w.client.SendTextMsg(msg.String(), msg.To)
 		}
 	}()
 
@@ -71,41 +71,11 @@ func (w *wx) run() {
 		case sdk.EVENT_NEW_MESSAGE:
 			msg := e.Data.(sdk.MsgData)
 
-			toName := w.client.MySelf.NickName
-			if msg.IsGroupMsg {
-				if c := w.client.ContactByUserName(msg.ToUserName); c != nil {
-					toName = c.NickName
-				} else {
-					toName = `无名`
-				}
-			}
-
-			to := rboot.User{
-				ID:   msg.ToUserName,
-				Name: toName,
-			}
-
-			fromName := ``
-			if c := w.client.ContactByUserName(msg.FromUserName); c != nil {
-				fromName = c.NickName
-			}
-
-			from := rboot.User{
-				ID:   msg.FromUserName,
-				Name: fromName,
-			}
-
-			senderName := ``
 			isFriend := false
 			if c := w.client.ContactByUserName(msg.SenderUserName); c != nil {
-				senderName = c.NickName
 				if c.Type == sdk.Friend || c.Type == sdk.FriendAndMember {
 					isFriend = true
 				}
-			}
-			sender := rboot.User{
-				ID:   msg.SenderUserName,
-				Name: senderName,
 			}
 
 			content := msg.Content
@@ -120,18 +90,16 @@ func (w *wx) run() {
 				content = strings.TrimSpace(strings.TrimPrefix(content, atme))
 			}
 
-			if !msg.IsGroupMsg || msg.AtMe {
-				rmsg := rboot.NewMessage(content)
-				rmsg.To = to
-				rmsg.From = from
-				rmsg.Sender = sender
-				rmsg.Header.Set("AtMe", strconv.FormatBool(msg.AtMe))
-				rmsg.Header.Set("SendByMySelf", strconv.FormatBool(msg.IsSendedByMySelf))
-				rmsg.Header.Set("GroupMsg", strconv.FormatBool(msg.IsGroupMsg))
-				rmsg.Header.Set("IsFriend", strconv.FormatBool(isFriend))
+			rmsg := rboot.NewMessage(content)
+			rmsg.To = msg.ToUserName
+			rmsg.From = msg.FromUserName
+			rmsg.Sender = msg.SenderUserName
+			rmsg.Header.Set("AtMe", strconv.FormatBool(msg.AtMe))
+			rmsg.Header.Set("SendByMySelf", strconv.FormatBool(msg.IsSendedByMySelf))
+			rmsg.Header.Set("GroupMsg", strconv.FormatBool(msg.IsGroupMsg))
+			rmsg.Header.Set("IsFriend", strconv.FormatBool(isFriend))
 
-				w.in <- rmsg
-			}
+			w.in <- rmsg
 		}
 
 	}

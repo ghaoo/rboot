@@ -3,17 +3,18 @@ package rboot
 import (
 	"bufio"
 	"bytes"
-	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/textproto"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Message struct {
-	To     User      // 接收者
-	From   User      // 发送者
-	Sender User      // 发送者
+	To     string    // 接收者
+	From   string    // 发送者
+	Sender string    // 发送者
 	Header Header    // 头信息
 	Body   io.Reader // 消息主体
 }
@@ -31,7 +32,8 @@ func ReadMessage(r io.Reader) (msg *Message, err error) {
 	return msg, err
 }
 
-func NewMessage(content string, to ...User) *Message {
+// NewMessage 新建消息
+func NewMessage(content string, to ...string) *Message {
 	msg := &Message{
 		Header: Header{},
 		Body:   strings.NewReader(content),
@@ -62,6 +64,18 @@ func (m *Message) String() string {
 	return string(content)
 }
 
+// SetCc 为消息设置抄送
+func (m *Message) SetCc(to ...string) {
+	m.Header.Set("Cc", strings.Join(to, ","))
+}
+
+// Cc 返回消息抄送信息
+func (m *Message) Cc() []string {
+	cc := m.Header.Get("Cc")
+
+	return strings.Split(cc, ",")
+}
+
 // MsgType 消息类型，类型名称会转换成小写
 func (m *Message) MsgType() string {
 	return strings.ToLower(m.Header.Get("MsgType"))
@@ -86,6 +100,12 @@ func (h Header) Add(key, value string) {
 
 func (h Header) Set(key, value string) {
 	textproto.MIMEHeader(h).Set(key, value)
+}
+
+func (h Header) Has(key string) bool {
+	_, ok := h[key]
+
+	return ok
 }
 
 func (h Header) Get(key string) string {

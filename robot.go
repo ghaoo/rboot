@@ -40,6 +40,7 @@ type Robot struct {
 	rule       Rule
 	inputChan  chan *Message
 	outputChan chan *Message
+	users      cacheUser
 
 	Router  *Router
 	Ruleset string
@@ -58,6 +59,7 @@ func New() *Robot {
 		outputChan: make(chan *Message),
 		signalChan: make(chan os.Signal),
 		rule:       new(Regex),
+		users:      make(map[string]*User),
 	}
 
 	bot.Router = newRouter()
@@ -119,15 +121,23 @@ func process(ctx context.Context, bot *Robot) {
 					resp.To = msg.From
 
 					if bot.Debug {
-						logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 发送人: %v\n- 内容: %s\n",
+						logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n",
 							resp.Header.Get("MsgType"),
 							resp.To,
+							resp.Cc(),
 							resp.From,
 							resp)
 					}
 
 					// send ...
 					bot.outputChan <- resp
+
+					if resp.Header.Has("Cc") {
+						for _, cc := range resp.Cc() {
+							resp.To = cc
+							bot.outputChan <- resp
+						}
+					}
 				}
 
 			}(bot, in)
@@ -192,15 +202,15 @@ func (bot *Robot) Send(msg *Message) {
 // SendText 发送文本消息
 func (bot *Robot) SendText(text string, to string) {
 	msg := NewMessage(text)
-	msg.To = User{ID: to}
+	msg.To = to
 
 	bot.outputChan <- msg
 
 }
 
-// GetAdapter 获取正在使用的适配器
-func (bot *Robot) GetAdapter() Adapter {
-	return bot.adapter
+// GetAdapter 获取正在使用的适配器名称
+func (bot *Robot) GetAdapter() string {
+	return bot.adapter.Name()
 }
 
 // SetBrain 设置储存器

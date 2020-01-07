@@ -27,14 +27,14 @@ func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg *rboot.Message) {
 		}
 	}
 
-	room, ok := GM.GameRooms[in.From.ID]
+	room, ok := GM.GameRooms[in.From]
 	// 如果房间存在并且房间不处于关闭状态，则不作任何操作
 	if ok && room.RoomStatus != GAMEROOM_STATUS__DISABLE {
 		return rboot.NewMessage("游戏中...")
 	}
 
 	// 获取用户唯一标识
-	userID := in.Sender.ID
+	userID := in.Sender
 	// 根据用户ID获取用户信息
 	user, ok := GM.User[userID]
 
@@ -42,8 +42,8 @@ func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg *rboot.Message) {
 		return rboot.NewMessage("正在游戏中，不允许创建游戏")
 	} else {
 		user = &User{
-			ID:   in.Sender.ID,
-			Name: in.Sender.Name,
+			ID:   in.Sender,
+			Name: bot.GetUserName(in.Sender),
 		}
 	}
 
@@ -81,14 +81,14 @@ func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg *rboot.Message) {
 	// 房间序号+1并注册到游戏
 	//roomNum := len(GM.GameRooms) + 1
 	// 使用群ID或者个人ID作为房间编号
-	GM.GameRooms[in.From.ID] = room
-	GM.User[in.Sender.ID] = user
+	GM.GameRooms[in.From] = room
+	GM.User[in.Sender] = user
 
 	if group, _ := strconv.ParseBool(in.Header.Get("GroupMsg")); !group {
 		// 将ai加入游戏
 		ai := &User{
-			ID:   in.To.ID,
-			Name: in.To.Name,
+			ID:   in.To,
+			Name: bot.GetUserName(in.To),
 		}
 		room.Join(ai, GAME_USER__PLAYER)
 		// 将AI设置为托管状态
@@ -111,13 +111,13 @@ func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg *rboot.Message) {
 
 			case broadcast := <-room.Broadcast:
 				// 监听广播消息
-				bot.SendText(broadcast, in.From.ID)
+				bot.SendText(broadcast, in.From)
 
 			case <-timer.C:
 
 				room.Close()
 
-				bot.SendText("超时！游戏房间取消", in.From.ID)
+				bot.SendText("超时！游戏房间取消", in.From)
 
 				break Loop
 
@@ -127,13 +127,13 @@ func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg *rboot.Message) {
 					<-timer.C
 				}
 
-				bot.SendText("请玩家做好准备，游戏开始", in.From.ID)
+				bot.SendText("请玩家做好准备，游戏开始", in.From)
 
 			case <-room.StopChan:
 
 				room.Close()
 
-				bot.SendText("游戏房间关闭", in.From.ID)
+				bot.SendText("游戏房间关闭", in.From)
 
 				break Loop
 			}
@@ -144,7 +144,7 @@ func CreateGameRoom(in rboot.Message, bot *rboot.Robot) (msg *rboot.Message) {
 }
 
 func StopGame(in rboot.Message) *rboot.Message {
-	room, _ := GM.GameRooms[in.From.ID]
+	room, _ := GM.GameRooms[in.From]
 
 	room.StopChan <- true
 
@@ -162,7 +162,7 @@ func JoinRoom(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 		return nil
 	}
 
-	room, ok := GM.GameRooms[in.From.ID]
+	room, ok := GM.GameRooms[in.From]
 	// 如果房间不存在或者游戏已经结束，提示创建游戏
 	if !ok || room.RoomStatus == GAMEROOM_STATUS__DISABLE {
 		return rboot.NewMessage("游戏不存在，请先创建游戏")
@@ -174,17 +174,17 @@ func JoinRoom(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 	}
 
 	// 获取用户唯一标识
-	userID := in.Sender.ID
+	userID := in.Sender
 	// 根据用户ID获取用户信息
 	user, ok := GM.User[userID]
 
 	// 判断用户是否在游戏中
 	if ok && user.Room != nil {
-		return rboot.NewMessage("@" + in.Sender.Name + " 正在游戏中，不允许加入其他游戏")
+		return rboot.NewMessage("@" + bot.GetUserName(in.Sender) + " 正在游戏中，不允许加入其他游戏")
 	} else {
 		user = &User{
-			ID:   in.Sender.ID,
-			Name: in.Sender.Name,
+			ID:   in.Sender,
+			Name: bot.GetUserName(in.Sender),
 		}
 	}
 
@@ -192,7 +192,7 @@ func JoinRoom(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 
 	room.Join(user, GAME_USER__PLAYER)
 
-	return rboot.NewMessage("@" + in.Sender.Name + " 加入游戏成功，请等待游戏开始")
+	return rboot.NewMessage("@" + bot.GetUserName(in.Sender) + " 加入游戏成功，请等待游戏开始")
 }
 
 // 暂离游戏
@@ -204,28 +204,30 @@ func AFK(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 		}
 	}
 
-	room, ok := GM.GameRooms[in.From.ID]
+	room, ok := GM.GameRooms[in.From]
 	// 如果房间不存在或者游戏已经结束，提示创建游戏
 	if !ok || room.RoomStatus == GAMEROOM_STATUS__DISABLE {
 		return rboot.NewMessage("游戏不存在，请先创建游戏")
 	}
 
 	// 获取用户唯一标识
-	userID := in.Sender.ID
+	userID := in.Sender
 	// 根据用户ID获取用户信息
 	user, ok := GM.User[userID]
 
+	sender := bot.GetUserName(in.Sender)
+
 	if !ok || user.Room == nil {
-		return rboot.NewMessage("@" + in.Sender.Name + " 未参加游戏")
+		return rboot.NewMessage("@" + sender + " 未参加游戏")
 	}
 
 	if room.User[user] != GAME_USER__PLAYER {
-		return rboot.NewMessage("@" + in.Sender.Name + " 已经处于托管状态")
+		return rboot.NewMessage("@" + sender + " 已经处于托管状态")
 	}
 
 	go room.AFK(user)
 
-	return rboot.NewMessage("@" + in.Sender.Name + " 暂时离开，游戏将由系统托管")
+	return rboot.NewMessage("@" + sender + " 暂时离开，游戏将由系统托管")
 }
 
 // 退出游戏房间
@@ -237,24 +239,26 @@ func QuitGame(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 		}
 	}
 
-	room, ok := GM.GameRooms[in.From.ID]
+	room, ok := GM.GameRooms[in.From]
 	// 如果房间不存在或者游戏已经结束，提示创建游戏
 	if !ok || room.RoomStatus == GAMEROOM_STATUS__DISABLE {
 		return rboot.NewMessage("游戏不存在，请先创建游戏")
 	}
 
 	// 获取用户唯一标识
-	userID := in.Sender.ID
+	userID := in.Sender
 	// 根据用户ID获取用户信息
 	user, ok := GM.User[userID]
 
+	sender := bot.GetUserName(in.Sender)
+
 	if !ok || user.Room == nil {
-		return rboot.NewMessage("@" + in.Sender.Name + " 未参加游戏")
+		return rboot.NewMessage("@" + sender + " 未参加游戏")
 	}
 
 	room.Quit(user)
 
-	reply := fmt.Sprintf("@%s 退出游戏", in.Sender.Name)
+	reply := fmt.Sprintf("@%s 退出游戏", sender)
 
 	return rboot.NewMessage(reply)
 }
@@ -268,19 +272,19 @@ func StartGame(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 		}
 	}
 
-	room, ok := GM.GameRooms[in.From.ID]
+	room, ok := GM.GameRooms[in.From]
 	// 如果房间不存在或者游戏已经结束，提示创建游戏
 	if !ok || room.RoomStatus == GAMEROOM_STATUS__DISABLE {
 		return rboot.NewMessage("游戏不存在，请先创建游戏")
 	}
 
 	// 获取用户唯一标识
-	userID := in.Sender.ID
+	userID := in.Sender
 	// 根据用户ID获取用户信息
 	user, ok := GM.User[userID]
 
 	if !ok || user.Room == nil {
-		return rboot.NewMessage("@" + in.Sender.Name + " 未参加游戏")
+		return rboot.NewMessage("@" + bot.GetUserName(in.Sender) + " 未参加游戏")
 	}
 
 	if room.GameNumber < 2 {
@@ -309,7 +313,7 @@ func StartGame(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 // 掷骰子
 func Dice(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 
-	room, ok := GM.GameRooms[in.From.ID]
+	room, ok := GM.GameRooms[in.From]
 	// 如果房间不存在或者游戏已经结束，不做任何操作
 	if !ok || room.RoomStatus == GAMEROOM_STATUS__DISABLE {
 		return nil
@@ -320,7 +324,7 @@ func Dice(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 	}
 
 	// 获取用户唯一标识
-	userID := in.Sender.ID
+	userID := in.Sender
 	// 根据用户ID获取用户信息
 	user, ok := GM.User[userID]
 	// 非游戏玩家不做任何操作
@@ -339,10 +343,14 @@ func Dice(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 	case `shake`:
 		args := bot.Args
 
+		fmt.Println(len(args))
+
 		// 获取骰子点数
 		if len(args) < 2 {
 			return nil
 		}
+
+		fmt.Println(args)
 
 		dice, err := strconv.Atoi(args[1])
 		if err != nil {
@@ -355,7 +363,7 @@ func Dice(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 	case `roll`:
 		dice = ShakeDice()
 
-		bot.SendText(fmt.Sprintf("点数: %d", dice), in.From.ID)
+		bot.SendText(fmt.Sprintf("点数: %d", dice), in.From)
 	}
 
 	room.Dice(dice, user)
@@ -365,7 +373,7 @@ func Dice(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 
 // 查看用户信息
 func Look(in rboot.Message, bot *rboot.Robot) *rboot.Message {
-	room, ok := GM.GameRooms[in.From.ID]
+	room, ok := GM.GameRooms[in.From]
 	// 如果房间不存在或者游戏已经结束，不做任何操作
 	if !ok || room.RoomStatus == GAMEROOM_STATUS__DISABLE {
 		fmt.Println("房间关闭中")
@@ -373,7 +381,7 @@ func Look(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 	}
 
 	// 获取用户唯一标识
-	userID := in.Sender.ID
+	userID := in.Sender
 	// 根据用户ID获取用户信息
 	user, ok := GM.User[userID]
 	// 非游戏玩家不做任何操作
@@ -392,7 +400,7 @@ func Look(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 // 查看房间玩家状态
 func RoomInfo(in rboot.Message, bot *rboot.Robot) *rboot.Message {
 
-	room, ok := GM.GameRooms[in.From.ID]
+	room, ok := GM.GameRooms[in.From]
 	// 如果房间不存在或者游戏已经结束，不做任何操作
 	if !ok || room.RoomStatus != GAMEROOM_STATUS__GAMESTART {
 		fmt.Println("房间未开始")

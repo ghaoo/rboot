@@ -82,8 +82,8 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msg := rboot.NewMessage(recv.Content)
-	msg.From = rboot.User{ID: recv.FromUsername, Name: recv.FromUsername}
-	msg.Sender = rboot.User{ID: recv.FromUsername, Name: recv.FromUsername}
+	msg.From = recv.FromUsername
+	msg.Sender = recv.FromUsername
 	msg.Header.Set("AgentId", strconv.Itoa(wx.agent.AgentID))
 
 	buf := bytes.Buffer{}
@@ -128,7 +128,7 @@ func (wx *wework) listenOutgoing() {
 			wmsg = wxwork.NewTextMessage(msg.String())
 		}
 
-		wmsg.SetUser(msg.To.ID)
+		wmsg.SetUser(msg.To)
 
 		_, err := wx.agent.SendMessage(wmsg)
 		if err != nil {
