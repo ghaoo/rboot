@@ -24,24 +24,24 @@ func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
 
 	switch bot.Ruleset {
 	case "timer":
-		return start_timer(in, bot)
-	case "stop_timer":
-		return stop_timer(bot)
-	case "status_timer":
-		return status_timer(bot)
+		return startTimer(in, bot)
+	case "stopTimer":
+		return stopTimer(bot)
+	case "statusTimer":
+		return statusTimer(bot)
 	case "ticker":
-		return start_ticker(in, bot)
-	case "stop_ticker":
+		return startTicker(in, bot)
+	case "stopTicker":
 		return stop_ticker(bot)
-	case "status_ticker":
-		return status_ticker(bot)
+	case "statusTicker":
+		return statusTicker(bot)
 	}
 
 	return nil
 }
 
 // 定时器开始定时
-func start_timer(in *rboot.Message, bot *rboot.Robot) *rboot.Message {
+func startTimer(in *rboot.Message, bot *rboot.Robot) *rboot.Message {
 
 	args := bot.Args
 
@@ -103,7 +103,7 @@ func start_timer(in *rboot.Message, bot *rboot.Robot) *rboot.Message {
 }
 
 // 定时器结束定时
-func stop_timer(bot *rboot.Robot) *rboot.Message {
+func stopTimer(bot *rboot.Robot) *rboot.Message {
 	args := bot.Args
 
 	tNS := args[1]
@@ -127,7 +127,7 @@ func stop_timer(bot *rboot.Robot) *rboot.Message {
 }
 
 // 定时器状态
-func status_timer(bot *rboot.Robot) *rboot.Message {
+func statusTimer(bot *rboot.Robot) *rboot.Message {
 
 	content := ""
 	if len(timers) <= 0 {
@@ -156,7 +156,7 @@ var tickerN = 0
 var tickers = make(map[int]*ticker)
 
 // ticker开始计时
-func start_ticker(in *rboot.Message, bot *rboot.Robot) *rboot.Message {
+func startTicker(in *rboot.Message, bot *rboot.Robot) *rboot.Message {
 	args := bot.Args
 
 	// 时间
@@ -245,7 +245,7 @@ func stop_ticker(bot *rboot.Robot) *rboot.Message {
 	}
 }
 
-func status_ticker(bot *rboot.Robot) *rboot.Message {
+func statusTicker(bot *rboot.Robot) *rboot.Message {
 
 	content := ""
 	if len(tickers) <= 0 {
@@ -266,12 +266,12 @@ func init() {
 	rboot.RegisterScripts(`timing`, rboot.Script{
 		Action: setup,
 		Ruleset: map[string]string{
-			`timer`:         `^!(\d+)([小时|H|h|分|分钟|M|m|秒|S|s]{1,2})后执行(.+)\.(.+)`,
-			`stop_timer`:    `^!stop timer (\d+)`,
-			`status_timer`:  `^!timer status`,
-			`ticker`:        `^!每过(\d+)([小时|H|h|分|分钟|M|m|秒|秒钟|S|s]{1,2})执行(.+)\.(.+)`,
-			`stop_ticker`:   `^!stop ticker (\d+)`,
-			`status_ticker`: `^!ticker status`,
+			`timer`:        `^!(\d+)([小时|H|h|分|分钟|M|m|秒|S|s]{1,2})后执行(.+)\.(.+)`,
+			`stopTimer`:    `^!stop timer (\d+)`,
+			`statusTimer`:  `^!timer status`,
+			`ticker`:       `^!每过(\d+)([小时|H|h|分|分钟|M|m|秒|秒钟|S|s]{1,2})执行(.+)\.(.+)`,
+			`stopTicker`:   `^!stop ticker (\d+)`,
+			`statusTicker`: `^!ticker status`,
 		},
 		Usage: "> `!<N小时|分|秒>后执行<脚本名称>.<命令名称>`: 定时器开始定时任务并在倒计时结束时执行相应命令 \n" +
 			"> `!stop timer <N>`: 结束对应序号定时器 \n" +
