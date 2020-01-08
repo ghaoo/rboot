@@ -16,17 +16,17 @@ type wework struct {
 	in  chan *rboot.Message
 	out chan *rboot.Message
 
-	agent *wxwork.Agent
+	client *wxwork.Agent
 }
 
 func newWework(bot *rboot.Robot) rboot.Adapter {
 	wx := &wework{
-		in:    make(chan *rboot.Message),
-		out:   make(chan *rboot.Message),
-		agent: newAgent(),
+		in:     make(chan *rboot.Message),
+		out:    make(chan *rboot.Message),
+		client: newAgent(),
 	}
 
-	bot.Router.HandleFunc("/wxwork", wx.agent.CallbackVerify).Methods("GET")
+	bot.Router.HandleFunc("/wxwork", wx.client.CallbackVerify).Methods("GET")
 	bot.Router.HandleFunc("/wxwork", wx.parseRecvHandle).Methods("POST")
 
 	go wx.listenOutgoing()
@@ -41,7 +41,8 @@ func newAgent() *wxwork.Agent {
 	if err != nil {
 		panic(err)
 	}
-	a := wxwork.NewAgent(corpid, secret, agentid)
+	a := wxwork.NewAgent(corpid, agentid)
+	a = a.WithSecret(secret)
 
 	token := os.Getenv("WORKWX_RECV_TOKEN")
 	encodingAESKey := os.Getenv("WORKWX_RECV_AES_KEY")
@@ -75,7 +76,7 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 		logrus.Errorln("read callback msg err:", err)
 	}
 
-	recv, err := wx.agent.ParseRecvMessage(signature, timestamp, nonce, data)
+	recv, err := wx.client.ParseRecvMessage(signature, timestamp, nonce, data)
 	if err != nil {
 		logrus.WithField("func", "parseRecvHandle.ParseRecvMessage").Error(err)
 	}
@@ -83,7 +84,7 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 	msg := rboot.NewMessage(recv.Content)
 	msg.From = recv.FromUsername
 	msg.Sender = recv.FromUsername
-	msg.Header.Set("AgentId", strconv.Itoa(wx.agent.AgentID))
+	msg.Header.Set("AgentId", strconv.Itoa(wx.client.AgentID))
 
 	buf := bytes.Buffer{}
 	encoder := gob.NewEncoder(&buf)
@@ -96,7 +97,7 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// 监听 rboot Outgoing
+// listenOutgoing 监听 rboot Outgoing
 func (wx *wework) listenOutgoing() {
 	for msg := range wx.out {
 		var wmsg *wxwork.Message
@@ -127,7 +128,7 @@ func (wx *wework) listenOutgoing() {
 
 		wmsg.SetUser(msg.To)
 
-		_, err := wx.agent.SendMessage(wmsg)
+		_, err := wx.client.SendMessage(wmsg)
 		if err != nil {
 			logrus.WithField("func", "wxwork listenOutgoing").Errorf("listen outgoing message err: %v", err)
 		}
