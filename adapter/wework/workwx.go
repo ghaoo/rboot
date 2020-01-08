@@ -3,7 +3,6 @@ package wework
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"github.com/ghaoo/rboot"
 	"github.com/ghaoo/wxwork"
 	"github.com/sirupsen/logrus"
@@ -24,7 +23,7 @@ func newWework(bot *rboot.Robot) rboot.Adapter {
 	wx := &wework{
 		in:    make(chan *rboot.Message),
 		out:   make(chan *rboot.Message),
-		agent: agent(),
+		agent: newAgent(),
 	}
 
 	bot.Router.HandleFunc("/wxwork", wx.agent.CallbackVerify).Methods("GET")
@@ -35,7 +34,7 @@ func newWework(bot *rboot.Robot) rboot.Adapter {
 	return wx
 }
 
-func agent() *wxwork.Agent {
+func newAgent() *wxwork.Agent {
 	corpid := os.Getenv("WORKWX_CORP_ID")
 	secret := os.Getenv("WORKWX_SECRET")
 	agentid, err := strconv.Atoi(os.Getenv("WORKWX_AGENT_ID"))
@@ -93,8 +92,6 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 	}
 	msg.Header.Set("Data", buf.String())
 
-	fmt.Println(buf.String())
-
 	wx.in <- msg
 
 }
@@ -111,8 +108,8 @@ func (wx *wework) listenOutgoing() {
 		url := msg.Header.Get("url")
 
 		switch msgtype {
-		case MSG_TYPE_MARKDOWN:
-			wmsg = wxwork.NewMarkdownMessage(msg.String())
+		case MSG_TYPE_TEXT:
+			wmsg = wxwork.NewTextMessage(msg.String())
 
 		case MSG_TYPE_IMAGE, MSG_TYPE_VOICE, MSG_TYPE_FILE:
 			wmsg = wxwork.NewMediaMessage(msgtype, mediaid)
@@ -125,7 +122,7 @@ func (wx *wework) listenOutgoing() {
 			wmsg = wxwork.NewTextCardMessage(title, desc, url, btntxt)
 
 		default:
-			wmsg = wxwork.NewTextMessage(msg.String())
+			wmsg = wxwork.NewMarkdownMessage(msg.String())
 		}
 
 		wmsg.SetUser(msg.To)

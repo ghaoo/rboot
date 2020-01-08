@@ -21,7 +21,7 @@ type Vote struct {
 }
 
 // 新建投票
-func (v *Vote) New(bot *rboot.Robot, to, name, user string, opt string) *rboot.Message {
+func (v *Vote) New(bot *rboot.Robot, in *rboot.Message, name string, opt string) *rboot.Message {
 	// 检查有没有进行中的投票
 	if active {
 		return rboot.NewMessage("投票进行中，请稍后...")
@@ -38,7 +38,7 @@ func (v *Vote) New(bot *rboot.Robot, to, name, user string, opt string) *rboot.M
 	}
 
 	v.Name = name
-	v.User = user
+	v.User = bot.GetUserName(in.Sender)
 	v.Players = make(map[string]string)
 	v.startTime = time.Now()
 	v.bot = bot
@@ -48,7 +48,7 @@ func (v *Vote) New(bot *rboot.Robot, to, name, user string, opt string) *rboot.M
 		v.ticker = time.NewTicker(timeout)
 		select {
 		case <-v.ticker.C:
-			result := v.Result()
+			result := v.Result(in.From)
 
 			bot.Send(result)
 
@@ -56,18 +56,18 @@ func (v *Vote) New(bot *rboot.Robot, to, name, user string, opt string) *rboot.M
 
 			v.ticker.Stop()
 
-			bot.SendText(fmt.Sprintf("`%s` 投票结束！", v.Name), to)
+			bot.SendText(fmt.Sprintf("`%s` 投票结束！", name), in.From)
 		}
 	}()
 
-	msg := fmt.Sprintf("%s 创建了投票: %s\n> 选项:\n", user, name)
+	msg := fmt.Sprintf("%s 创建了投票: %s\n> 选项:\n", v.User, name)
 	for i, c := range opts {
 		msg += fmt.Sprintf("> %d. `%s`\n", i+1, c)
 	}
 
 	msg += "\n*投票请直接输入@@选项*"
 
-	return rboot.NewMessage(msg, to)
+	return rboot.NewMessage(msg, in.From)
 }
 
 func (v *Vote) Voting(user string, opt string) *rboot.Message {
@@ -76,7 +76,7 @@ func (v *Vote) Voting(user string, opt string) *rboot.Message {
 	}
 	// 检查用户有没有参与
 	if iopt, ok := v.Players[user]; ok {
-		return rboot.NewMessage("你已经参与了投票，你选择的是 " + iopt)
+		return rboot.NewMessage(fmt.Sprintf("%s 你已经参与了投票，你选择的是`%s`", user, iopt))
 	}
 
 	opt = strings.TrimSpace(opt)
@@ -92,7 +92,7 @@ func (v *Vote) Voting(user string, opt string) *rboot.Message {
 	return rboot.NewMessage("投票成功!")
 }
 
-func (v *Vote) Result() *rboot.Message {
+func (v *Vote) Result(to string) *rboot.Message {
 	if !active {
 		return rboot.NewMessage("没有正在进行中的投票或投票已经结束")
 	}
@@ -105,10 +105,12 @@ func (v *Vote) Result() *rboot.Message {
 
 	content += "\n*发起人*: " + v.User
 
-	return rboot.NewMessage(content)
+	fmt.Println(to)
+
+	return rboot.NewMessage(content, to)
 }
 
-func (v *Vote) Stop(to, user string) *rboot.Message {
+func (v *Vote) Stop(bot *rboot.Robot, user, to string) *rboot.Message {
 
 	if !active {
 		return rboot.NewMessage("没有正在进行中的投票或投票已经结束")
@@ -118,7 +120,7 @@ func (v *Vote) Stop(to, user string) *rboot.Message {
 		return rboot.NewMessage("NO!")
 	}
 
-	result := v.Result()
+	result := v.Result(to)
 
 	v.bot.Send(result)
 
@@ -126,7 +128,7 @@ func (v *Vote) Stop(to, user string) *rboot.Message {
 
 	v.ticker.Stop()
 
-	msg := rboot.NewMessage(fmt.Sprintf("`%s` 投票结束！", v.Name), to)
+	msg := rboot.NewMessage(fmt.Sprintf("%s 创建的 `%s` 投票结束！", bot.GetUserName(user), v.Name), to)
 
 	return msg
 }

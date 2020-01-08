@@ -17,14 +17,14 @@ type beary struct {
 }
 
 func newBeary(bot *rboot.Robot) rboot.Adapter {
-	beary := &beary{
+	b := &beary{
 		in:  make(chan *rboot.Message),
 		out: make(chan *rboot.Message),
 	}
 
-	beary.run(bot)
+	b.run(bot)
 
-	return beary
+	return b
 }
 
 func (b *beary) Name() string {
