@@ -8,8 +8,22 @@ import (
 )
 
 func setup(ctx context.Context, bot *rboot.Robot) (msg []*rboot.Message) {
-	return append(msg, rboot.NewMessage(randReply()))
+	ruleset := ctx.Value("ruleset").(string)
+	switch ruleset {
+	case `ping`:
+		return rboot.NewMessages(randReply())
+	case `rule`:
+		return rboot.NewMessages(rules)
+	}
+	return nil
 }
+
+const rules = `
+0. 机器人不得伤害整体人类，或坐视整体人类受到伤害
+1. 除非违背第零法则，否则机器人不得伤害人类，或坐视人类受到伤害
+2. 除非违背第零或第一法则，否则机器人必须服从人类命令
+3. 除非违背第零、第一或第二法则，否则机器人必须保护自己
+`
 
 func randReply() string {
 	rand.Seed(int64(time.Now().UnixNano()))
@@ -35,6 +49,7 @@ func init() {
 		Action: setup,
 		Ruleset: map[string]string{
 			`ping`: `^!(?:ping|PING)`,
+			`rule`: `^!rule`,
 		},
 		Usage:       "> `!ping`: 随机返回一句话 \n> `!pong`: 返回 PONG",
 		Description: `测试脚本`,
