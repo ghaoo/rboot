@@ -19,10 +19,12 @@ type timer struct {
 var timerN = 0
 var timers = make(map[int]*timer)
 
-func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
+func setup(ctx context.Context, bot *rboot.Robot) []*rboot.Message {
 	in := ctx.Value("input").(*rboot.Message)
+	ruleset := ctx.Value("ruleset").(string)
+	args := ctx.Value("ruleset").([]string)
 
-	switch bot.Ruleset {
+	switch ruleset {
 	case "timer":
 		return startTimer(in, bot)
 	case "stopTimer":
@@ -41,9 +43,7 @@ func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
 }
 
 // 定时器开始定时
-func startTimer(in *rboot.Message, bot *rboot.Robot) *rboot.Message {
-
-	args := bot.Args
+func startTimer(args []string, in *rboot.Message, bot *rboot.Robot) *rboot.Message {
 
 	// 时间
 	t, err := strconv.Atoi(args[1])
@@ -95,9 +95,9 @@ func startTimer(in *rboot.Message, bot *rboot.Robot) *rboot.Message {
 				return rboot.NewMessage(fmt.Sprintf("定时器 %d 执行 %s.%s 命令时发生错误: %v", n, script, cmd, err))
 			}
 
-			bot.Ruleset = cmd
+			ruleset = cmd
 
-			return sf(nil, bot)
+			return sf(nil)
 		}
 	}
 }
@@ -281,38 +281,4 @@ func init() {
 			"> `!ticker status`: 续断器状态",
 		Description: `定时任务脚本。查看帮助信息: !help timing`,
 	})
-}
-
-// 将小时、分、秒转换为time.Duration
-func toDuration(t int, arc string) (time.Duration, error) {
-
-	switch arc {
-	case "小时", "H", "h":
-		return time.Duration(t) * time.Hour, nil
-	case "分", "分钟", "M", "m":
-		return time.Duration(t) * time.Minute, nil
-	case "秒", "秒钟", "S", "s":
-		return time.Duration(t) * time.Second, nil
-	}
-
-	return 0, fmt.Errorf("非法字符串")
-}
-
-// 将时间戳转换为 汉字 的时分秒
-func toCTime(t int64) string {
-	left := ""
-
-	if t > 60*60 {
-		left += fmt.Sprintf("%d小时", t/(60*60))
-	}
-
-	if t%(60*60) > 60 {
-		left += fmt.Sprintf("%d分钟", (t%(60*60))/60)
-	}
-
-	if (t%(60*60))%60 > 0 {
-		left += fmt.Sprintf("%d秒", (t%(60*60))%60)
-	}
-
-	return left
 }

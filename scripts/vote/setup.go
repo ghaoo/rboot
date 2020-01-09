@@ -9,12 +9,14 @@ var vote = new(Vote)
 
 func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
 	in := ctx.Value("input").(*rboot.Message)
+	ruleset := ctx.Value("ruleset").(string)
+	args := ctx.Value("ruleset").([]string)
 
-	switch bot.Ruleset {
+	switch ruleset {
 	case `voting`:
-		return vote.Voting(bot.GetUserName(in.Sender), bot.Args[1])
+		return vote.Voting(bot.GetUserName(in.Sender), args[1])
 	case `new_vote`:
-		return vote.New(bot, in, bot.Args[1], bot.Args[2])
+		return vote.New(bot, in, args[1], args[2])
 	case `stop_vote`:
 		return vote.Stop(bot, in.Sender, bot.GetUserName(in.From))
 	case `result`:

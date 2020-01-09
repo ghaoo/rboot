@@ -6,9 +6,9 @@ import (
 )
 
 type Brain interface {
-	Set(key string, value []byte) error
-	Get(key string) []byte
-	Remove(key string) error
+	Set(bucket, key string, value []byte) error
+	Get(bucket, key string) []byte
+	Remove(bucket, key string) error
 }
 
 var brains = make(map[string]func() Brain)
@@ -60,21 +60,21 @@ func newMemory() Brain {
 }
 
 // save ...
-func (m *memory) Set(key string, value []byte) error {
+func (m *memory) Set(bucket, key string, value []byte) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.items[key] = value
+	m.items[bucket+key] = value
 
 	return nil
 }
 
 // find ...
-func (m *memory) Get(key string) []byte {
+func (m *memory) Get(bucket, key string) []byte {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	v, ok := m.items[key]
+	v, ok := m.items[bucket+key]
 	if !ok {
 		return []byte{}
 	}
@@ -82,11 +82,11 @@ func (m *memory) Get(key string) []byte {
 }
 
 // delete ...
-func (m *memory) Remove(key string) error {
+func (m *memory) Remove(bucket, key string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	delete(m.items, key)
+	delete(m.items, bucket+key)
 
 	return nil
 }

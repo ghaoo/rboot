@@ -5,7 +5,7 @@ import "testing"
 var m = newMemory()
 
 func TestMemory_Set(t *testing.T) {
-	err := m.Set("key", []byte("value"))
+	err := m.Set("test", "key", []byte("value"))
 
 	if err != nil {
 		t.Error(err)
@@ -13,7 +13,7 @@ func TestMemory_Set(t *testing.T) {
 }
 
 func TestMemory_Get(t *testing.T) {
-	v := m.Get("key")
+	v := m.Get("test", "key")
 
 	if string(v) != "value" {
 		t.Error("failed")
@@ -21,13 +21,13 @@ func TestMemory_Get(t *testing.T) {
 }
 
 func TestMemory_Remove(t *testing.T) {
-	err := m.Remove("key")
+	err := m.Remove("test", "key")
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	v := m.Get("key")
+	v := m.Get("test", "key")
 
 	if string(v) == "value" {
 		t.Error("failed")

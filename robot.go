@@ -12,13 +12,11 @@ import (
 	"syscall"
 
 	"github.com/fatih/color"
-	"github.com/ghaoo/rboot/tools/env"
 	"github.com/sirupsen/logrus"
 )
 
-var AppName string
-
 const (
+	// rbootLogo rboot logo
 	rbootLogo = `
 ===================================================================
 *   ________  ____  ____  ____  ______   ________  ____  ______   *
@@ -34,19 +32,16 @@ const (
 	Version = "0.2.0"
 )
 
+// Robot 是 rboot 的一个实例，它包含了`聊天适配器` `规则处理器` `缓存器` `路由适配器` 和 消息的进出通道
 type Robot struct {
+	Router     *Router
+	Brain      Brain
 	adapter    Adapter
-	brain      Brain
 	rule       Rule
 	inputChan  chan *Message
 	outputChan chan *Message
-	users      cacheUser
 
-	Router  *Router
-	Ruleset string
-	Args    []string
-	Debug   bool
-
+	debug      bool
 	signalChan chan os.Signal
 	mu         sync.RWMutex
 }
@@ -59,7 +54,6 @@ func New() *Robot {
 		outputChan: make(chan *Message),
 		signalChan: make(chan os.Signal),
 		rule:       new(Regex),
-		users:      make(map[string]*User),
 	}
 
 	bot.Router = newRouter()
@@ -87,57 +81,58 @@ func process(ctx context.Context, bot *Robot) {
 				ctx = context.WithValue(ctx, "input", msg)
 
 				// 匹配消息
-				if script, mr, ms, ok := bot.matchScript(strings.TrimSpace(msg.String())); ok {
+				if script, ruleset, args, ok := bot.matchScript(strings.TrimSpace(msg.String())); ok {
 
-					// 匹配的脚本对应规则
-					bot.Ruleset = mr
-
-					// 消息匹配参数
-					bot.Args = ms
-
-					if bot.Debug {
+					if bot.debug {
 						logrus.Debugf("\nIncoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %v\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n",
 							msg.Header.Get("MsgType"),
 							msg.From,
 							msg.To,
 							msg.String(),
 							script,
-							mr,
-							ms[1:])
+							ruleset,
+							args[1:])
 					}
 
 					// 获取脚本执行函数
 					action, err := DirectiveScript(script)
-
 					if err != nil {
 						logrus.Error(err)
 					}
 
+					// 将匹配结果拷贝到 ctx
+					ctx = context.WithValue(ctx, "ruleset", ruleset)
+					ctx = context.WithValue(ctx, "args", args)
+
 					// 执行脚本, 附带ctx, 并获取输出
-					resp := action(ctx, bot)
+					response := action(ctx)
 
-					// 将消息发送到 outputChan
-					// 指定输出消息的接收者
-					resp.To = msg.From
+					for _, resp := range response {
+						// 将消息发送到 outputChan
+						// 指定输出消息的接收者
+						resp.To = msg.From
 
-					if bot.Debug {
-						logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n",
-							resp.Header.Get("MsgType"),
-							resp.To,
-							resp.Cc(),
-							resp.From,
-							resp)
-					}
+						if bot.debug {
+							logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n",
+								resp.Header.Get("MsgType"),
+								resp.To,
+								resp.Cc(),
+								resp.From,
+								resp)
+						}
 
-					// send ...
-					bot.outputChan <- resp
+						// send ...
+						bot.outputChan <- resp
 
-					if resp.Header.Has("Cc") {
-						for _, cc := range resp.Cc() {
-							resp.To = cc
-							bot.outputChan <- resp
+						// 如果存在抄送人，将消息抄送给对方
+						if resp.Header.Has("Cc") {
+							for _, cc := range resp.Cc() {
+								resp.To = cc
+								bot.outputChan <- resp
+							}
 						}
 					}
+
 				}
 
 			}(bot, in)
@@ -145,12 +140,12 @@ func process(ctx context.Context, bot *Robot) {
 	})
 }
 
-// 皮皮虾，我们走~~~~~~~~~
+// Go 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
 
 	logrus.Infof("Rboot Version %s", Version)
 	// 设置Robot名称
-	AppName = os.Getenv(`RBOOT_NAME`)
+	appName := os.Getenv(`RBOOT_NAME`)
 
 	// 初始化
 	bot.initialize()
@@ -161,7 +156,7 @@ func (bot *Robot) Go() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ctx = context.WithValue(ctx, "appname", AppName)
+	ctx = context.WithValue(ctx, "appname", appName)
 
 	// 消息处理
 	go process(ctx, bot)
@@ -216,28 +211,13 @@ func (bot *Robot) GetAdapter() string {
 // SetBrain 设置储存器
 func (bot *Robot) SetBrain(brain Brain) {
 	bot.mu.Lock()
-	bot.brain = brain
+	bot.Brain = brain
 	bot.mu.Unlock()
 }
 
-// Brain set ...
-func (bot *Robot) BrainSet(key string, value []byte) error {
-	return bot.brain.Set(key, value)
-}
-
-// Brain get ...
-func (bot *Robot) BrainGet(key string) []byte {
-	return bot.brain.Get(key)
-}
-
-// Brain get ...
-func (bot *Robot) BrainRemove(key string) error {
-	return bot.brain.Remove(key)
-}
-
-// MatchScript 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(match)
+// matchScript 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(matchArgs)
 // 当消息不匹配时，matched 返回false
-func (bot *Robot) matchScript(msg string) (script, matchRule string, match []string, matched bool) {
+func (bot *Robot) matchScript(msg string) (script, matchRule string, matchArgs []string, matched bool) {
 
 	for script, rule := range rulesets {
 		for m, r := range rule {
@@ -253,7 +233,7 @@ func (bot *Robot) matchScript(msg string) (script, matchRule string, match []str
 // initialize 初始化 Robot
 func (bot *Robot) initialize() {
 	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
-	bot.Debug = debug
+	bot.debug = debug
 
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
 	adpName := os.Getenv(`RBOOT_ADAPTER`)
@@ -290,7 +270,7 @@ func (bot *Robot) initialize() {
 		panic(`Detect brain error: ` + err.Error())
 	}
 
-	bot.brain = brain()
+	bot.Brain = brain()
 
 	// 开启web服务
 	go bot.Router.run()
@@ -300,5 +280,5 @@ func init() {
 	color.New(color.FgGreen).Fprintln(os.Stdout, rbootLogo)
 
 	// 加载配置
-	env.Load()
+	LoadEnv()
 }

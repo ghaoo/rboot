@@ -10,13 +10,10 @@ import (
 )
 
 const DefaultBoltDBFile = `db/rboot.db`
-const DefaultBoltBucket = `rboot`
 
 type boltMemory struct {
 	bolt   *bolt.DB
 	dbfile string
-
-	bucket string
 
 	mu sync.Mutex
 }
@@ -53,12 +50,6 @@ func Bolt() rboot.Brain {
 		return nil
 	}
 
-	bucket := os.Getenv("BOLT_BUCKET")
-	if bucket == `` {
-		logrus.Warningf(`BOLT_BUCKET not set, using default: %s`, DefaultBoltBucket)
-		bucket = DefaultBoltBucket
-	}
-
 	db, err := bolt.Open(dbfile, 0600, nil)
 	if err != nil {
 		return nil
@@ -66,17 +57,16 @@ func Bolt() rboot.Brain {
 
 	b.bolt = db
 	b.dbfile = dbfile
-	b.bucket = bucket
 	return b
 }
 
 // save ...
-func (b *boltMemory) Set(key string, value []byte) error {
+func (b *boltMemory) Set(bucket, key string, value []byte) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	err := b.bolt.Update(func(tx *bolt.Tx) error {
-		b, e := tx.CreateBucketIfNotExists([]byte(b.bucket))
+		b, e := tx.CreateBucketIfNotExists([]byte(bucket))
 		if e != nil {
 			logrus.Error("bolt: error saving:", e)
 			return e
@@ -88,13 +78,13 @@ func (b *boltMemory) Set(key string, value []byte) error {
 }
 
 // find ...
-func (b *boltMemory) Get(key string) []byte {
+func (b *boltMemory) Get(bucket, key string) []byte {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	var found []byte
 	b.bolt.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(b.bucket))
+		b := tx.Bucket([]byte(bucket))
 		if b == nil {
 			return nil
 		}
@@ -107,12 +97,12 @@ func (b *boltMemory) Get(key string) []byte {
 }
 
 // remove ...
-func (b *boltMemory) Remove(key string) error {
+func (b *boltMemory) Remove(bucket, key string) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	err := b.bolt.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(b.bucket))
+		b := tx.Bucket([]byte(bucket))
 		return b.Delete([]byte(key))
 	})
 

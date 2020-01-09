@@ -10,21 +10,23 @@ import (
 var scripts = rboot.ListScripts()
 
 // helpSetup 帮助脚本
-func helpSetup(ctx context.Context, bot *rboot.Robot) (msg *rboot.Message) {
+func helpSetup(ctx context.Context) (msg []*rboot.Message) {
+	ruleset := ctx.Value("ruleset").(string)
+	args := ctx.Value("ruleset").([]string)
 
-	switch bot.Ruleset {
+	switch ruleset {
 	case `help`:
-		if len(bot.Args) < 2 || bot.Args[1] == "" {
-			msg = rboot.NewMessage("请在 !help 后面带上想要查看的脚本名称，比如查看 <ping> 脚本帮助信息，输入 <!help ping>")
+		if len(args) < 2 || args[1] == "" {
+			msg = append(msg, rboot.NewMessage("请在 !help 后面带上想要查看的脚本名称，比如查看 <ping> 脚本帮助信息，输入 <!help ping>"))
 		} else {
-			if script, ok := scripts[bot.Args[1]]; ok {
-				msg = rboot.NewMessage(script.Usage)
+			if script, ok := scripts[args[1]]; ok {
+				msg = append(msg, rboot.NewMessage(script.Usage))
 			} else {
-				msg = rboot.NewMessage("> help命令用法：!help <script> \n> !scripts 可查看所有加载的脚本信息")
+				msg = append(msg, rboot.NewMessage("> help命令用法：!help <script> \n> !scripts 可查看所有加载的脚本信息"))
 			}
 		}
 	case `ruleset`:
-		if len(bot.Args) < 2 || bot.Args[1] == "" {
+		if len(args) < 2 || args[1] == "" {
 			content := ""
 			for scr, spt := range scripts {
 				content += fmt.Sprintf("**%s**:\n", scr)
@@ -37,11 +39,11 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) (msg *rboot.Message) {
 
 			content = strings.TrimSpace(content)
 
-			msg = rboot.NewMessage(content)
+			msg = append(msg, rboot.NewMessage(content))
 
 		} else {
 
-			scr := bot.Args[1]
+			scr := args[1]
 			spt := scripts[scr]
 			content := fmt.Sprintf("**%s**:\n", scr)
 
@@ -49,7 +51,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) (msg *rboot.Message) {
 				content += fmt.Sprintf("- %s\n", ruleset)
 			}
 
-			msg = rboot.NewMessage(content)
+			msg = append(msg, rboot.NewMessage(content))
 		}
 	case `script`:
 		// 获取所有脚本信息
@@ -63,7 +65,7 @@ func helpSetup(ctx context.Context, bot *rboot.Robot) (msg *rboot.Message) {
 		// 去除末尾空白字符
 		content = strings.TrimSpace(content)
 
-		msg = rboot.NewMessage(content)
+		msg = append(msg, rboot.NewMessage(content))
 	}
 
 	return msg

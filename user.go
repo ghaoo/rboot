@@ -25,7 +25,7 @@ func newContact(m map[string]interface{}) (*User, error) {
 }
 
 // GetUserByUserID 根据用户ID获取用户信息
-func (bot *Robot) GetUser(id string) *User {
+/*func (bot *Robot) GetUser(id string) *User {
 	if user, found := bot.users[id]; found {
 		return user
 	}
@@ -51,4 +51,4 @@ func (bot *Robot) AllUsers() []*User {
 // ClearUser 清空所有用户
 func (bot *Robot) ClearUser() {
 	bot.users = make(map[string]*User)
-}
+}*/

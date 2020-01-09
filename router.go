@@ -24,7 +24,7 @@ type route struct {
 	handler     http.Handler
 }
 
-// 命名路由
+// Name 为命名路由
 func (r *route) Name(name string) *route {
 	if r.name != "" {
 		logrus.Errorf("route already has name %q, can't set %q", r.name, name)

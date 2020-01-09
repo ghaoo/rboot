@@ -1,5 +1,6 @@
-// 微信助手
 package wechat
+
+// 微信助手
 
 import (
 	"bytes"

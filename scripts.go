@@ -19,7 +19,7 @@ type Script struct {
 }
 
 // SetupFunc 脚本执行或解析
-type SetupFunc func(context.Context, *Robot) *Message
+type SetupFunc func(context.Context) []*Message
 
 // RegisterScripts 注册脚本
 func RegisterScripts(name string, script Script) {
