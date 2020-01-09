@@ -7,14 +7,11 @@ import (
 )
 
 // User 包含了用户的ID，名称，类型，用户附加信息和成员列表(比如群组)
-// Type 为自定义类型，可以根据自己需要定义，比如定义用户为群组或组织
 // Data 为用户附加信息
 type User struct {
-	ID         string                 // 用户唯一标识
-	Name       string                 // 用户名称
-	Type       string                 // 自定义类型
-	Data       map[string]interface{} // 附加信息
-	MemberList []*User                // 成员列表
+	ID   string                 `json:"id"`   // 用户唯一标识
+	Name string                 `json:"name"` // 用户名称
+	Data map[string]interface{} `json:"data"` // 附加信息
 }
 
 func newUser(users map[string]interface{}) (*User, error) {
@@ -25,19 +22,6 @@ func newUser(users map[string]interface{}) (*User, error) {
 	var u *User
 	err = json.Unmarshal(data, &u)
 	return u, err
-}
-
-// 递归遍历群组用户
-func fetchMembers(u *User) []*User {
-	member := make([]*User, 0)
-	for _, m := range u.MemberList {
-		member = append(member, m)
-		if len(m.MemberList) > 0 {
-			member = append(member, fetchMembers(m)...)
-		}
-	}
-
-	return member
 }
 
 type cacheUser struct {
@@ -63,14 +47,22 @@ func (c *cacheUser) update(u map[string]interface{}) error {
 
 	c.contact[nu.ID] = nu
 
-	if len(nu.MemberList) > 0 {
-		member := fetchMembers(nu)
-		for _, m := range member {
-			c.contact[m.ID] = m
+	return nil
+}
+
+func (c *cacheUser) append(us []map[string]interface{}) (invalids []map[string]interface{}) {
+	c.Lock()
+	defer c.Unlock()
+
+	for _, u := range us {
+		err := c.update(u)
+
+		if err != nil {
+			invalids = append(invalids, u)
 		}
 	}
 
-	return nil
+	return invalids
 }
 
 func (c *cacheUser) getUser(id string) *User {
@@ -105,8 +97,8 @@ func (c *cacheUser) delete(uid string) {
 }
 
 // SyncContacts 同步联系人信息，invalids为数据格式错误的用户列表，对应 us
-func (bot *Robot) SyncContacts(us map[string]interface{}) error {
-	return bot.contact.update(us)
+func (bot *Robot) SyncContacts(us []map[string]interface{}) (invalids []map[string]interface{}) {
+	return bot.contact.append(us)
 }
 
 // GetUser 根据用户ID获取用户信息

@@ -38,7 +38,7 @@ type Robot struct {
 	Brain      Brain
 	adapter    Adapter
 	rule       Rule
-	contact    cacheUser
+	contact    *cacheUser
 	inputChan  chan *Message
 	outputChan chan *Message
 
@@ -57,6 +57,7 @@ func New() *Robot {
 	}
 
 	bot.Router = newRouter()
+	bot.contact = newCache()
 
 	return bot
 }

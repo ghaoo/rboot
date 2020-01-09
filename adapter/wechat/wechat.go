@@ -4,6 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ghaoo/rboot"
 	"github.com/ghaoo/rboot/adapter/wechat/sdk"
@@ -35,6 +36,7 @@ func New(bot *rboot.Robot) rboot.Adapter {
 	client.Hook(w.Assisant)
 
 	go w.run()
+	go w.syncContact()
 
 	return w
 }
@@ -109,16 +111,24 @@ func (w *wx) run() {
 }
 
 func (w *wx) syncContact() {
+	time.Sleep(2 * time.Second)
 	contacts := w.client.AllContacts()
 
-	us := make(map[string]interface{})
+	us := make([]map[string]interface{}, 0)
 
 	for _, c := range contacts {
-		us[c.UserName] = map[string]string{
+		us = append(us, map[string]interface{}{
 			"id":   c.UserName,
 			"name": c.NickName,
-		}
+		})
 	}
+
+	myself := map[string]interface{}{
+		"id":   w.client.MySelf.UserName,
+		"name": w.client.MySelf.NickName,
+	}
+
+	us = append(us, myself)
 
 	err := w.bot.SyncContacts(us)
 
