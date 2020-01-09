@@ -1,6 +1,7 @@
 package wechat
 
 import (
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 
@@ -68,6 +69,8 @@ func (w *wx) run() {
 		switch e.Type {
 		case sdk.EVENT_STOP_LOOP:
 			return
+		case sdk.EVENT_CONTACT_CHANGE:
+			w.syncContact()
 		case sdk.EVENT_NEW_MESSAGE:
 			msg := e.Data.(sdk.MsgData)
 
@@ -102,6 +105,25 @@ func (w *wx) run() {
 			w.in <- rmsg
 		}
 
+	}
+}
+
+func (w *wx) syncContact() {
+	contacts := w.client.AllContacts()
+
+	us := make(map[string]interface{})
+
+	for _, c := range contacts {
+		us[c.UserName] = map[string]string{
+			"id":   c.UserName,
+			"name": c.NickName,
+		}
+	}
+
+	err := w.bot.SyncContacts(us)
+
+	if err != nil {
+		logrus.Error(err)
 	}
 }
 

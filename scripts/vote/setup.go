@@ -7,18 +7,18 @@ import (
 
 var vote = new(Vote)
 
-func setup(ctx context.Context, bot *rboot.Robot) *rboot.Message {
+func setup(ctx context.Context, bot *rboot.Robot) []*rboot.Message {
 	in := ctx.Value("input").(*rboot.Message)
 	ruleset := ctx.Value("ruleset").(string)
-	args := ctx.Value("ruleset").([]string)
+	args := ctx.Value("args").([]string)
 
 	switch ruleset {
-	case `voting`:
-		return vote.Voting(bot.GetUserName(in.Sender), args[1])
 	case `new_vote`:
-		return vote.New(bot, in, args[1], args[2])
+		return vote.New(in, args[1], args[2])
+	case `voting`:
+		return vote.Voting(in.Sender, args[1])
 	case `stop_vote`:
-		return vote.Stop(bot, in.Sender, bot.GetUserName(in.From))
+		return vote.Stop(in.Sender, in.From)
 	case `result`:
 		return vote.Result(in.From)
 	}

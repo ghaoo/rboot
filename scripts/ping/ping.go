@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func setup(ctx context.Context) (msg []*rboot.Message) {
+func setup(ctx context.Context, bot *rboot.Robot) (msg []*rboot.Message) {
 	return append(msg, rboot.NewMessage(randReply()))
 }
 
@@ -35,7 +35,6 @@ func init() {
 		Action: setup,
 		Ruleset: map[string]string{
 			`ping`: `^!(?:ping|PING)`,
-			`pong`: `^!(?:pong|PONG)`,
 		},
 		Usage:       "> `!ping`: 随机返回一句话 \n> `!pong`: 返回 PONG",
 		Description: `测试脚本`,

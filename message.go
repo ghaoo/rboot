@@ -32,7 +32,15 @@ func ReadMessage(r io.Reader) (msg *Message, err error) {
 	return msg, err
 }
 
-// NewMessage 新建消息
+// NewMessages 新建一组消息
+func NewMessages(content string, to ...string) []*Message {
+	msg := make([]*Message, 1)
+	msg[0] = NewMessage(content, to...)
+
+	return msg
+}
+
+// NewMessage 新建一条消息
 func NewMessage(content string, to ...string) *Message {
 	msg := &Message{
 		Header: Header{},

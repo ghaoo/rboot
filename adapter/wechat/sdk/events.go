@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	EVENT_STOP_LOOP   int = 500
-	EVENT_NEW_MESSAGE int = iota + 1
+	EVENT_STOP_LOOP    int = 500
+	EVENT_CLIENT_START int = iota + 1
+	EVENT_NEW_MESSAGE
 	EVENT_CONTACT_CHANGE
 )
 
@@ -67,6 +68,17 @@ func (es *Stream) emitContactChangeEvent(c Contact, ct int) {
 		To:   `End`,
 		Time: time.Now().Unix(),
 		Data: data,
+	}
+	es.Event <- event
+}
+
+func (es *Stream) emitClientStartEvent() {
+
+	event := Event{
+		Type: EVENT_CLIENT_START,
+		From: `Server`,
+		To:   `End`,
+		Time: time.Now().Unix(),
 	}
 	es.Event <- event
 }

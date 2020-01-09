@@ -38,12 +38,12 @@ type Robot struct {
 	Brain      Brain
 	adapter    Adapter
 	rule       Rule
+	contact    cacheUser
 	inputChan  chan *Message
 	outputChan chan *Message
 
 	debug      bool
 	signalChan chan os.Signal
-	mu         sync.RWMutex
 }
 
 // New 获取Robot实例
@@ -86,8 +86,8 @@ func process(ctx context.Context, bot *Robot) {
 					if bot.debug {
 						logrus.Debugf("\nIncoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %v\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n",
 							msg.Header.Get("MsgType"),
-							msg.From,
-							msg.To,
+							bot.GetUserName(msg.From),
+							bot.GetUserName(msg.To),
 							msg.String(),
 							script,
 							ruleset,
@@ -105,7 +105,7 @@ func process(ctx context.Context, bot *Robot) {
 					ctx = context.WithValue(ctx, "args", args)
 
 					// 执行脚本, 附带ctx, 并获取输出
-					response := action(ctx)
+					response := action(ctx, bot)
 
 					for _, resp := range response {
 						// 将消息发送到 outputChan
@@ -115,9 +115,9 @@ func process(ctx context.Context, bot *Robot) {
 						if bot.debug {
 							logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n",
 								resp.Header.Get("MsgType"),
-								resp.To,
+								bot.GetUserName(resp.To),
 								resp.Cc(),
-								resp.From,
+								bot.GetUserName(resp.From),
 								resp)
 						}
 
@@ -210,9 +210,7 @@ func (bot *Robot) GetAdapter() string {
 
 // SetBrain 设置储存器
 func (bot *Robot) SetBrain(brain Brain) {
-	bot.mu.Lock()
 	bot.Brain = brain
-	bot.mu.Unlock()
 }
 
 // matchScript 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(matchArgs)
@@ -277,8 +275,8 @@ func (bot *Robot) initialize() {
 }
 
 func init() {
-	color.New(color.FgGreen).Fprintln(os.Stdout, rbootLogo)
+	_, _ = color.New(color.FgGreen).Fprintln(os.Stdout, rbootLogo)
 
 	// 加载配置
-	LoadEnv()
+	_ = LoadEnv()
 }
