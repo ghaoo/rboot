@@ -15,3 +15,5 @@ before_script:
 
 script:
   - go test -v
+  - cd .example
+  - go build
