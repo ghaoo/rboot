@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-// User 包含了用户的ID，名称，类型，用户附加信息和成员列表(比如群组)
+// User 包含了用户的ID，名称，用户附加信息
 // Data 为用户附加信息
 type User struct {
 	ID   string                 `json:"id"`   // 用户唯一标识
@@ -111,7 +111,7 @@ func (bot *Robot) GetUserName(id string) string {
 	return bot.contact.getUserName(id)
 }
 
-// AllUsers 获取所有用户
+// AllUsers 获取所有联系人列表
 func (bot *Robot) AllUsers() []*User {
 	var values []*User
 	for _, value := range bot.contact.contact {

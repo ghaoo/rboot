@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ghaoo/rboot/adapter/wechat/sdk"
+	sdk "github.com/ghaoo/wechat"
 )
 
 type groupUser struct {

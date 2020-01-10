@@ -1,13 +1,13 @@
 package wechat
 
 import (
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ghaoo/rboot"
-	"github.com/ghaoo/rboot/adapter/wechat/sdk"
+	sdk "github.com/ghaoo/wechat"
+	"github.com/sirupsen/logrus"
 )
 
 type wx struct {

@@ -6,13 +6,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/ghaoo/rboot/adapter/wechat/sdk"
+	sdk "github.com/ghaoo/wechat"
 	"github.com/sirupsen/logrus"
-	"regexp"
 )
 
 func (w *wx) Assisant(e sdk.Event) {
