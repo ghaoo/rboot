@@ -87,6 +87,8 @@ func (r *Router) run() {
 		}
 	}
 
+	r.mux.StrictSlash(true)
+
 	// 获取 web 端口
 	addr := os.Getenv("WEB_SERVER_ADDR")
 	if addr == "" {

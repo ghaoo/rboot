@@ -18,10 +18,12 @@ type Vote struct {
 	Players   map[string]string // 参与人数
 	startTime time.Time         // 开始时间
 	ticker    *time.Ticker      // 计时器
+
+	bot *rboot.Robot
 }
 
 // New 新建一个投票
-func (v *Vote) New(in *rboot.Message, name string, opt string) []*rboot.Message {
+func (v *Vote) New(bot *rboot.Robot, in *rboot.Message, name string, opt string) []*rboot.Message {
 	// 检查有没有进行中的投票
 	if active {
 		return rboot.NewMessages("投票进行中，请稍后...")
@@ -41,6 +43,7 @@ func (v *Vote) New(in *rboot.Message, name string, opt string) []*rboot.Message 
 	v.User = in.Sender
 	v.Players = make(map[string]string)
 	v.startTime = time.Now()
+	v.bot = bot
 	active = true
 
 	go func() {
@@ -51,12 +54,12 @@ func (v *Vote) New(in *rboot.Message, name string, opt string) []*rboot.Message 
 		}
 	}()
 
-	msg := fmt.Sprintf("%s 创建了投票: %s\n> 选项:\n", v.User, name)
+	msg := fmt.Sprintf("%s 创建了投票: %s\n> 选项:\n", bot.GetUserName(v.User), name)
 	for i, c := range opts {
 		msg += fmt.Sprintf("> %d. `%s`\n", i+1, c)
 	}
 
-	msg += "\n*投票请直接输入@@选项*"
+	msg += "\n*投票请直接输入 @@选项*"
 
 	return rboot.NewMessages(msg, in.From)
 }
@@ -90,13 +93,13 @@ func (v *Vote) Result(to string) []*rboot.Message {
 		return rboot.NewMessages("没有正在进行中的投票或投票已经结束")
 	}
 
-	content := "投票: " + v.Name + "\n      "
+	content := "投票: " + v.Name + "\n"
 
 	for choice, count := range v.Choices {
-		content += fmt.Sprintf(" %d 人选择了 `%s` \n", count, choice)
+		content += fmt.Sprintf("    *%d* 人选择了 `%s` \n", count, choice)
 	}
 
-	content += "\n*发起人*: " + v.User
+	content += "\n*发起人*: " + v.bot.GetUserName(v.User)
 
 	return rboot.NewMessages(content, to)
 }

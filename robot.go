@@ -112,6 +112,12 @@ func process(ctx context.Context, bot *Robot) {
 						// 将消息发送到 outputChan
 						// 指定输出消息的接收者
 						resp.To = msg.From
+						// 将传入消息中未修改的头信息代入输出消息中
+						for h, v := range msg.Header {
+							if resp.Header.Get(h) == "" {
+								resp.Header.Set(h, v[0])
+							}
+						}
 
 						if bot.debug {
 							logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n",
@@ -126,7 +132,7 @@ func process(ctx context.Context, bot *Robot) {
 						bot.outputChan <- resp
 
 						// 如果存在抄送人，将消息抄送给对方
-						if resp.Header.Has("Cc") {
+						if resp.Header.Get("Cc") != "" {
 							for _, cc := range resp.Cc() {
 								resp.To = cc
 								bot.outputChan <- resp

@@ -14,7 +14,7 @@ func setup(ctx context.Context, bot *rboot.Robot) []*rboot.Message {
 
 	switch ruleset {
 	case `new_vote`:
-		return vote.New(in, args[1], args[2])
+		return vote.New(bot, in, args[1], args[2])
 	case `voting`:
 		return vote.Voting(in.Sender, args[1])
 	case `stop_vote`:

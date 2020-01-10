@@ -16,6 +16,7 @@ type wework struct {
 	in  chan *rboot.Message
 	out chan *rboot.Message
 
+	bot    *rboot.Robot
 	client *wxwork.Agent
 }
 
@@ -23,13 +24,19 @@ func newWework(bot *rboot.Robot) rboot.Adapter {
 	wx := &wework{
 		in:     make(chan *rboot.Message),
 		out:    make(chan *rboot.Message),
+		bot:    bot,
 		client: newAgent(),
 	}
 
-	bot.Router.HandleFunc("/wxwork", wx.client.CallbackVerify).Methods("GET")
-	bot.Router.HandleFunc("/wxwork", wx.parseRecvHandle).Methods("POST")
+	bot.Router.HandleFunc("/wework", wx.client.CallbackVerify).Methods("GET")
+	bot.Router.HandleFunc("/wework", wx.parseRecvHandle).Methods("POST")
 
 	go wx.listenOutgoing()
+
+	contacts := wx.getContacts()
+	if len(contacts) > 0 {
+		wx.bot.SyncContacts(contacts)
+	}
 
 	return wx
 }
@@ -51,14 +58,17 @@ func newAgent() *wxwork.Agent {
 	return a
 }
 
+// Name 适配器名称
 func (wx *wework) Name() string {
 	return "wework"
 }
 
+// Incoming 企业微信传入的消息
 func (wx *wework) Incoming() chan *rboot.Message {
 	return wx.in
 }
 
+// Outgoing 传入消息经脚本处理后向企业微信输入的消息
 func (wx *wework) Outgoing() chan *rboot.Message {
 	return wx.out
 }
@@ -99,36 +109,35 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 
 // listenOutgoing 监听 rboot Outgoing
 func (wx *wework) listenOutgoing() {
-	for msg := range wx.out {
-		var wmsg *wxwork.Message
+	for out := range wx.out {
+		var msg *wxwork.Message
 
-		msgtype := msg.MsgType()
-		title := msg.Header.Get("title")
-		desc := msg.Header.Get("description")
-		mediaid := msg.Header.Get("mediaid")
-		url := msg.Header.Get("url")
+		title := out.Header.Get("title")
+		desc := out.Header.Get("description")
+		mediaid := out.Header.Get("mediaid")
+		url := out.Header.Get("url")
 
-		switch msgtype {
+		switch out.MsgType() {
 		case MSG_TYPE_TEXT:
-			wmsg = wxwork.NewTextMessage(msg.String())
+			msg = wxwork.NewTextMessage(out.String())
 
 		case MSG_TYPE_IMAGE, MSG_TYPE_VOICE, MSG_TYPE_FILE:
-			wmsg = wxwork.NewMediaMessage(msgtype, mediaid)
+			msg = wxwork.NewMediaMessage(out.MsgType(), mediaid)
 
 		case MSG_TYPE_VIDEO:
-			wmsg = wxwork.NewVideoMessage(title, desc, mediaid)
+			msg = wxwork.NewVideoMessage(title, desc, mediaid)
 
 		case MSG_TYPE_TEXTCARD:
-			btntxt := msg.Header.Get("btntxt")
-			wmsg = wxwork.NewTextCardMessage(title, desc, url, btntxt)
+			btntxt := out.Header.Get("btntxt")
+			msg = wxwork.NewTextCardMessage(title, desc, url, btntxt)
 
 		default:
-			wmsg = wxwork.NewMarkdownMessage(msg.String())
+			msg = wxwork.NewMarkdownMessage(out.String())
 		}
 
-		wmsg.SetUser(msg.To)
+		msg.SetUser(out.To)
 
-		_, err := wx.client.SendMessage(wmsg)
+		_, err := wx.client.SendMessage(msg)
 		if err != nil {
 			logrus.WithField("func", "wxwork listenOutgoing").Errorf("listen outgoing message err: %v", err)
 		}

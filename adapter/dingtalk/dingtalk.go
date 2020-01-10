@@ -2,14 +2,15 @@ package dingtalk
 
 import (
 	"github.com/ghaoo/rboot"
-	"github.com/hugozhu/godingtalk"
 	"os"
 )
 
 type dingtalk struct {
-	in     chan *rboot.Message
-	out    chan *rboot.Message
-	client *godingtalk.DingTalkClient
+	secret string
+
+	in  chan *rboot.Message
+	out chan *rboot.Message
+	bot *rboot.Robot
 }
 
 func (ding *dingtalk) Name() string {
@@ -28,10 +29,19 @@ func newDingTalk(bot *rboot.Robot) rboot.Adapter {
 	ding := &dingtalk{
 		in:  make(chan *rboot.Message),
 		out: make(chan *rboot.Message),
+		bot: bot,
 	}
 
-	client := godingtalk.NewDingTalkClient(os.Getenv("DING_CORP_ID"), os.Getenv("DING_CORP_SECRET"))
-	ding.client = client
+	secret := os.Getenv("DING_ROBOT_SECRET")
+	if secret == "" {
+		panic("DING_ROBOT_SECRET 未设置!!")
+	}
+
+	ding.secret = secret
+
+	bot.Router.HandleFunc("/ding", ding.listenIncoming).Methods("POST")
+
+	go ding.listenOutgoing()
 
 	return ding
 }

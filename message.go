@@ -72,6 +72,17 @@ func (m *Message) String() string {
 	return string(content)
 }
 
+func (m *Message) Bytes() []byte {
+	content, err := ioutil.ReadAll(m.Body)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	m.Body = bytes.NewBuffer(content)
+
+	return content
+}
+
 // SetCc 为消息设置抄送
 func (m *Message) SetCc(to ...string) {
 	m.Header.Set("Cc", strings.Join(to, ","))
@@ -108,12 +119,6 @@ func (h Header) Add(key, value string) {
 
 func (h Header) Set(key, value string) {
 	textproto.MIMEHeader(h).Set(key, value)
-}
-
-func (h Header) Has(key string) bool {
-	_, ok := h[key]
-
-	return ok
 }
 
 func (h Header) Get(key string) string {
