@@ -29,10 +29,10 @@ const (
 ===================================================================
 `
 
-	Version = "1.1.0"
+	version = "1.1.0"
 )
 
-// Robot 是 rboot 的一个实例，它包含了`聊天适配器` `规则处理器` `缓存器` `路由适配器` 和 消息的进出通道
+// Robot 是 rboot 的一个实例，它包含了聊天适配器，规则处理器，缓存器，路由适配器和消息的进出通道
 type Robot struct {
 	Router     *Router
 	Brain      Brain
@@ -46,9 +46,8 @@ type Robot struct {
 	signalChan chan os.Signal
 }
 
-// New 获取Robot实例
+// New 获取一个Robot实例，
 func New() *Robot {
-
 	bot := &Robot{
 		inputChan:  make(chan *Message),
 		outputChan: make(chan *Message),
@@ -150,7 +149,7 @@ func process(ctx context.Context, bot *Robot) {
 // Go 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
 
-	logrus.Infof("Rboot Version %s", Version)
+	logrus.Infof("Rboot Version %s", version)
 	// 设置Robot名称
 	appName := os.Getenv(`RBOOT_NAME`)
 
