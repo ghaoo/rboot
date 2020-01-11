@@ -63,7 +63,7 @@ func helpSetup(ctx context.Context, bot *Robot) (msg []*Message) {
 			if script, ok := scripts[args[1]]; ok {
 				msg = append(msg, NewMessage(script.Usage))
 			} else {
-				msg = append(msg, NewMessage("> help命令用法：!help <script> \n> !scripts 可查看所有加载的脚本信息"))
+				msg = append(msg, NewMessage("> help命令用法：!help <script> \n\n> !scripts 可查看所有加载的脚本信息"))
 			}
 		}
 	case `ruleset`:
@@ -123,7 +123,7 @@ func init() {
 	RegisterScripts(`help`, Script{
 		Action:      helpSetup,
 		Ruleset:     helpRules,
-		Usage:       "> `!scripts` 或 `!脚本`: 查看所有脚本 \n> `!help <script>`: 查看脚本帮助信息 \n> `!ruleset <脚本名称>`",
+		Usage:       "> `!scripts` 或 `!脚本`: 查看所有脚本 \n\n> `!help <script>`: 查看脚本帮助信息 \n\n> `!ruleset <脚本名称>`",
 		Description: `查看脚本帮助信息`,
 	})
 }
