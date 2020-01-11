@@ -72,7 +72,7 @@ func helpSetup(ctx context.Context, bot *Robot) (msg []*Message) {
 			for scr, spt := range scripts {
 				content += fmt.Sprintf("**%s**:\n", scr)
 				for ruleset := range spt.Ruleset {
-					content += fmt.Sprintf("- %s\n", ruleset)
+					content += fmt.Sprintf(" %s\n", ruleset)
 				}
 
 				content += "\n"
@@ -89,7 +89,7 @@ func helpSetup(ctx context.Context, bot *Robot) (msg []*Message) {
 			content := fmt.Sprintf("**%s**:\n", scr)
 
 			for ruleset := range spt.Ruleset {
-				content += fmt.Sprintf("- %s\n", ruleset)
+				content += fmt.Sprintf(" %s\n", ruleset)
 			}
 
 			msg = append(msg, NewMessage(content))
@@ -99,7 +99,7 @@ func helpSetup(ctx context.Context, bot *Robot) (msg []*Message) {
 		content := ""
 
 		for scr, spt := range scripts {
-			content += fmt.Sprintf("- **%s**: %s\n- **Usage**:\n%s", scr, spt.Description, spt.Usage)
+			content += fmt.Sprintf(" **%s**: %s\n **Usage**:\n%s", scr, spt.Description, spt.Usage)
 			content += "\n\n"
 		}
 
