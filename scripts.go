@@ -1,14 +1,13 @@
 package rboot
 
 import (
-	"context"
 	"fmt"
 	"strings"
 )
 
 var (
-	scripts  = make(map[string]Script)
-	rulesets = make(map[string]map[string]string)
+	scripts = make(map[string]Script)
+	ruleset = make(map[string]map[string]string)
 )
 
 // Script 脚本结构体
@@ -20,7 +19,9 @@ type Script struct {
 }
 
 // SetupFunc 脚本执行或解析
-type SetupFunc func(context.Context, *Robot) []*Message
+// - bot: A Robot instance
+// - incoming: The incoming message
+type SetupFunc func(bot *Robot, incoming *Message) []*Message
 
 // RegisterScripts 注册脚本
 func RegisterScripts(name string, script Script) {
@@ -36,7 +37,7 @@ func RegisterScripts(name string, script Script) {
 
 	if len(script.Ruleset) > 0 {
 
-		rulesets[name] = script.Ruleset
+		ruleset[name] = script.Ruleset
 	}
 }
 
@@ -51,11 +52,11 @@ func DirectiveScript(name string) (SetupFunc, error) {
 }
 
 // helpSetup 帮助脚本
-func helpSetup(ctx context.Context, bot *Robot) (msg []*Message) {
-	ruleset := ctx.Value("ruleset").(string)
-	args := ctx.Value("args").([]string)
+func helpSetup(bot *Robot, in *Message) (msg []*Message) {
+	rule := in.Header.Get("rule")
+	args := in.Header["args"]
 
-	switch ruleset {
+	switch rule {
 	case `help`:
 		if len(args) < 2 || args[1] == "" {
 			msg = append(msg, NewMessage("请在 !help 后面带上想要查看的脚本名称，比如查看 <ping> 脚本帮助信息，输入 <!help ping>"))
@@ -72,7 +73,7 @@ func helpSetup(ctx context.Context, bot *Robot) (msg []*Message) {
 			for scr, spt := range scripts {
 				content += fmt.Sprintf("**%s**:\n", scr)
 				for ruleset := range spt.Ruleset {
-					content += fmt.Sprintf(" %s\n", ruleset)
+					content += fmt.Sprintf("- %s\n", ruleset)
 				}
 
 				content += "\n"
@@ -89,7 +90,7 @@ func helpSetup(ctx context.Context, bot *Robot) (msg []*Message) {
 			content := fmt.Sprintf("**%s**:\n", scr)
 
 			for ruleset := range spt.Ruleset {
-				content += fmt.Sprintf(" %s\n", ruleset)
+				content += fmt.Sprintf("- %s\n", ruleset)
 			}
 
 			msg = append(msg, NewMessage(content))

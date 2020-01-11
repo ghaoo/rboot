@@ -126,7 +126,7 @@ func (c *cli) writeString(str string) error {
 		name = os.Getenv(`RBOOT_NAME`)
 	}
 
-	msg := fmt.Sprintf(name+"> %s\n", strings.TrimSpace(str))
+	msg := fmt.Sprintf("%s> %s\n", name, strings.TrimSpace(str))
 
 	if _, err := c.writer.WriteString(msg); err != nil {
 		return err

@@ -1,7 +1,6 @@
 package rboot
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -38,7 +37,6 @@ type Robot struct {
 	Brain      Brain
 	adapter    Adapter
 	rule       Rule
-	contact    *cacheUser
 	inputChan  chan *Message
 	outputChan chan *Message
 
@@ -56,7 +54,6 @@ func New() *Robot {
 	}
 
 	bot.Router = newRouter()
-	bot.contact = newCache()
 
 	return bot
 }
@@ -64,7 +61,7 @@ func New() *Robot {
 var processOnce sync.Once
 
 // process 消息处理函数
-func process(ctx context.Context, bot *Robot) {
+func process(bot *Robot) {
 	processOnce.Do(func() {
 
 		// 监听传入消息
@@ -78,16 +75,16 @@ func process(ctx context.Context, bot *Robot) {
 				}()
 
 				// 匹配消息
-				if script, ruleset, args, ok := bot.matchScript(strings.TrimSpace(msg.String())); ok {
+				if script, rule, args, ok := bot.matchScript(strings.TrimSpace(msg.String())); ok {
 
 					if bot.debug {
-						logrus.Debugf("\nIncoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %v\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n",
+						logrus.Debugf("\nIncoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %v\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n\n",
 							msg.Header.Get("MsgType"),
-							bot.GetUserName(msg.From),
-							bot.GetUserName(msg.To),
+							msg.From,
+							msg.To,
 							msg.String(),
 							script,
-							ruleset,
+							rule,
 							args[1:])
 					}
 
@@ -97,33 +94,23 @@ func process(ctx context.Context, bot *Robot) {
 						logrus.Error(err)
 					}
 
-					// 将传入消息拷贝到 ctx
-					ctx = context.WithValue(ctx, "input", msg)
-
-					// 将匹配结果拷贝到 ctx
-					ctx = context.WithValue(ctx, "ruleset", ruleset)
-					ctx = context.WithValue(ctx, "args", args)
+					msg.Header.Set("rule", rule)
+					msg.Header["args"] = args
 
 					// 执行脚本, 附带ctx, 并获取输出
-					response := action(ctx, bot)
+					response := action(bot, msg)
 
 					for _, resp := range response {
 						// 将消息发送到 outputChan
 						// 指定输出消息的接收者
 						resp.To = msg.From
-						// 将传入消息中未修改的头信息代入输出消息中
-						for h, v := range msg.Header {
-							if resp.Header.Get(h) == "" {
-								resp.Header.Set(h, v[0])
-							}
-						}
 
 						if bot.debug {
-							logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n",
+							logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n\n",
 								resp.Header.Get("MsgType"),
-								bot.GetUserName(resp.To),
+								resp.To,
 								resp.Cc(),
-								bot.GetUserName(resp.From),
+								resp.From,
 								resp)
 						}
 
@@ -150,22 +137,14 @@ func process(ctx context.Context, bot *Robot) {
 func (bot *Robot) Go() {
 
 	logrus.Infof("Rboot Version %s", version)
-	// 设置Robot名称
-	appName := os.Getenv(`RBOOT_NAME`)
 
 	// 初始化
 	bot.initialize()
 
 	logrus.Info("皮皮虾，我们走~~~~~~~")
 
-	// 上下文
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	ctx = context.WithValue(ctx, "appname", appName)
-
 	// 消息处理
-	go process(ctx, bot)
+	go process(bot)
 
 	signal.Notify(bot.signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
@@ -218,7 +197,7 @@ func (bot *Robot) SetBrain(brain Brain) {
 // 当消息不匹配时，matched 返回false
 func (bot *Robot) matchScript(msg string) (script, matchRule string, matchArgs []string, matched bool) {
 
-	for script, rule := range rulesets {
+	for script, rule := range ruleset {
 		for m, r := range rule {
 			if match, ok := bot.rule.Match(r, msg); ok {
 				return script, m, match, true

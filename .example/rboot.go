@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-
 	bot := rboot.New()
 
 	bot.Go()
