@@ -91,26 +91,6 @@ func (m *Message) Cc() []string {
 	return strings.Split(cc, ",")
 }
 
-// MsgType 消息类型，类型名称会转换成小写
-func (m *Message) MsgType() string {
-	return strings.ToLower(m.Header.Get("MsgType"))
-}
-
-// SetMsgType 设置消息类型
-func (m *Message) SetMsgType(msgtype string) {
-	m.Header.Set("MsgType", msgtype)
-}
-
-// FilePath 获取消息中的附件位置
-func (m *Message) FilePath() string {
-	return m.Header.Get("File")
-}
-
-// AddFile 为消息设置附件文件
-func (m *Message) AddFile(filepath string) {
-	m.Header.Add("File", filepath)
-}
-
 // Header 消息附带的头信息，键-值对
 type Header map[string][]string
 
