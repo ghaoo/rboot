@@ -96,15 +96,18 @@ func (m *Message) MsgType() string {
 	return strings.ToLower(m.Header.Get("MsgType"))
 }
 
-// File 获取消息中的附件存放位置
+func (m *Message) SetMsgType(msgtype string) {
+	m.Header.Set("MsgType", msgtype)
+}
+
+// FilePath 获取消息中的附件位置
 func (m *Message) FilePath() string {
 	return m.Header.Get("File")
 }
 
-// SetAttachment 为消息设置附件，多个附件以
-func (m *Message) AddFile(contentType, filepath string) {
-	m.Header.Set("MsgType", contentType)
-	m.Header.Set("File", filepath)
+// AddFile 为消息设置附件文件
+func (m *Message) AddFile(filepath string) {
+	m.Header.Add("File", filepath)
 }
 
 // Header 消息附带的头信息，键-值对

@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// LoadEnv
+// LoadEnv 加载env配置
 func LoadEnv(filenames ...string) (err error) {
 	filenames = filenamesOrDefault(filenames)
 

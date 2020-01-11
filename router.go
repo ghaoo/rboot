@@ -41,23 +41,25 @@ func (r *route) Methods(methods ...string) *route {
 	return r
 }
 
+// Router 包含了路由处理器 mux 和已经注册的所有路由集合
 type Router struct {
 	mux    *mux.Router
 	routes []*route
 }
 
+// newRouter 创建一个路由实例
 func newRouter() *Router {
 	return &Router{mux: mux.NewRouter(), routes: make([]*route, 0)}
 }
 
-// 注册新路由
+// HandleFunc 为路径 path 注册一个新的路由处理函数
 func (r *Router) HandleFunc(path string, f func(http.ResponseWriter, *http.Request)) *route {
 	route := &route{path: path, handlerFunc: f}
 	r.routes = append(r.routes, route)
 	return route
 }
 
-// 注册新路由
+// Handle 为路径 path 注册一个新路由
 func (r *Router) Handle(path string, handler http.Handler) *route {
 	route := &route{path: path, handler: handler}
 	r.routes = append(r.routes, route)

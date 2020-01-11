@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+// Brain 是Rboot缓存器实现的接口
 type Brain interface {
 	Set(bucket, key string, value []byte) error
 	Get(bucket, key string) []byte
@@ -13,7 +14,8 @@ type Brain interface {
 
 var brains = make(map[string]func() Brain)
 
-// 注册存储器
+// RegisterBrain 注册存储器，名称须唯一
+// 需实现Brain接口
 func RegisterBrain(name string, m func() Brain) {
 
 	if name == "" {
@@ -25,6 +27,7 @@ func RegisterBrain(name string, m func() Brain) {
 	brains[name] = m
 }
 
+// DetectBrain 获取名称为 name 的缓存器
 func DetectBrain(name string) (func() Brain, error) {
 	if brain, ok := brains[name]; ok {
 		return brain, nil
@@ -45,7 +48,7 @@ func DetectBrain(name string) (func() Brain, error) {
 	return nil, fmt.Errorf("unknown brain '%s'", name)
 }
 
-// memory brain
+// memory the default brain
 type memory struct {
 	mu    sync.Mutex
 	items map[string][]byte

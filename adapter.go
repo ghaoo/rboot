@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
+// Adapter 是管理聊天适配器进出消息的接口
 type Adapter interface {
-	Name() string            // 适配器名称
 	Incoming() chan *Message // 接收到的消息
 	Outgoing() chan *Message // 回复的消息
 }

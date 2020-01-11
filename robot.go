@@ -185,7 +185,7 @@ func (bot *Robot) Go() {
 	bot.Stop()
 }
 
-// 皮皮虾，快停下~~~~~~~~~
+// Stop 皮皮虾，快停下~~~~~~~~~
 func (bot *Robot) Stop() {
 
 	runtime.SetFinalizer(bot, nil)
@@ -207,11 +207,6 @@ func (bot *Robot) SendText(text string, to string) {
 
 	bot.outputChan <- msg
 
-}
-
-// GetAdapter 获取正在使用的适配器名称
-func (bot *Robot) GetAdapter() string {
-	return bot.adapter.Name()
 }
 
 // SetBrain 设置储存器
