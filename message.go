@@ -11,9 +11,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Message 消息结构
 type Message struct {
-	To     string    // 接收者
-	From   string    // 发送者
+	To     string    // 消息接收者
+	From   string    // 消息来源
 	Sender string    // 发送者
 	Header Header    // 头信息
 	Body   io.Reader // 消息主体
@@ -61,6 +62,7 @@ func NewMessageWithReader(body io.Reader) *Message {
 	}
 }
 
+// String 读取消息内容为 string
 func (m *Message) String() string {
 	content, err := ioutil.ReadAll(m.Body)
 	if err != nil {
@@ -72,6 +74,7 @@ func (m *Message) String() string {
 	return string(content)
 }
 
+// Bytes 读取消息内容为 []byte
 func (m *Message) Bytes() []byte {
 	content, err := ioutil.ReadAll(m.Body)
 	if err != nil {

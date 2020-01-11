@@ -78,9 +78,6 @@ func process(ctx context.Context, bot *Robot) {
 					}
 				}()
 
-				// 将传入消息拷贝到 ctx
-				ctx = context.WithValue(ctx, "input", msg)
-
 				// 匹配消息
 				if script, ruleset, args, ok := bot.matchScript(strings.TrimSpace(msg.String())); ok {
 
@@ -100,6 +97,9 @@ func process(ctx context.Context, bot *Robot) {
 					if err != nil {
 						logrus.Error(err)
 					}
+
+					// 将传入消息拷贝到 ctx
+					ctx = context.WithValue(ctx, "input", msg)
 
 					// 将匹配结果拷贝到 ctx
 					ctx = context.WithValue(ctx, "ruleset", ruleset)
