@@ -96,6 +96,7 @@ func (m *Message) MsgType() string {
 	return strings.ToLower(m.Header.Get("MsgType"))
 }
 
+// SetMsgType 设置消息类型
 func (m *Message) SetMsgType(msgtype string) {
 	m.Header.Set("MsgType", msgtype)
 }
