@@ -48,6 +48,21 @@ func DetectBrain(name string) (func() Brain, error) {
 	return nil, fmt.Errorf("unknown brain '%s'", name)
 }
 
+// Store 向储存器中存入信息
+func (bot *Robot) Store(bucket, key string, value []byte) error {
+	return bot.Brain.Set(bucket, key, value)
+}
+
+// Find 从储存器中获取指定的bucket和key对应的信息
+func (bot *Robot) Find(bucket, key string) []byte {
+	return bot.Brain.Get(bucket, key)
+}
+
+// Remove 从储存器中移除指定的bucket和key对应的信息
+func (bot *Robot) Remove(bucket, key string) error {
+	return bot.Brain.Remove(bucket, key)
+}
+
 // memory the default brain
 type memory struct {
 	mu    sync.Mutex
