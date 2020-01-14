@@ -21,7 +21,7 @@ type Script struct {
 // SetupFunc 脚本执行或解析
 // - bot: A Robot instance
 // - incoming: The incoming message
-type SetupFunc func(bot *Robot, incoming *Message) []*Message
+type SetupFunc func(incoming *Message) []*Message
 
 // RegisterScripts 注册脚本
 func RegisterScripts(name string, script Script) {
@@ -52,7 +52,7 @@ func DirectiveScript(name string) (SetupFunc, error) {
 }
 
 // helpSetup 帮助脚本
-func helpSetup(bot *Robot, in *Message) (msg []*Message) {
+func helpSetup(in *Message) (msg []*Message) {
 	rule := in.Header.Get("rule")
 	args := in.Header["args"]
 

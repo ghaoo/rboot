@@ -6,13 +6,13 @@ import (
 
 var vote = new(Vote)
 
-func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
+func setup(in *rboot.Message) []*rboot.Message {
 	rule := in.Header.Get("rule")
 	args := in.Header["args"]
 
 	switch rule {
 	case `new_vote`:
-		return vote.New(bot, args[1], args[2])
+		return vote.New(args[1], args[2])
 	case `voting`:
 		return vote.Voting(in.Sender, args[1])
 	case `stop_vote`:

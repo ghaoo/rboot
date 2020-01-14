@@ -18,12 +18,10 @@ type Vote struct {
 	Players   map[string]string // 参与人数
 	startTime time.Time         // 开始时间
 	ticker    *time.Ticker      // 计时器
-
-	bot *rboot.Robot
 }
 
 // New 新建一个投票
-func (v *Vote) New(bot *rboot.Robot, name string, opt string) []*rboot.Message {
+func (v *Vote) New(name string, opt string) []*rboot.Message {
 	// 检查有没有进行中的投票
 	if active {
 		return rboot.NewMessages("投票进行中，请稍后...")
@@ -42,7 +40,6 @@ func (v *Vote) New(bot *rboot.Robot, name string, opt string) []*rboot.Message {
 	v.Name = name
 	v.Players = make(map[string]string)
 	v.startTime = time.Now()
-	v.bot = bot
 	active = true
 
 	go func() {
