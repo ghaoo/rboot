@@ -59,7 +59,7 @@ func helpSetup(bot *Robot, in *Message) (msg []*Message) {
 	switch rule {
 	case `help`:
 		if len(args) < 2 || args[1] == "" {
-			msg = append(msg, NewMessage("请在 !help 后面带上想要查看的脚本名称，比如查看 <ping> 脚本帮助信息，输入 <!help ping>"))
+			msg = append(msg, NewMessage(script()))
 		} else {
 			if script, ok := scripts[args[1]]; ok {
 				msg = append(msg, NewMessage(script.Usage))
@@ -97,20 +97,25 @@ func helpSetup(bot *Robot, in *Message) (msg []*Message) {
 		}
 	case `script`:
 		// 获取所有脚本信息
-		content := ""
-
-		for scr, spt := range scripts {
-			content += fmt.Sprintf(" **%s**: %s\n **Usage**:\n%s", scr, spt.Description, spt.Usage)
-			content += "\n\n"
-		}
-
-		// 去除末尾空白字符
-		content = strings.TrimSpace(content)
-
-		msg = append(msg, NewMessage(content))
+		msg = append(msg, NewMessage(script()))
 	}
 
 	return msg
+}
+
+func script() string {
+	// 获取所有脚本信息
+	content := ""
+
+	for scr, spt := range scripts {
+		content += fmt.Sprintf(" **%s**: %s\n **Usage**:\n%s", scr, spt.Description, spt.Usage)
+		content += "\n\n"
+	}
+
+	// 去除末尾空白字符
+	content = strings.TrimSpace(content)
+
+	return content
 }
 
 // 帮助脚本规则集
