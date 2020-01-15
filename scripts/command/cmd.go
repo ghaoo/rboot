@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/ghaoo/rboot"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -91,15 +90,13 @@ func allCmd(dir string) ([]Cmd, error) {
 	for _, file := range cmdFiles {
 		data, err := load(file)
 		if err != nil {
-			log.Println(err)
-			continue
+			return nil, err
 		}
 
 		var cmd = Cmd{}
 		err = yaml.Unmarshal(data, &cmd)
 		if err != nil {
-			log.Println(err)
-			continue
+			return nil, err
 		}
 
 		cmds = append(cmds, cmd)
