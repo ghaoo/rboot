@@ -17,12 +17,11 @@ const defaultCmdDir = "command"
 var command = make(map[string]Cmd)
 
 type Cmd struct {
-	Name        string   `yaml:"name"`
-	Rule        string   `yaml:"rule"`
-	Usage       string   `yaml:"usage"`
-	Description string   `yaml:"description"`
-	Version     string   `yaml:"version"`
-	Cmd         []string `yaml:"cmd"`
+	Name    string   `yaml:"name"`
+	Rule    string   `yaml:"rule"`
+	Usage   string   `yaml:"usage"`
+	Version string   `yaml:"version"`
+	Cmd     []string `yaml:"cmd"`
 }
 
 func registerCommand() error {
@@ -43,13 +42,12 @@ func registerCommand() error {
 
 	var ruleset = make(map[string]string)
 	var usage = ""
-	var desc = ""
+	var desc = "命令执行脚本"
 	for _, cmd := range cmds {
 		command[cmd.Name] = cmd
 
 		ruleset[cmd.Name] = cmd.Rule
-		usage += "> " + cmd.Usage + "\n\n"
-		desc += cmd.Name + ": " + cmd.Description + "\n\n"
+		usage += "\n> " + cmd.Usage + "\n\n"
 	}
 
 	if len(ruleset) > 0 {
