@@ -99,7 +99,7 @@ func process(bot *Robot) {
 					msg.Header["args"] = args
 
 					// 执行脚本, 附带ctx, 并获取输出
-					response := action(msg)
+					response := action(bot, msg)
 
 					for _, resp := range response {
 						// 将消息发送到 outputChan

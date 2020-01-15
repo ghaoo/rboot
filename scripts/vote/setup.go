@@ -6,7 +6,7 @@ import (
 
 var vote = new(Vote)
 
-func setup(in *rboot.Message) []*rboot.Message {
+func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
 	rule := in.Header.Get("rule")
 	args := in.Header["args"]
 

@@ -1,0 +1,8 @@
+name: hello
+version: 0.1.0
+rule: "^hello"
+usage: "echo hello world"
+description: "hello world"
+cmd:
+  - "echo \"hello world\""
+  - echo "你好"
