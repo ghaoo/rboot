@@ -29,7 +29,7 @@ func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
 
 	cmd := command[rule]
 
-	for name, args := range cmd.Cmd {
+	for _, args := range cmd.Cmd {
 		out, err := runCommand(args[0], args[1:]...)
 		if err != nil {
 			bot.Outgoing(rboot.NewMessage(err.Error()))
