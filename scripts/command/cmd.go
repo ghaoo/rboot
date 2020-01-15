@@ -42,7 +42,7 @@ func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
 	return nil
 }
 
-func registerCommand() {
+func registerCommand() error {
 	cmdDir := os.Getenv("COMMAND_DIR")
 
 	if cmdDir == "" {
@@ -51,12 +51,11 @@ func registerCommand() {
 
 	cmds, err := allCmd(cmdDir)
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 
 	if len(cmds) <= 0 {
-		log.Println("no command found")
-		return
+		return fmt.Errorf("no command found")
 	}
 
 	var ruleset = make(map[string]string)
@@ -77,6 +76,8 @@ func registerCommand() {
 			Description: desc,
 		})
 	}
+
+	return nil
 }
 
 func allCmd(dir string) ([]Cmd, error) {
@@ -91,13 +92,15 @@ func allCmd(dir string) ([]Cmd, error) {
 	for _, file := range cmdFiles {
 		data, err := load(file)
 		if err != nil {
-			return nil, err
+			log.Println(err)
+			continue
 		}
 
 		var cmd = Cmd{}
 		err = yaml.Unmarshal(data, &cmd)
 		if err != nil {
-			return nil, err
+			log.Println(err)
+			continue
 		}
 
 		cmds = append(cmds, cmd)
