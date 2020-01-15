@@ -3,13 +3,12 @@ package command
 import (
 	"fmt"
 	"github.com/ghaoo/rboot"
+	"github.com/go-yaml/yaml"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-
-	"github.com/go-yaml/yaml"
 )
 
 const defaultCmdDir = "command"
@@ -17,11 +16,11 @@ const defaultCmdDir = "command"
 var command = make(map[string]Cmd)
 
 type Cmd struct {
-	Name    string              `yaml:"name"`
-	Rule    string              `yaml:"rule"`
-	Usage   string              `yaml:"usage"`
-	Version string              `yaml:"version"`
-	Cmd     map[string][]string `yaml:"cmd"`
+	Name    string   `yaml:"name"`
+	Rule    string   `yaml:"rule"`
+	Usage   string   `yaml:"usage"`
+	Version string   `yaml:"version"`
+	Cmd     []string `yaml:"cmd"`
 }
 
 func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
@@ -29,10 +28,10 @@ func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
 
 	cmd := command[rule]
 
-	for _, args := range cmd.Cmd {
-		out, err := runCommand(args[0], args[1:]...)
+	for _, c := range cmd.Cmd {
+		out, err := runCommand("/bin/sh", "-c", c)
 		if err != nil {
-			bot.Outgoing(rboot.NewMessage(err.Error()))
+			return rboot.NewMessages(err.Error())
 		}
 
 		bot.Outgoing(rboot.NewMessage(out, in.From))
