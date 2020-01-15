@@ -4,5 +4,5 @@ rule: "^hello"
 usage: "echo hello world"
 description: "hello world"
 cmd:
-  - "echo \"hello world\""
+  - echo "hello world"
   - echo "你好"
