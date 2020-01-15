@@ -36,7 +36,6 @@ func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
 		}
 
 		bot.Outgoing(rboot.NewMessage(out, in.From))
-		bot.Outgoing(rboot.NewMessage(name+"执行完毕...", in.From))
 	}
 
 	return nil
