@@ -55,7 +55,7 @@ func newAgent() *wxwork.Agent {
 	return a
 }
 
-// Name 适配器名称
+// Name 转接器名称
 func (wx *wework) Name() string {
 	return "wework"
 }

@@ -31,7 +31,7 @@ const (
 	version = "1.1.0"
 )
 
-// Robot 是 rboot 的一个实例，它包含了聊天适配器，规则处理器，缓存器，路由适配器和消息的进出通道
+// Robot 是 rboot 的一个实例，它包含了聊天转接器，规则处理器，缓存器，路由适配器和消息的进出通道
 type Robot struct {
 	Router     *Router
 	Brain      Brain
@@ -241,7 +241,7 @@ func (bot *Robot) initialize() {
 		panic(`Detect adapter error: ` + err.Error())
 	}
 
-	// 获取适配器实例
+	// 获取转接器实例
 	adapter := adp(bot)
 
 	// 建立消息通道连接

@@ -1,7 +1,7 @@
 package rboot
 
 // Hook 应在 robot 启动之后，消息处理之前触发，
-// 可以认为 Hook 是一个独立于聊天适配器和脚本之外的插件
+// 可以认为 Hook 是一个独立于聊天转接器和脚本之外的插件
 type Hook interface {
 	Fire(*Robot) error
 }
