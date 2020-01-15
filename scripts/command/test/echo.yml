@@ -3,5 +3,9 @@ version: 0.1.0
 rule: "^hello"
 usage: "echo hello world"
 cmd:
-  - echo "hello world"
-  - echo "你好"
+  echo en:
+    - echo
+    - hello world
+  echo cn:
+    - echo
+    - "你好"

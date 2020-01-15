@@ -17,11 +17,29 @@ const defaultCmdDir = "command"
 var command = make(map[string]Cmd)
 
 type Cmd struct {
-	Name    string   `yaml:"name"`
-	Rule    string   `yaml:"rule"`
-	Usage   string   `yaml:"usage"`
-	Version string   `yaml:"version"`
-	Cmd     []string `yaml:"cmd"`
+	Name    string              `yaml:"name"`
+	Rule    string              `yaml:"rule"`
+	Usage   string              `yaml:"usage"`
+	Version string              `yaml:"version"`
+	Cmd     map[string][]string `yaml:"cmd"`
+}
+
+func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
+	rule := in.Header.Get("rule")
+
+	cmd := command[rule]
+
+	for name, args := range cmd.Cmd {
+		out, err := runCommand(args[0], args[1:]...)
+		if err != nil {
+			bot.Outgoing(rboot.NewMessage(err.Error()))
+		}
+
+		bot.Outgoing(rboot.NewMessage(out, in.From))
+		bot.Outgoing(rboot.NewMessage(name+"执行完毕...", in.From))
+	}
+
+	return nil
 }
 
 func registerCommand() error {
