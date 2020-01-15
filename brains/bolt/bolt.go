@@ -45,6 +45,8 @@ func Bolt() rboot.Brain {
 		logrus.Warningf(`BOLT_DB_FILE not set, using default: %s`, DefaultBoltDBFile)
 		dbfile = DefaultBoltDBFile
 	}
+
+	dbfile = path.Join(os.Getenv("DATA_PATH"), dbfile)
 	err := pathExist(dbfile)
 
 	if err != nil {
