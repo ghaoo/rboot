@@ -5,7 +5,7 @@ import (
 )
 
 func TestCmd_Load(t *testing.T) {
-	b, err := load("./test/echo.yml")
+	b, err := load("./test/composer.yml")
 	if err != nil {
 		t.Error(err)
 	}
