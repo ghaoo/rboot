@@ -18,10 +18,10 @@ func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
 
 		output, err := runCmd.CombinedOutput()
 		if err != nil {
-			bot.Outgoing(rboot.NewMessage(fmt.Sprintf("error running command: %v: %q", err, string(output))))
+			bot.Outgoing(rboot.NewMessage(fmt.Sprintf("`error running command`: %v: %q", err, string(output)), in.From))
 		}
 
-		bot.Outgoing(rboot.NewMessage(string(output)))
+		bot.Outgoing(rboot.NewMessage(string(output), in.From))
 	}
 
 	return nil
