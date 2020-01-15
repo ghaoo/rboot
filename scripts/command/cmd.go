@@ -12,6 +12,8 @@ import (
 	"github.com/go-yaml/yaml"
 )
 
+const defaultCmdDir = "command"
+
 var command = make(map[string]Cmd)
 
 type Cmd struct {
@@ -26,9 +28,17 @@ type Cmd struct {
 func registerCommand() error {
 	cmdDir := os.Getenv("COMMAND_DIR")
 
+	if cmdDir == "" {
+		cmdDir = defaultCmdDir
+	}
+
 	cmds, err := allCmd(cmdDir)
 	if err != nil {
 		return err
+	}
+
+	if len(cmds) <= 0 {
+		return fmt.Errorf("no command found")
 	}
 
 	var ruleset = make(map[string]string)
@@ -42,17 +52,20 @@ func registerCommand() error {
 		desc += cmd.Name + ": " + cmd.Description + "\n\n"
 	}
 
-	rboot.RegisterScripts("cmd", rboot.Script{
-		Action:      setup,
-		Ruleset:     ruleset,
-		Usage:       usage,
-		Description: desc,
-	})
+	if len(ruleset) > 0 {
+		rboot.RegisterScripts("cmd", rboot.Script{
+			Action:      setup,
+			Ruleset:     ruleset,
+			Usage:       usage,
+			Description: desc,
+		})
+	}
 
 	return nil
 }
 
 func allCmd(dir string) ([]Cmd, error) {
+
 	cmdFiles, err := filepath.Glob(filepath.Join(dir, "*.yml"))
 	if err != nil {
 		return nil, err
