@@ -73,16 +73,10 @@ func (ding *dingtalk) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	msg.Sender = in.SenderNick
 	msg.Header.Set("sender", in.SenderId)
 	msg.Header.Set("dinghook", in.SessionWebhook)
-	msg.Header.Set("ding", "1")
 
 	ding.in <- msg
 
 	out := <-ding.out
-
-	// 非当前返回不做反应
-	if out.Header.Get("ding") != "1" {
-		return
-	}
 
 	dmsg := ding.buildMessage(out)
 	result, err := json.Marshal(dmsg)
