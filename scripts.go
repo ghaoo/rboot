@@ -96,9 +96,6 @@ func helpSetup(bot *Robot, in *Message) (msg []*Message) {
 
 			msg = append(msg, NewMessage(content))
 		}
-	case `script`:
-		// 获取所有脚本信息
-		msg = append(msg, NewMessage(script()))
 	}
 
 	return msg
@@ -123,14 +120,13 @@ func script() string {
 var helpRules = map[string]string{
 	`help`:    `^!help(?: *)(\S*)`,
 	`ruleset`: `^!ruleset(?: *)(\S*)`,
-	`script`:  `^!(?:脚本|scripts)`,
 }
 
 func init() {
 	RegisterScripts(`help`, Script{
 		Action:      helpSetup,
 		Ruleset:     helpRules,
-		Usage:       "> `!scripts` 或 `!脚本`: 查看所有脚本 \n\n> `!help <script>`: 查看脚本帮助信息 \n\n> `!ruleset <脚本名称>`",
+		Usage:       "> `!help <script>`: 查看脚本帮助信息 \n\n> `!ruleset <script>`: 查看已经注册的脚本规则集",
 		Description: `查看脚本帮助信息`,
 	})
 }

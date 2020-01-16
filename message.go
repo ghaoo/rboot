@@ -81,14 +81,16 @@ func (m *Message) Bytes() []byte {
 
 // SetCc 为消息设置抄送
 func (m *Message) SetCc(to ...string) {
-	m.Header.Set("Cc", strings.Join(to, ","))
+	if len(to) > 0 {
+		for _, t := range to {
+			m.Header.Add("Cc", t)
+		}
+	}
 }
 
 // Cc 返回消息抄送信息
 func (m *Message) Cc() []string {
-	cc := m.Header.Get("Cc")
-
-	return strings.Split(cc, ",")
+	return m.Header.GetKey("Cc")
 }
 
 // Header 消息附带的头信息，键-值对
@@ -104,9 +106,14 @@ func (h Header) Set(key, value string) {
 	textproto.MIMEHeader(h).Set(key, value)
 }
 
-// Get 从头信息中获取与给定键关联的第一个值，如果需要取得一个键的多个值请直接操作map
+// Get 从头信息中获取与给定键关联的第一个值
 func (h Header) Get(key string) string {
 	return textproto.MIMEHeader(h).Get(key)
+}
+
+// GetKey 从头信息中获取与给定键关联的多个值
+func (h Header) GetKey(key string) []string {
+	return h[textproto.CanonicalMIMEHeaderKey(key)]
 }
 
 // Del 删除与键关联的值

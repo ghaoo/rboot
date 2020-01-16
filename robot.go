@@ -119,7 +119,7 @@ func process(bot *Robot) {
 						bot.outputChan <- resp
 
 						// 如果存在抄送人，将消息抄送给对方
-						if resp.Header.Get("Cc") != "" {
+						if len(resp.Cc()) > 0 {
 							for _, cc := range resp.Cc() {
 								resp.To = cc
 								bot.outputChan <- resp
