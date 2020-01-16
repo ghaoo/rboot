@@ -147,6 +147,9 @@ func (bot *Robot) Go() {
 	// hook
 	bot.hooks.Fire(bot)
 
+	// 开启web服务
+	go bot.Router.run()
+
 	// 消息处理
 	go process(bot)
 
@@ -263,9 +266,6 @@ func (bot *Robot) initialize() {
 	}
 
 	bot.Brain = brain()
-
-	// 开启web服务
-	go bot.Router.run()
 }
 
 func init() {
