@@ -137,4 +137,20 @@ func runCommand(command string, args ...string) (string, error) {
 
 func init() {
 	registerCommand()
+	rboot.RegisterScripts("refreshCmd", rboot.Script{
+		Action: func(bot *rboot.Robot, incoming *rboot.Message) []*rboot.Message {
+			err := registerCommand()
+			if err != nil {
+				log.Println(err)
+				return rboot.NewMessages(err.Error(), incoming.From)
+			}
+
+			return rboot.NewMessages("更新成功！", incoming.From)
+		},
+		Ruleset: map[string]string{
+			"refresh": `^!refresh command`,
+		},
+		Usage:       "`!refresh command`: 重新加载外部command",
+		Description: "当command有变化时可运行次命令更新",
+	})
 }
