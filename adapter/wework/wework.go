@@ -111,7 +111,6 @@ func (wx *wework) listenOutgoing() {
 
 		title := out.Header.Get("title")
 		desc := out.Header.Get("description")
-		mediaid := out.Header.Get("mediaid")
 		url := out.Header.Get("url")
 
 		switch out.Header.Get("msgtype") {
@@ -119,10 +118,24 @@ func (wx *wework) listenOutgoing() {
 			msg = wxwork.NewTextMessage(out.String())
 
 		case MSG_TYPE_IMAGE, MSG_TYPE_VOICE, MSG_TYPE_FILE:
-			msg = wxwork.NewMediaMessage(out.Header.Get("msgtype"), mediaid)
+			if out.Header.Get("file") != "" {
+				media, err := wx.client.MediaUpload(out.Header.Get("file"))
+				if err != nil {
+					msg = wxwork.NewTextMessage("上传附件失败：" + err.Error())
+				} else {
+					msg = wxwork.NewMediaMessage(out.Header.Get("msgtype"), media.MediaId)
+				}
+			}
 
 		case MSG_TYPE_VIDEO:
-			msg = wxwork.NewVideoMessage(title, desc, mediaid)
+			if out.Header.Get("file") != "" {
+				media, err := wx.client.MediaUpload(out.Header.Get("file"))
+				if err != nil {
+					msg = wxwork.NewTextMessage("上传视频失败：" + err.Error())
+				} else {
+					msg = wxwork.NewVideoMessage(title, desc, media.MediaId)
+				}
+			}
 
 		case MSG_TYPE_TEXTCARD:
 			btntxt := out.Header.Get("btntxt")
