@@ -55,8 +55,11 @@ func (w *wx) run() {
 
 	go func() {
 		for msg := range w.out {
-			if msg.Header.Get("file") != "" {
-				w.client.SendFile(msg.Header.Get("file"), msg.To)
+			if len(msg.Header.GetKey("file")) > 0 {
+
+				for _, f := range msg.Header.GetKey("file") {
+					w.client.SendFile(f, msg.To)
+				}
 			}
 
 			w.client.SendTextMsg(msg.String(), msg.To)
@@ -70,7 +73,7 @@ func (w *wx) run() {
 		case sdk.EVENT_STOP_LOOP:
 			return
 		case sdk.EVENT_CONTACT_CHANGE:
-			go w.syncContact()
+			w.syncContact()
 		case sdk.EVENT_NEW_MESSAGE:
 			msg := e.Data.(sdk.MsgData)
 
