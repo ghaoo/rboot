@@ -93,9 +93,8 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	req.Text = strings.TrimPrefix(req.Text, os.Getenv("BEARYCHAT_TRIGGER_WORD"))
 
 	msg := rboot.NewMessage(req.Text)
-	msg.Header.Set("Channel", req.ChannelName)
-	msg.Header.Set("From", req.UserName)
-	msg.Header.Set("Sender", req.UserName)
+	msg.From = req.ChannelName
+	msg.Sender = req.UserName
 
 	b.in <- msg
 
