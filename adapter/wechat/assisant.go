@@ -49,7 +49,8 @@ func (w *wx) Assisant(e sdk.Event) {
 		}
 
 		if msg.MsgType == 37 {
-			w.AutoAcceptAddFirendRequest(msg)
+			// 自动同意好友请求
+			// w.AutoAcceptAddFirendRequest(msg)
 		}
 	}
 }

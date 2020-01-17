@@ -19,7 +19,7 @@ type Script struct {
 	Description string            // 简介
 }
 
-// SetupFunc 脚本执行或解析
+// SetupFunc 脚本执行或解析函数
 // - bot: A Robot instance
 // - incoming: The incoming message
 type SetupFunc func(bot *Robot, incoming *Message) []*Message
