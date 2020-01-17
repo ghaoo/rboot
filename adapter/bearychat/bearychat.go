@@ -84,7 +84,7 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证token
-	if req.Token != os.Getenv("BEARYCHAT_OUT_TOKEN") {
+	if req.Token != os.Getenv("BEARYCHAT_TOKEN") {
 		w.WriteHeader(http.StatusNotExtended)
 		return
 	}
