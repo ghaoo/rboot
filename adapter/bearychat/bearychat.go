@@ -98,6 +98,7 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	msg.Header.Set("Sender", req.UserName)
 
 	b.in <- msg
+
 }
 
 func (b *beary) run(bot *rboot.Robot) {

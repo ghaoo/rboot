@@ -37,7 +37,6 @@ type Robot struct {
 	Brain      Brain
 	adapter    Adapter
 	rule       Rule
-	hooks      Hooks
 	inputChan  chan *Message
 	outputChan chan *Message
 
@@ -144,9 +143,6 @@ func (bot *Robot) Go() {
 
 	logrus.Info("皮皮虾，我们走~~~~~~~")
 
-	// hook
-	bot.hooks.Fire(bot)
-
 	// 开启web服务
 	go bot.Router.run()
 
@@ -198,11 +194,6 @@ func (bot *Robot) SendText(text string, to string) {
 
 	bot.outputChan <- msg
 
-}
-
-// AddHook 添加hook
-func (bot *Robot) AddHook(hook Hook) {
-	bot.hooks.Add(hook)
 }
 
 // SetBrain 设置储存器
