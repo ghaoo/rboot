@@ -90,7 +90,7 @@ func (b *beary) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 删除 bearychat 设置的 TRIGGER_WORD
-	req.Text = strings.TrimPrefix(req.Text, os.Getenv("TRIGGER_WORD"))
+	req.Text = strings.TrimPrefix(req.Text, os.Getenv("BEARYCHAT_TRIGGER_WORD"))
 
 	msg := rboot.NewMessage(req.Text)
 	msg.Header.Set("Channel", req.ChannelName)

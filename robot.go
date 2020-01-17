@@ -74,15 +74,20 @@ func process(bot *Robot) {
 					}
 				}()
 
+				if bot.debug {
+					logrus.Debugf("- Incoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %v\n- 内容: %s\n\n",
+						msg.Header.Get("MsgType"),
+						msg.From,
+						msg.To,
+						msg.String(),
+					)
+				}
+
 				// 匹配消息
 				if script, rule, args, ok := bot.matchScript(strings.TrimSpace(msg.String())); ok {
 
 					if bot.debug {
-						logrus.Debugf("\nIncoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %v\n- 内容: %s\n- 脚本: %s\n- 规则: %s\n- 参数: %v\n\n",
-							msg.Header.Get("MsgType"),
-							msg.From,
-							msg.To,
-							msg.String(),
+						logrus.Debugf("- 脚本: %s\n- 规则: %s\n- 参数: %v\n\n",
 							script,
 							rule,
 							args[1:])
