@@ -25,10 +25,10 @@ type Response struct {
 }
 
 type Attachment struct {
-	Title  string   `json:"title,omitempty"`
-	Text   string   `json:"text,omitempty"`
-	Color  string   `json:"color,omitempty"`
-	Images []string `json:"images,omitempty"`
+	Title  string              `json:"title,omitempty"`
+	Text   string              `json:"text,omitempty"`
+	Color  string              `json:"color,omitempty"`
+	Images []map[string]string `json:"images,omitempty"`
 }
 
 type Res struct {

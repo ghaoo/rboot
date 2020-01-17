@@ -53,9 +53,8 @@ func (b *beary) listenOutgoing() {
 			res.Markdown = false
 		}
 
-		// 暂不支持
 		// 图片使用 Header 传递，图片链接用 “,” 隔开
-		/*hatts := msg.Header.Get("Attachments")
+		hatts := msg.Header.Get("Attachments")
 		if hatts != "" {
 			var attachments []Attachment
 			err := json.Unmarshal([]byte(hatts), &attachments)
@@ -64,7 +63,7 @@ func (b *beary) listenOutgoing() {
 			}
 
 			res.Attachments = attachments
-		}*/
+		}
 
 		if err := sendMessage(res); err != nil {
 			logrus.WithField("func", "bearychat listenOutgoing send msg").Errorf("listen outgoing message err: %v", err)
