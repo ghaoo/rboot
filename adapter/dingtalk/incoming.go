@@ -70,8 +70,8 @@ func (ding *dingtalk) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	_ = json.Unmarshal(body, &in)
 
 	msg := rboot.NewMessage(in.Text.Content)
-	msg.Sender = in.SenderNick
-	msg.Header.Set("sender", in.SenderId)
+	msg.Sender = in.SenderId
+	msg.Header.Set("sender", in.SenderNick)
 	msg.Header.Set("dinghook", in.SessionWebhook)
 
 	ding.in <- msg
