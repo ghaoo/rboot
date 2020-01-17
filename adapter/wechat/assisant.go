@@ -79,7 +79,6 @@ func (w *wx) ChatRoomMember(room_name string) (map[string]int, error) {
 		} else {
 			none++
 		}
-
 	}
 
 	stats = map[string]int{
