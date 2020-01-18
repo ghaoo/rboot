@@ -110,6 +110,12 @@ func process(bot *Robot) {
 						// 指定输出消息的接收者
 						resp.To = msg.From
 
+						if msg.KeepHeader {
+							for hn, hv := range msg.Header {
+								resp.Header[hn] = hv
+							}
+						}
+
 						if bot.debug {
 							logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n\n",
 								resp.Header.Get("MsgType"),

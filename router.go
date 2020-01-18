@@ -41,51 +41,71 @@ func (r *route) Methods(methods ...string) *route {
 	return r
 }
 
-// Router 包含了路由处理器 mux 和已经注册的所有路由集合
+// Router 包含了路由处理器 mux 和已经注册的所有路由集合，支持中间件
 type Router struct {
 	mux    *mux.Router
 	routes []*route
+
+	// 中间件
+	middlewares []func(http.Handler) http.Handler
 }
 
 // newRouter 创建一个路由实例
 func newRouter() *Router {
-	return &Router{mux: mux.NewRouter(), routes: make([]*route, 0)}
+	return &Router{
+		mux:         mux.NewRouter(),
+		routes:      make([]*route, 0),
+		middlewares: make([]func(http.Handler) http.Handler, 0),
+	}
+}
+
+// Use 注册中间件，和 *mux.Router.Use 用法相同
+func (r *Router) Use(mwf ...func(http.Handler) http.Handler) {
+	for _, fn := range mwf {
+		r.middlewares = append(r.middlewares, fn)
+	}
 }
 
 // HandleFunc 为路径 path 注册一个新的路由处理函数
 func (r *Router) HandleFunc(path string, f func(http.ResponseWriter, *http.Request)) *route {
-	route := &route{path: path, handlerFunc: f}
-	r.routes = append(r.routes, route)
-	return route
+	ro := &route{path: path, handlerFunc: f}
+	r.routes = append(r.routes, ro)
+	return ro
 }
 
 // Handle 为路径 path 注册一个新路由
 func (r *Router) Handle(path string, handler http.Handler) *route {
-	route := &route{path: path, handler: handler}
-	r.routes = append(r.routes, route)
-	return route
+	ro := &route{path: path, handler: handler}
+	r.routes = append(r.routes, ro)
+	return ro
 }
 
 func (r *Router) run() {
 	// 注册路由
 	r.mux.HandleFunc("/", rbootHome)
 
-	for _, route := range r.routes {
+	for _, ro := range r.routes {
 		var routeMux *mux.Route
-		if route.handler != nil {
-			routeMux = r.mux.Handle(route.path, route.handler)
-		} else if route.handlerFunc != nil {
-			routeMux = r.mux.HandleFunc(route.path, route.handlerFunc)
+		if ro.handler != nil {
+			routeMux = r.mux.Handle(ro.path, ro.handler)
+		} else if ro.handlerFunc != nil {
+			routeMux = r.mux.HandleFunc(ro.path, ro.handlerFunc)
 		} else {
 			continue
 		}
 
-		if len(route.methods) > 0 {
-			routeMux = routeMux.Methods(route.methods...)
+		if len(ro.methods) > 0 {
+			routeMux = routeMux.Methods(ro.methods...)
 		}
 
-		if route.name != "" {
-			routeMux = routeMux.Name(route.name)
+		if ro.name != "" {
+			routeMux = routeMux.Name(ro.name)
+		}
+	}
+
+	if len(r.middlewares) > 0 {
+		for _, middleware := range r.middlewares {
+			r.mux.Use(mux.MiddlewareFunc(middleware))
 		}
 	}
 

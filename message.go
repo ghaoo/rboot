@@ -13,11 +13,12 @@ import (
 
 // Message 表示一个消息的结构
 type Message struct {
-	To     string    // 消息接收者
-	From   string    // 消息来源
-	Sender string    // 发送者
-	Header Header    // 头信息
-	Body   io.Reader // 消息主体
+	To         string    // 消息接收者
+	From       string    // 消息来源
+	Sender     string    // 发送者
+	Header     Header    // 头信息
+	KeepHeader bool      // 如果为true则传入消息的Header在一次会话结束之前不会清除
+	Body       io.Reader // 消息主体
 }
 
 // ReadMessage 从 r 中读取消息，消息头将被解析，消息体将可从msg.Body中读取
