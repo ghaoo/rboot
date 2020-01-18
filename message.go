@@ -1,7 +1,6 @@
 package rboot
 
 import (
-	"bufio"
 	"bytes"
 	"io"
 	"io/ioutil"
@@ -19,19 +18,6 @@ type Message struct {
 	Header     Header    // 头信息
 	KeepHeader bool      // 如果为true则传入消息的Header在一次会话结束之前不会清除
 	Body       io.Reader // 消息主体
-}
-
-// ReadMessage 从 r 中读取消息，消息头将被解析，消息体将可从msg.Body中读取
-func ReadMessage(r io.Reader) (msg *Message, err error) {
-	tp := textproto.NewReader(bufio.NewReader(r))
-
-	hdr, err := tp.ReadMIMEHeader()
-	msg = &Message{
-		Header: Header(hdr),
-		Body:   tp.R,
-	}
-
-	return msg, err
 }
 
 // NewMessages 新建一组消息
@@ -82,16 +68,14 @@ func (m *Message) Bytes() []byte {
 
 // SetCc 为消息设置抄送
 func (m *Message) SetCc(to ...string) {
-	if len(to) > 0 {
-		for _, t := range to {
-			m.Header.Add("Cc", t)
-		}
-	}
+	m.Header.Set("Cc", strings.Join(to, ","))
 }
 
 // Cc 返回消息抄送信息
 func (m *Message) Cc() []string {
-	return m.Header.GetKey("Cc")
+	cc := m.Header.Get("Cc")
+
+	return strings.Split(cc, ",")
 }
 
 // Header 消息附带的头信息，键-值对

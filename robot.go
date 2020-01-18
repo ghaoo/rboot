@@ -46,6 +46,7 @@ type Robot struct {
 
 // New 获取一个Robot实例，
 func New() *Robot {
+
 	bot := &Robot{
 		inputChan:  make(chan *Message),
 		outputChan: make(chan *Message),
@@ -233,7 +234,7 @@ func (bot *Robot) initialize() {
 	bot.debug = debug
 
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
-	adpName := os.Getenv(`RBOOT_ADAPTER`)
+	adpName := os.Getenv(`ROBOT_ADAPTER`)
 	// 默认使用 cli
 	if adpName == "" {
 		logrus.Warn("未指定 adapter，默认使用 cli")
@@ -254,7 +255,7 @@ func (bot *Robot) initialize() {
 	bot.outputChan = adapter.Outgoing()
 
 	// 储存器
-	brainName := os.Getenv(`RBOOT_BRAIN`)
+	brainName := os.Getenv(`ROBOT_BRAIN`)
 	// 默认使用 memory
 	if brainName == "" {
 		logrus.Warn("未指定 brain，默认使用 memory")

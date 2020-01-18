@@ -121,9 +121,9 @@ func (c *cli) run() {
 
 func (c *cli) writeString(str string) error {
 
-	name := os.Getenv(`RBOOT_ALIAS`)
+	name := os.Getenv(`ROBOT_ALIAS`)
 	if name == `` {
-		name = os.Getenv(`RBOOT_NAME`)
+		name = os.Getenv(`ROBOT_NAME`)
 	}
 
 	msg := fmt.Sprintf("%s> %s\n", name, strings.TrimSpace(str))

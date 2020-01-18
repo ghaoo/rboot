@@ -5,8 +5,8 @@ go:
 
 env:
   global:
-    - RBOOT_ADAPTER=cli
-    - RBOOT_BRAIN=memory
+    - ROBOT_ADAPTER=cli
+    - ROBOT_BRAIN=memory
 
 install:
  - go mod tidy
