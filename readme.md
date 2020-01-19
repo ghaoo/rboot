@@ -27,9 +27,13 @@ $ ./cmd
 
 ## 文档
 
-中文文档：[Rboot](https://www.kancloud.cn/ghaoo/rboot/1476883)
+[![Rboot](https://img.shields.io/badge/%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3-rboot1.1.2-green)](https://www.kancloud.cn/ghaoo/rboot/1476883)
 
-开发请查看 [GoDoc](http://godoc.org/github.com/ghaoo/rboot)
+[![GoDoc](http://godoc.org/github.com/ghaoo/rboot?status.svg)](http://godoc.org/github.com/ghaoo/rboot)
+
+### 版权
+
+本项目采用 [MIT](https://opensource.org/licenses/MIT) 开源授权许可证，完整的授权说明可在 [LICENSE](LICENSE) 文件中找到。
 
 
 

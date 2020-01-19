@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/textproto"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Message 表示一个消息的结构
@@ -46,7 +44,7 @@ func NewMessage(content string, to ...string) *Message {
 func (m *Message) String() string {
 	content, err := ioutil.ReadAll(m.Body)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 	}
 
 	m.Body = bytes.NewBuffer(content)
@@ -58,7 +56,7 @@ func (m *Message) String() string {
 func (m *Message) Bytes() []byte {
 	content, err := ioutil.ReadAll(m.Body)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 	}
 
 	m.Body = bytes.NewBuffer(content)

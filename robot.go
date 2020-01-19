@@ -31,8 +31,13 @@ const (
 	version = "1.1.0"
 )
 
+var log = logrus.WithFields(logrus.Fields{
+	"mod": "rboot",
+})
+
 // Robot 是 rboot 的一个实例，它包含了聊天转接器，规则处理器，缓存器，路由适配器和消息的进出通道
 type Robot struct {
+	ID         string
 	Router     *Router
 	Brain      Brain
 	adapter    Adapter
@@ -46,13 +51,14 @@ type Robot struct {
 
 // New 获取一个Robot实例，
 func New() *Robot {
-
 	bot := &Robot{
 		inputChan:  make(chan *Message),
 		outputChan: make(chan *Message),
 		signalChan: make(chan os.Signal),
 		rule:       new(Regex),
 	}
+
+	//bot.ID, _ = sonyflake.BitLenMachineID
 
 	bot.Router = newRouter()
 
@@ -71,12 +77,12 @@ func process(bot *Robot) {
 			go func(bot *Robot, msg *Message) {
 				defer func() {
 					if r := recover(); r != nil {
-						logrus.Errorf("panic recovered when parsing message: %#v. \nPanic: %v", fmt.Sprintf(""), r)
+						log.Errorf("panic recovered when parsing message: %#v. \nPanic: %v", fmt.Sprintf(""), r)
 					}
 				}()
 
 				if bot.debug {
-					logrus.Debugf("- Incoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %v\n- 内容: %s\n\n",
+					log.Debugf("- Incoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %v\n- 内容: %s\n\n",
 						msg.Header.Get("MsgType"),
 						msg.From,
 						msg.To,
@@ -88,7 +94,7 @@ func process(bot *Robot) {
 				if script, rule, args, ok := bot.matchScript(strings.TrimSpace(msg.String())); ok {
 
 					if bot.debug {
-						logrus.Debugf("- 脚本: %s\n- 规则: %s\n- 参数: %v\n\n",
+						log.Debugf("- 脚本: %s\n- 规则: %s\n- 参数: %v\n\n",
 							script,
 							rule,
 							args[1:])
@@ -97,7 +103,7 @@ func process(bot *Robot) {
 					// 获取脚本执行函数
 					action, err := DirectiveScript(script)
 					if err != nil {
-						logrus.Error(err)
+						log.Error(err)
 					}
 
 					msg.Header.Set("rule", rule)
@@ -118,7 +124,7 @@ func process(bot *Robot) {
 						}
 
 						if bot.debug {
-							logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n\n",
+							log.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n\n",
 								resp.Header.Get("MsgType"),
 								resp.To,
 								resp.Cc(),
@@ -148,12 +154,12 @@ func process(bot *Robot) {
 // Go 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
 
-	logrus.Infof("Rboot Version %s", version)
+	log.Infof("Rboot Version %s", version)
 
 	// 初始化
 	bot.initialize()
 
-	logrus.Info("皮皮虾，我们走~~~~~~~")
+	log.Info("皮皮虾，我们走~~~~~~~")
 
 	// 开启web服务
 	go bot.Router.run()
@@ -184,7 +190,7 @@ func (bot *Robot) Stop() {
 
 	runtime.SetFinalizer(bot, nil)
 
-	logrus.Info("皮皮虾，快停下~~~~~~~~")
+	log.Info("皮皮虾，快停下~~~~~~~~")
 
 	os.Exit(0)
 }
@@ -237,10 +243,10 @@ func (bot *Robot) initialize() {
 	adpName := os.Getenv(`ROBOT_ADAPTER`)
 	// 默认使用 cli
 	if adpName == "" {
-		logrus.Warn("未指定 adapter，默认使用 cli")
+		log.Warn("未指定 adapter，默认使用 cli")
 		adpName = "cli"
 	}
-	logrus.Info("已连接 ", adpName)
+	log.Info("已连接 ", adpName)
 	adp, err := DetectAdapter(adpName)
 
 	if err != nil {
@@ -258,7 +264,7 @@ func (bot *Robot) initialize() {
 	brainName := os.Getenv(`ROBOT_BRAIN`)
 	// 默认使用 memory
 	if brainName == "" {
-		logrus.Warn("未指定 brain，默认使用 memory")
+		log.Warn("未指定 brain，默认使用 memory")
 		brainName = "memory"
 	}
 

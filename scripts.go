@@ -2,7 +2,6 @@ package rboot
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -31,7 +30,7 @@ func RegisterScripts(name string, script Script) {
 		panic("RegisterScripts: the script must have a name")
 	}
 	if _, ok := scripts[name]; ok {
-		logrus.Warnf("RegisterScripts: script named %s already registered, old script will be replaced", name)
+		log.Warnf("RegisterScripts: script named %s already registered, old script will be replaced", name)
 	}
 
 	scripts[name] = script

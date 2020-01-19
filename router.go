@@ -1,12 +1,13 @@
 package rboot
 
 import (
+	"net"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 )
 
 type route struct {
@@ -27,7 +28,7 @@ type route struct {
 // Name 为命名路由
 func (r *route) Name(name string) *route {
 	if r.name != "" {
-		logrus.Errorf("route already has name %q, can't set %q", r.name, name)
+		log.Errorf("route already has name %q, can't set %q", r.name, name)
 	} else {
 		r.name = name
 	}
@@ -82,7 +83,8 @@ func (r *Router) Handle(path string, handler http.Handler) *route {
 
 func (r *Router) run() {
 	// 注册路由
-	r.mux.HandleFunc("/", rbootHome)
+	r.mux.HandleFunc("/", webHome)
+	r.mux.HandleFunc("/ipv4", remoteIPV4)
 
 	for _, ro := range r.routes {
 		var routeMux *mux.Route
@@ -112,12 +114,14 @@ func (r *Router) run() {
 	r.mux.StrictSlash(true)
 
 	// 获取 web 端口
-	addr := os.Getenv("WEB_SERVER_ADDR")
-	if addr == "" {
-		addr = ":7856"
+	port := os.Getenv("WEB_SERVER_PORT")
+	if port == "" {
+		port = "7856"
 	}
 
-	logrus.Infof("web 服务开启，地址 %s", addr)
+	var addr = ":" + port
+
+	log.Infof("web 服务开启，地址 %s", addr)
 
 	isTls, _ := strconv.ParseBool(os.Getenv("WEB_SERVER_TLS"))
 	if isTls {
@@ -133,7 +137,25 @@ func (r *Router) run() {
 	}
 }
 
-func rbootHome(w http.ResponseWriter, r *http.Request) {
+func remoteIPV4(w http.ResponseWriter, r *http.Request) {
+	var remoteAddr string
+	xForwardedFor := r.Header.Get("X-Forwarded-For")
+	if ip := strings.TrimSpace(strings.Split(xForwardedFor, ",")[0]); ip != "" {
+		remoteAddr = ip
+	}
+
+	if ip := strings.TrimSpace(r.Header.Get("X-Real-Ip")); ip != "" {
+		remoteAddr = ip
+	}
+
+	if ip, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr)); err == nil {
+		remoteAddr = ip
+	}
+
+	w.Write([]byte(remoteAddr))
+}
+
+func webHome(w http.ResponseWriter, r *http.Request) {
 
 	var out = `<div style="color: green;width: 100%;text-align: center;margin-top: 10%;font-size: 18px;"><pre style="word-wrap: break-word; white-space: pre-wrap;">` + rbootLogo + `</pre></div>`
 	w.Write([]byte(out))
