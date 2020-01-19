@@ -40,6 +40,7 @@ type Robot struct {
 	ID         string
 	Router     *Router
 	Brain      Brain
+	Bucket     *Bucket
 	adapter    Adapter
 	rule       Rule
 	inputChan  chan *Message
@@ -60,7 +61,8 @@ func New() *Robot {
 
 	//bot.ID, _ = sonyflake.BitLenMachineID
 
-	bot.Router = newRouter()
+	bot.Router = NewRouter()
+	bot.Bucket = NewBucket()
 
 	return bot
 }

@@ -52,7 +52,7 @@ type Router struct {
 }
 
 // newRouter 创建一个路由实例
-func newRouter() *Router {
+func NewRouter() *Router {
 	return &Router{
 		mux:         mux.NewRouter(),
 		routes:      make([]*route, 0),
