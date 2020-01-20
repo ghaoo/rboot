@@ -1,6 +1,8 @@
 package rboot
 
-import "sync"
+import (
+	"sync"
+)
 
 // Node 为记录多机部署时的每个节点的信息
 type Node struct {

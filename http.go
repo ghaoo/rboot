@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -26,6 +27,7 @@ func signature(datetime, secret, content string) string {
 	return base64.StdEncoding.EncodeToString(data)
 }
 
+// listenIncoming 用于传入消息，为保证消息的安全性，消息应该进行签名加密
 func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	sign := r.Header.Get("sign")
 	datetime := r.Header.Get("datetime")
@@ -58,9 +60,15 @@ func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//botId :=
+	dc := json.NewDecoder(r.Body)
+
+	var msg *Message
+
+	if err = dc.Decode(&msg); err != nil {
+		w.WriteHeader(403)
+		w.Write([]byte("bad request!"))
+		return
+	}
+
+	bot.inputChan <- msg
 }
-
-/*func (bot *Robot) listenOutgoing(w http.ResponseWriter, r *http.Request) {
-
-}*/
