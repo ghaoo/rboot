@@ -28,7 +28,7 @@ const (
 ===================================================================
 `
 
-	version = "1.1.0"
+	version = "1.1.3"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -37,7 +37,6 @@ var log = logrus.WithFields(logrus.Fields{
 
 // Robot 是 rboot 的一个实例，它包含了聊天转接器，规则处理器，缓存器，路由适配器和消息的进出通道
 type Robot struct {
-	ID         string
 	Router     *Router
 	Brain      Brain
 	adapter    Adapter
@@ -57,8 +56,6 @@ func New() *Robot {
 		signalChan: make(chan os.Signal),
 		rule:       new(Regex),
 	}
-
-	//bot.ID, _ = sonyflake.BitLenMachineID
 
 	bot.Router = newRouter()
 
@@ -223,8 +220,8 @@ func (bot *Robot) SetBrain(brain Brain) {
 // 当消息不匹配时，matched 返回false
 func (bot *Robot) matchScript(msg string) (script, matchRule string, matchArgs []string, matched bool) {
 
-	for script, rule := range ruleset {
-		for m, r := range rule {
+	for script, rules := range ruleset {
+		for m, r := range rules {
 			if match, ok := bot.rule.Match(r, msg); ok {
 				return script, m, match, true
 			}
