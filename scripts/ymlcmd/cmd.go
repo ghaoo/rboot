@@ -35,7 +35,6 @@ func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
 
 	cmd := command[rule]
 
-	fmt.Println(cmd)
 	for _, cs := range cmd.Command {
 		for _, c := range cs.Cmd {
 			out, err := runCommand(cs.Dir, "/bin/sh", "-c", c)
