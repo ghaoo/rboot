@@ -68,7 +68,7 @@ func registerCommand() error {
 
 	var ruleset = make(map[string]string)
 	var usage = ""
-	var desc = "命令执行脚本"
+	var desc = "YML配置命令执行脚本"
 	for _, cmd := range cmds {
 		command[cmd.Name] = cmd
 
