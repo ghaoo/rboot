@@ -1,0 +1,15 @@
+name: composer
+
+version: 0.1.0
+
+rule: "^(?:安装composer|install composer)"
+
+usage: "`安装composer`: 将composer安装到系统中"
+
+command:
+    -
+        dir:
+        cmd:
+            - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+            - php composer-setup.php --install-dir=/usr/local/bin/composer
+            - php -r "unlink('composer-setup.php');"

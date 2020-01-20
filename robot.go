@@ -31,9 +31,7 @@ const (
 	version = "1.1.3"
 )
 
-var log = logrus.WithFields(logrus.Fields{
-	"mod": "rboot",
-})
+var log = logrus.WithFields(logrus.Fields{"mod": "rboot"})
 
 // Robot 是 rboot 的一个实例，它包含了聊天转接器，规则处理器，缓存器，路由适配器和消息的进出通道
 type Robot struct {

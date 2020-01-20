@@ -1,4 +1,4 @@
-package command
+package ymlcmd
 
 import (
 	"fmt"
@@ -16,11 +16,16 @@ const defaultCmdDir = "command"
 var command = make(map[string]Cmd)
 
 type Cmd struct {
-	Name    string   `yaml:"name"`
-	Rule    string   `yaml:"rule"`
-	Usage   string   `yaml:"usage"`
-	Version string   `yaml:"version"`
-	Cmd     []string `yaml:"cmd"`
+	Name    string    `yaml:"name"`
+	Rule    string    `yaml:"rule"`
+	Usage   string    `yaml:"usage"`
+	Version string    `yaml:"version"`
+	Command []Command `yaml:"command"`
+}
+
+type Command struct {
+	Dir string
+	Cmd []string
 }
 
 func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
@@ -28,13 +33,17 @@ func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
 
 	cmd := command[rule]
 
-	for _, c := range cmd.Cmd {
-		out, err := runCommand("/bin/sh", "-c", c)
-		if err != nil {
-			return rboot.NewMessages(err.Error())
+	fmt.Println(cmd)
+	for _, cs := range cmd.Command {
+		for _, c := range cs.Cmd {
+			out, err := runCommand(cs.Dir, "/bin/sh", "-c", c)
+			if err != nil {
+				return rboot.NewMessages(err.Error())
+			}
+
+			bot.Outgoing(rboot.NewMessage(out, in.From))
 		}
 
-		bot.Outgoing(rboot.NewMessage(out, in.From))
 	}
 
 	return nil
@@ -123,10 +132,12 @@ func load(file string) ([]byte, error) {
 	return ioutil.ReadAll(fi)
 }
 
-func runCommand(command string, args ...string) (string, error) {
+func runCommand(dir, command string, args ...string) (string, error) {
 
 	cmd := exec.Command(command, args...)
-
+	if dir != "" {
+		cmd.Dir = dir
+	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("error running command: %v: %q", err, string(output))
@@ -136,7 +147,10 @@ func runCommand(command string, args ...string) (string, error) {
 }
 
 func init() {
-	registerCommand()
+	err := registerCommand()
+	if err != nil {
+		log.Println("register yml cmd err: ", err)
+	}
 	rboot.RegisterScripts("refreshCmd", rboot.Script{
 		Action: func(bot *rboot.Robot, incoming *rboot.Message) []*rboot.Message {
 			err := registerCommand()

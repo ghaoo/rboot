@@ -12,7 +12,7 @@ var (
 
 // Script 脚本结构体
 type Script struct {
-	Action      SetupFunc         // 执行解析或一些必要加载
+	Action      ScriptFunc        // 执行解析或一些必要加载
 	Ruleset     map[string]string // 脚本规则集合
 	Usage       string            // 帮助信息
 	Description string            // 简介
@@ -21,7 +21,7 @@ type Script struct {
 // SetupFunc 脚本执行或解析函数
 // - bot: A Robot instance
 // - incoming: The incoming message
-type SetupFunc func(bot *Robot, incoming *Message) []*Message
+type ScriptFunc func(bot *Robot, incoming *Message) []*Message
 
 // RegisterScripts 注册脚本
 func RegisterScripts(name string, script Script) {
@@ -42,7 +42,7 @@ func RegisterScripts(name string, script Script) {
 }
 
 // DirectiveScript 根据脚本名称获取脚本执行函数
-func DirectiveScript(name string) (SetupFunc, error) {
+func DirectiveScript(name string) (ScriptFunc, error) {
 
 	if script, ok := scripts[name]; ok {
 		return script.Action, nil

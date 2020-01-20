@@ -73,6 +73,10 @@ func (m *Message) SetCc(to ...string) {
 func (m *Message) Cc() []string {
 	cc := m.Header.Get("Cc")
 
+	if len(strings.TrimSpace(cc)) == 0 {
+		return nil
+	}
+
 	return strings.Split(cc, ",")
 }
 

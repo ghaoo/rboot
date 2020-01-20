@@ -1,4 +1,4 @@
-package command
+package ymlcmd
 
 import (
 	"testing"
