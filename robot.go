@@ -28,7 +28,7 @@ const (
 ===================================================================
 `
 
-	version = "1.1.3"
+	version = "1.2.0"
 )
 
 var log = logrus.WithFields(logrus.Fields{"mod": "rboot"})
@@ -243,7 +243,6 @@ func (bot *Robot) initialize() {
 	}
 	log.Info("已连接 ", adpName)
 	adp, err := DetectAdapter(adpName)
-
 	if err != nil {
 		panic(`Detect adapter error: ` + err.Error())
 	}
@@ -270,6 +269,9 @@ func (bot *Robot) initialize() {
 	}
 
 	bot.Brain = brain()
+
+	// 监听 http 入站消息
+	bot.Router.HandleFunc("/incoming", bot.listenIncoming).Methods("POST")
 }
 
 func init() {

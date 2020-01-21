@@ -1,13 +1,12 @@
 name: hi
 version: 0.1.0
 rule: "^hi"
-usage: "say hi echo hello world"
+usage:
+    hi: echo hello world and 你好
 command:
     -
-        dir:
         cmd:
             - echo hello world
     -
-        dir: bbb
         cmd:
-            - echo "你好"
+            - echo 你好

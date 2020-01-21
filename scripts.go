@@ -2,7 +2,6 @@ package rboot
 
 import (
 	"fmt"
-	"strings"
 )
 
 var (
@@ -14,7 +13,7 @@ var (
 type Script struct {
 	Action      ScriptFunc        // 执行解析或一些必要加载
 	Ruleset     map[string]string // 脚本规则集合
-	Usage       string            // 帮助信息
+	Usage       map[string]string // 帮助信息
 	Description string            // 简介
 }
 
@@ -61,39 +60,21 @@ func helpSetup(bot *Robot, in *Message) (msg []*Message) {
 		if len(args) < 2 || args[1] == "" {
 			msg = append(msg, NewMessage(script()))
 		} else {
-			if script, ok := scripts[args[1]]; ok {
-				msg = append(msg, NewMessage(script.Usage))
-			} else {
-				msg = append(msg, NewMessage("> help命令用法：!help <script> \n\n> !scripts 可查看所有加载的脚本信息"))
-			}
-		}
-	case `ruleset`:
-		if len(args) < 2 || args[1] == "" {
-			content := ""
-			for scr, spt := range scripts {
-				content += fmt.Sprintf("**%s**:\n", scr)
-				for ruleset := range spt.Ruleset {
-					content += fmt.Sprintf("- %s\n", ruleset)
+			if scr, ok := scripts[args[1]]; ok {
+				msgtype := in.Header.Get("msgtype")
+				usage := ""
+				for _rule, _explain := range scr.Usage {
+					if msgtype == "markdown" {
+						usage += fmt.Sprintf("> `%s` - %s \n", _rule, _explain)
+					} else {
+						usage += fmt.Sprintf("- %s - %s \n", _rule, _explain)
+					}
 				}
 
-				content += "\n"
+				msg = append(msg, NewMessage(usage))
+			} else {
+				msg = append(msg, NewMessage("未找到脚本 "+args[1]+" \n"))
 			}
-
-			content = strings.TrimSpace(content)
-
-			msg = append(msg, NewMessage(content))
-
-		} else {
-
-			scr := args[1]
-			spt := scripts[scr]
-			content := fmt.Sprintf("**%s**:\n", scr)
-
-			for ruleset := range spt.Ruleset {
-				content += fmt.Sprintf("- %s\n", ruleset)
-			}
-
-			msg = append(msg, NewMessage(content))
 		}
 	}
 
@@ -105,27 +86,25 @@ func script() string {
 	content := ""
 
 	for scr, spt := range scripts {
-		content += fmt.Sprintf(" **%s**: %s\n **Usage**:\n%s", scr, spt.Description, spt.Usage)
-		content += "\n\n"
+		content += fmt.Sprintf("- %s - %s\n", scr, spt.Description)
 	}
-
-	// 去除末尾空白字符
-	content = strings.TrimSpace(content)
 
 	return content
 }
 
 // 帮助脚本规则集
 var helpRules = map[string]string{
-	`help`:    `^!help(?: *)(\S*)`,
-	`ruleset`: `^!ruleset(?: *)(\S*)`,
+	`help`: `^!help(?: *)(\S*)`,
 }
 
 func init() {
 	RegisterScripts(`help`, Script{
-		Action:      helpSetup,
-		Ruleset:     helpRules,
-		Usage:       "> `!help <script>`: 查看脚本帮助信息 \n\n> `!ruleset <script>`: 查看已经注册的脚本规则集",
-		Description: `查看脚本帮助信息`,
+		Action:  helpSetup,
+		Ruleset: helpRules,
+		Usage: map[string]string{
+			"!help":          "查看所有脚本简介",
+			"!help <script>": "查看script脚本的帮助信息",
+		},
+		Description: `显示已经注册的所有脚本简介或帮助信息`,
 	})
 }

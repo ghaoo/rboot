@@ -35,7 +35,9 @@ func init() {
 		Ruleset: map[string]string{
 			`ping`: `^!(?:ping|PING)`,
 		},
-		Usage:       "> `!ping`: 随机返回一句话 ",
+		Usage: map[string]string{
+			"!ping": "随机返回一句回答",
+		},
 		Description: `测试脚本`,
 	})
 }

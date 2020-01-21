@@ -77,10 +77,6 @@ func newCli(bot *Robot) Adapter {
 	return c
 }
 
-func (c *cli) Name() string {
-	return `cli`
-}
-
 func (c *cli) Incoming() chan *Message {
 	return c.in
 }
@@ -92,10 +88,14 @@ func (c *cli) Outgoing() chan *Message {
 // Run executes the adapter run loop
 func (c *cli) run() {
 
+	name := os.Getenv(`ROBOT_ALIAS`)
+	if name == `` {
+		name = os.Getenv(`ROBOT_NAME`)
+	}
+
 	go func() {
 		scanner := bufio.NewScanner(stdin)
 		for scanner.Scan() {
-
 			msg := NewMessage(scanner.Text())
 
 			c.in <- msg
@@ -104,7 +104,7 @@ func (c *cli) run() {
 			for {
 				select {
 				case msg := <-c.out:
-					_ = c.writeString(msg.String())
+					c.writeString(msg.String())
 				default:
 					break forLoop
 				}
@@ -114,19 +114,14 @@ func (c *cli) run() {
 
 	go func() {
 		for msg := range c.out {
-			_ = c.writeString(msg.String())
+			c.writeString(msg.String())
 		}
 	}()
 }
 
 func (c *cli) writeString(str string) error {
 
-	name := os.Getenv(`ROBOT_ALIAS`)
-	if name == `` {
-		name = os.Getenv(`ROBOT_NAME`)
-	}
-
-	msg := fmt.Sprintf("%s> %s\n", name, strings.TrimSpace(str))
+	msg := fmt.Sprintf("%s\n", strings.TrimSpace(str))
 
 	if _, err := c.writer.WriteString(msg); err != nil {
 		return err

@@ -1,5 +1,3 @@
-// +build darwin dragonfly freebsd linux netbsd openbsd
-
 package ymlcmd
 
 import (
@@ -18,11 +16,11 @@ const defaultCmdDir = "command"
 var command = make(map[string]Cmd)
 
 type Cmd struct {
-	Name    string    `yaml:"name"`
-	Rule    string    `yaml:"rule"`
-	Usage   string    `yaml:"usage"`
-	Version string    `yaml:"version"`
-	Command []Command `yaml:"command"`
+	Name    string            `yaml:"name"`
+	Rule    string            `yaml:"rule"`
+	Usage   map[string]string `yaml:"usage"`
+	Version string            `yaml:"version"`
+	Command []Command         `yaml:"command"`
 }
 
 type Command struct {
@@ -30,28 +28,8 @@ type Command struct {
 	Cmd []string
 }
 
-func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
-	rule := in.Header.Get("rule")
-
-	cmd := command[rule]
-
-	for _, cs := range cmd.Command {
-		for _, c := range cs.Cmd {
-			out, err := runCommand(cs.Dir, "/bin/sh", "-c", c)
-			if err != nil {
-				return rboot.NewMessages(err.Error())
-			}
-
-			bot.Outgoing(rboot.NewMessage(out, in.From))
-		}
-
-	}
-
-	return nil
-}
-
 func registerCommand() error {
-	cmdDir := os.Getenv("COMMAND_DIR")
+	cmdDir := os.Getenv("YML_COMMAND_DIR")
 
 	if cmdDir == "" {
 		cmdDir = defaultCmdDir
@@ -67,13 +45,14 @@ func registerCommand() error {
 	}
 
 	var ruleset = make(map[string]string)
-	var usage = ""
-	var desc = "YML配置命令执行脚本"
+	var usage = make(map[string]string)
+	var desc = "YML命令执行脚本"
 	for _, cmd := range cmds {
 		command[cmd.Name] = cmd
-
 		ruleset[cmd.Name] = cmd.Rule
-		usage += "\n> " + cmd.Usage + "\n\n"
+		for _rule, _explain := range cmd.Usage {
+			usage[_rule] = _explain
+		}
 	}
 
 	if len(ruleset) > 0 {
@@ -152,7 +131,7 @@ func init() {
 	if err != nil {
 		log.Println("register yml cmd err: ", err)
 	}
-	rboot.RegisterScripts("refreshCmd", rboot.Script{
+	rboot.RegisterScripts("refresh_yml", rboot.Script{
 		Action: func(bot *rboot.Robot, incoming *rboot.Message) []*rboot.Message {
 			err := registerCommand()
 			if err != nil {
@@ -163,9 +142,11 @@ func init() {
 			return rboot.NewMessages("更新成功！", incoming.From)
 		},
 		Ruleset: map[string]string{
-			"refresh": `^!refresh command`,
+			"refresh": `^!refresh yml`,
 		},
-		Usage:       "`!refresh command`: 重新加载外部command",
+		Usage: map[string]string{
+			"!refresh yml": "重新加载YML文件",
+		},
 		Description: "当command有变化时可运行次命令更新",
 	})
 }
