@@ -114,7 +114,9 @@ func process(bot *Robot) {
 
 						if msg.KeepHeader {
 							for hn, hv := range msg.Header {
-								resp.Header[hn] = hv
+								if len(resp.Header[hn]) <= 0 {
+									resp.Header[hn] = hv
+								}
 							}
 						}
 
