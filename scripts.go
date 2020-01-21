@@ -54,14 +54,24 @@ func DirectiveScript(name string) (ScriptFunc, error) {
 func helpSetup(bot *Robot, in *Message) (msg []*Message) {
 	rule := in.Header.Get("rule")
 	args := in.Header["args"]
+	msgtype := in.Header.Get("msgtype")
 
 	switch rule {
 	case `help`:
 		if len(args) < 2 || args[1] == "" {
-			msg = append(msg, NewMessage(script()))
+			// 获取所有脚本信息
+			content := ""
+
+			for scr, spt := range scripts {
+				if msgtype == "markdown" {
+					content += fmt.Sprintf("> `%s` - %s\n", scr, spt.Description)
+				} else {
+					content += fmt.Sprintf("- %s - %s\n", scr, spt.Description)
+				}
+			}
+			msg = append(msg, NewMessage(content))
 		} else {
 			if scr, ok := scripts[args[1]]; ok {
-				msgtype := in.Header.Get("msgtype")
 				usage := ""
 				for _rule, _explain := range scr.Usage {
 					if msgtype == "markdown" {
@@ -79,17 +89,6 @@ func helpSetup(bot *Robot, in *Message) (msg []*Message) {
 	}
 
 	return msg
-}
-
-func script() string {
-	// 获取所有脚本信息
-	content := ""
-
-	for scr, spt := range scripts {
-		content += fmt.Sprintf("- %s - %s\n", scr, spt.Description)
-	}
-
-	return content
 }
 
 // 帮助脚本规则集
