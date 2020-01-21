@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 const defaultCmdDir = "command"
@@ -28,28 +27,6 @@ type Cmd struct {
 type Command struct {
 	Dir string
 	Cmd []string
-}
-
-func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
-	rule := in.Header.Get("rule")
-
-	cmd := command[rule]
-
-	for _, cs := range cmd.Command {
-		for _, c := range cs.Cmd {
-			args := strings.Split(c, " ")
-
-			out, err := runCommand(cs.Dir, args[0], args[1:]...)
-			if err != nil {
-				return rboot.NewMessages(err.Error())
-			}
-
-			bot.Outgoing(rboot.NewMessage(out, in.From))
-		}
-
-	}
-
-	return nil
 }
 
 func registerCommand() error {
@@ -72,9 +49,13 @@ func registerCommand() error {
 	var usage = make(map[string]string)
 	var desc = "YML命令执行脚本"
 	for _, cmd := range cmds {
+		if len(cmd.Command) <= 0 {
+			log.Printf("yml脚本 %s 命令为空，跳过注册", cmd.Name)
+			continue
+		}
 		command[cmd.Name] = cmd
 		ruleset[cmd.Name] = cmd.Rule
-		fmt.Println(cmd.Rule)
+
 		for _rule, _explain := range cmd.Usage {
 			usage[_rule] = _explain
 		}
@@ -144,13 +125,11 @@ func runCommand(dir, command string, args ...string) (string, error) {
 		cmd.Dir = dir
 	}
 
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		logrus.Error(err, "\n", string(output))
 		return "", fmt.Errorf("error running command: %v: %q", err, string(output))
 	}
-
-	fmt.Println(string(output))
 
 	return string(output), nil
 }
