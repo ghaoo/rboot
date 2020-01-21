@@ -4,9 +4,11 @@ package rboot
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 const defaultPluginDir = "plugins"
@@ -71,7 +73,7 @@ func loadPlugins(dir string) ([]plugin, error) {
 
 	for _, file := range files {
 		// 获取配置内容
-		conf, err := readConf(file)
+		conf, err := readScript(file)
 		if err != nil {
 			log.Errorf("plugin %s exec failure，err: %v", file, err)
 			continue
@@ -89,12 +91,24 @@ func loadPlugins(dir string) ([]plugin, error) {
 	return plugins, nil
 }
 
-// readConf 读取配置文件内容
-func readConf(file string) ([]byte, error) {
+// readScript 读取脚本
+func readScript(file string) ([]byte, error) {
 	_, err := os.Stat(file)
 
 	if os.IsNotExist(err) {
 		return nil, err
+	}
+
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+
+	rd := bufio.NewReader(f)
+
+	line, err := rd.ReadString('\n')
+	if strings.HasPrefix("#!") {
+		return nil, fmt.Errorf("%s not script file", file)
 	}
 
 	// 每个脚本文件需要有一个 init 命令解析函数，用来将脚本信息注册到rboot
