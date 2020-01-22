@@ -82,7 +82,7 @@ func allPlug(dir string) ([]plugin, error) {
 		var plug = plugin{}
 		err = yaml.Unmarshal(data, &plug)
 		if err != nil {
-			log.Println(err)
+			log.WithField("file", file).Errorln(err)
 			continue
 		}
 
