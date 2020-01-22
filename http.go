@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -50,29 +49,23 @@ func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	sign := r.Header.Get("sign")
 	datetime := r.Header.Get("datetime")
 
-	content, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("the message read failed, errmsg: " + err.Error()))
-		return
-	}
 	defer r.Body.Close()
-
-	secret := os.Getenv("ROBOT_INCOMING_SECRET")
-
-	if err = bot.VerifySign(sign, secret, string(content), datetime); err != nil {
-		w.WriteHeader(403)
-		w.Write([]byte(err.Error()))
-		return
-	}
 
 	dc := json.NewDecoder(r.Body)
 
 	var msg *Message
 
-	if err = dc.Decode(&msg); err != nil {
+	if err := dc.Decode(&msg); err != nil {
 		w.WriteHeader(403)
 		w.Write([]byte("bad request!"))
+		return
+	}
+
+	secret := os.Getenv("ROBOT_INCOMING_SECRET")
+
+	if err := bot.VerifySign(sign, secret, msg.String(), datetime); err != nil {
+		w.WriteHeader(403)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
