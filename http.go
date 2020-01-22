@@ -65,13 +65,11 @@ func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var msg *Message
+	var msg = NewMessage(string(content), r.Header.Get("to"))
 
-	msg.To = r.Header.Get("to")
 	msg.From = r.Header.Get("from")
 	msg.Sender = r.Header.Get("sender")
 	msg.Header = Header(r.Header)
-	msg.Body = r.Body
 
 	bot.inputChan <- msg
 }
