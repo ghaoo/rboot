@@ -8,4 +8,5 @@
 .idea
 .logs
 *.log
-example
+
+test

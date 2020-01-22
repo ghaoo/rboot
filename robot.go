@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	// rbootLogo rboot logo
 	rbootLogo = `
 ===================================================================
 *   ________  ____  ____  ____  ______   ________  ____  ______   *
@@ -31,7 +30,7 @@ const (
 	version = "1.2.0"
 )
 
-var log = logrus.WithFields(logrus.Fields{"mod": "rboot"})
+var log = logrus.WithField("mod", "rboot")
 
 // Robot 是 rboot 的一个实例，它包含了聊天转接器，规则处理器，缓存器，路由适配器和消息的进出通道
 type Robot struct {
@@ -39,6 +38,7 @@ type Robot struct {
 	Brain      Brain
 	adapter    Adapter
 	rule       Rule
+	plugins    map[string]plugin
 	inputChan  chan *Message
 	outputChan chan *Message
 
@@ -49,6 +49,7 @@ type Robot struct {
 // New 获取一个Robot实例，
 func New() *Robot {
 	bot := &Robot{
+		plugins:    make(map[string]plugin),
 		inputChan:  make(chan *Message),
 		outputChan: make(chan *Message),
 		signalChan: make(chan os.Signal),
@@ -271,6 +272,12 @@ func (bot *Robot) initialize() {
 	}
 
 	bot.Brain = brain()
+
+	// 注册插件
+	err = bot.registerPlugin()
+	if err != nil {
+		log.Println("register plugin err: ", err)
+	}
 
 	// 监听 http 入站消息
 	bot.Router.HandleFunc("/incoming", bot.listenIncoming).Methods("POST")

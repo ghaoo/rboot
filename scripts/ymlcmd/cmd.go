@@ -2,14 +2,15 @@ package ymlcmd
 
 import (
 	"fmt"
-	"github.com/ghaoo/rboot"
-	"github.com/go-yaml/yaml"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/ghaoo/rboot"
+	"github.com/go-yaml/yaml"
+	"github.com/sirupsen/logrus"
 )
 
 const defaultCmdDir = "command"

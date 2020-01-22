@@ -1,122 +1,154 @@
-// +build darwin dragonfly freebsd linux netbsd openbsd
-
 package rboot
 
 import (
-	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
+
+	"github.com/go-yaml/yaml"
+	"github.com/sirupsen/logrus"
 )
 
-const defaultPluginDir = "plugins"
+const defaultPlugDir = "plugins"
 
-// plugin 支持脚本语言执行的脚本插件
 type plugin struct {
-	Name string
-	Script
+	Name    string            `yaml:"name"`
+	Rule    string            `yaml:"rule"`
+	Usage   map[string]string `yaml:"usage"`
+	Version string            `yaml:"version"`
+	Command []command         `yaml:"command"`
 }
 
-func (plug plugin) runScript(bot *Robot, in *Message) []*Message {
-	rule := in.Header.Get("rule")
-	cmd := exec.Command(rule, plug.Ruleset[rule])
-
-	out, err := cmd.Output()
-	if err != nil {
-		return NewMessages(err.Error(), in.From)
-	}
-
-	return NewMessages(string(out), in.From)
+type command struct {
+	Dir string   `yaml:"dir"`
+	Cmd []string `yaml:"cmd"`
 }
 
-// 注册插件
-func registerPlugin() {
-	dir := os.Getenv("PLUGIN_DIR")
+func (bot *Robot) registerPlugin() error {
+	plugDir := os.Getenv("PLUGIN_DIR")
 
-	if dir == "" {
-		dir = defaultPluginDir
+	if plugDir == "" {
+		plugDir = defaultPlugDir
 	}
 
-	plugs, err := loadPlugins(dir)
+	plugs, err := allPlug(plugDir)
 	if err != nil {
-		log.Error(err)
-		return
+		return err
 	}
 
 	if len(plugs) <= 0 {
-		log.Warn("no plug-in found")
-		return
+		return fmt.Errorf("no plug-in found")
 	}
 
+	var _ruleset = make(map[string]string)
+	var _usage = make(map[string]string)
+	var _desc = "脚本插件"
 	for _, plug := range plugs {
-		if len(plug.Ruleset) > 0 {
-			RegisterScripts(plug.Name, Script{
-				Action:      plug.runScript,
-				Ruleset:     plug.Ruleset,
-				Usage:       plug.Usage,
-				Description: plug.Description,
-			})
+		if len(plug.Command) <= 0 {
+			log.Warnf("插件脚本 %s 命令集为空，跳过注册", plug.Name)
+			continue
+		}
+		bot.plugins[plug.Name] = plug
+		_ruleset[plug.Name] = plug.Rule
+
+		for _rule, _explain := range plug.Usage {
+			_usage[_rule] = _explain
 		}
 	}
+
+	if len(_ruleset) > 0 {
+		RegisterScripts("plug", Script{
+			Action:      setupPlugin,
+			Ruleset:     _ruleset,
+			Usage:       _usage,
+			Description: _desc,
+		})
+	}
+
+	return nil
 }
 
-// loadPlugins 加载所有Plugin
-func loadPlugins(dir string) ([]plugin, error) {
-	files, err := filepath.Glob(filepath.Join(dir, "*"))
+func allPlug(dir string) ([]plugin, error) {
+
+	cmdFiles, err := filepath.Glob(filepath.Join(dir, "*.yml"))
 	if err != nil {
 		return nil, err
 	}
 
-	var plugins = make([]plugin, 0)
+	var plugs = make([]plugin, 0)
 
-	for _, file := range files {
-		// 获取配置内容
-		conf, err := readScript(file)
+	for _, file := range cmdFiles {
+		data, err := loadPlugin(file)
 		if err != nil {
-			log.Errorf("plugin %s exec failure，err: %v", file, err)
+			log.Errorln(err)
 			continue
 		}
 
-		var p plugin
-		if err = json.Unmarshal(conf, &p); err != nil {
-			log.Errorf("plugin %s register failed, err: %v", file, err)
+		var plug = plugin{}
+		err = yaml.Unmarshal(data, &plug)
+		if err != nil {
+			log.Println(err)
 			continue
 		}
 
-		plugins = append(plugins, p)
+		plugs = append(plugs, plug)
 	}
 
-	return plugins, nil
+	return plugs, nil
 }
 
-// readScript 读取脚本
-func readScript(file string) ([]byte, error) {
+func loadPlugin(file string) ([]byte, error) {
 	_, err := os.Stat(file)
 
 	if os.IsNotExist(err) {
 		return nil, err
 	}
 
-	f, err := os.Open(file)
+	fi, err := os.Open(file)
 	if err != nil {
 		return nil, err
 	}
+	defer fi.Close()
 
-	rd := bufio.NewReader(f)
+	return ioutil.ReadAll(fi)
+}
 
-	line, err := rd.ReadString('\n')
-	if strings.HasPrefix("#!") {
-		return nil, fmt.Errorf("%s not script file", file)
+func runCommand(dir, command string, args ...string) (string, error) {
+
+	cmd := exec.Command(command, args...)
+	if dir != "" {
+		cmd.Dir = dir
 	}
 
-	// 每个脚本文件需要有一个 init 命令解析函数，用来将脚本信息注册到rboot
-	cmd := exec.Command(file, "init")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		logrus.Error(err, "\n", string(output))
+		return "", fmt.Errorf("run plugin error: %v: %q", err, string(output))
+	}
 
-	return cmd.Output()
+	return string(output), nil
 }
 
 func init() {
-	registerPlugin()
+
+	RegisterScripts("refresh_plugin", Script{
+		Action: func(bot *Robot, incoming *Message) []*Message {
+			err := bot.registerPlugin()
+			if err != nil {
+				log.Println(err)
+				return NewMessages(err.Error(), incoming.From)
+			}
+
+			return NewMessages("更新成功！", incoming.From)
+		},
+		Ruleset: map[string]string{
+			"refresh": `^!refresh yml`,
+		},
+		Usage: map[string]string{
+			"!refresh plugin": "重新加载YML配置文件",
+		},
+		Description: "当插件有变化时可运行此命令更新",
+	})
 }
