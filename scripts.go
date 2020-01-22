@@ -29,7 +29,7 @@ func RegisterScripts(name string, script Script) {
 		panic("RegisterScripts: the script must have a name")
 	}
 	if _, ok := scripts[name]; ok {
-		log.Warnf("RegisterScripts: script named %s already registered, old script will be replaced", name)
+		log.Warnf("script named %s already registered, old script will be replaced", name)
 	}
 
 	scripts[name] = script
@@ -64,11 +64,18 @@ func helpSetup(bot *Robot, in *Message) (msg []*Message) {
 
 			for scr, spt := range scripts {
 				if msgtype == "markdown" {
-					content += fmt.Sprintf("> `%s` - %s\n", scr, spt.Description)
+					content += fmt.Sprintf("**%s** - %s\n", scr, spt.Description)
+					for _rule, _explain := range spt.Usage {
+						content += fmt.Sprintf("- `%s` - %s\n\n", _rule, _explain)
+					}
+
 				} else {
 					content += fmt.Sprintf("- %s - %s\n", scr, spt.Description)
 				}
 			}
+
+			// 获取插件信息
+
 			msg = append(msg, NewMessage(content))
 		} else {
 			if scr, ok := scripts[args[1]]; ok {

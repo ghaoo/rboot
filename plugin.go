@@ -14,11 +14,12 @@ import (
 const defaultPlugDir = "plugins"
 
 type plugin struct {
-	Name    string            `yaml:"name"`
-	Rule    string            `yaml:"rule"`
-	Usage   map[string]string `yaml:"usage"`
-	Version string            `yaml:"version"`
-	Command []command         `yaml:"command"`
+	Name        string            `yaml:"name"`
+	Ruleset     map[string]string `yaml:"ruleset"`
+	Usage       map[string]string `yaml:"usage"`
+	Description string            `yaml:"description"`
+	Version     string            `yaml:"version"`
+	Command     []command         `yaml:"command"`
 }
 
 type command struct {
@@ -42,29 +43,21 @@ func (bot *Robot) registerPlugin() error {
 		return fmt.Errorf("no plug-in found")
 	}
 
-	var _ruleset = make(map[string]string)
-	var _usage = make(map[string]string)
-	var _desc = "脚本插件"
 	for _, plug := range plugs {
 		if len(plug.Command) <= 0 {
 			log.Warnf("插件脚本 %s 命令集为空，跳过注册", plug.Name)
 			continue
 		}
-		bot.plugins[plug.Name] = plug
-		_ruleset[plug.Name] = plug.Rule
 
-		for _rule, _explain := range plug.Usage {
-			_usage[_rule] = _explain
-		}
-	}
-
-	if len(_ruleset) > 0 {
-		RegisterScripts("plug", Script{
+		// 注册插件到脚本
+		RegisterScripts(plug.Name, Script{
 			Action:      setupPlugin,
-			Ruleset:     _ruleset,
-			Usage:       _usage,
-			Description: _desc,
+			Ruleset:     plug.Ruleset,
+			Usage:       plug.Usage,
+			Description: plug.Description,
 		})
+
+		bot.plugins[plug.Name] = plug
 	}
 
 	return nil
@@ -72,14 +65,14 @@ func (bot *Robot) registerPlugin() error {
 
 func allPlug(dir string) ([]plugin, error) {
 
-	cmdFiles, err := filepath.Glob(filepath.Join(dir, "*.yml"))
+	plugFiles, err := filepath.Glob(filepath.Join(dir, "*.yml"))
 	if err != nil {
 		return nil, err
 	}
 
 	var plugs = make([]plugin, 0)
 
-	for _, file := range cmdFiles {
+	for _, file := range plugFiles {
 		data, err := loadPlugin(file)
 		if err != nil {
 			log.Errorln(err)
@@ -144,11 +137,11 @@ func init() {
 			return NewMessages("更新成功！", incoming.From)
 		},
 		Ruleset: map[string]string{
-			"refresh": `^!refresh yml`,
+			"refresh": `^!refresh plugin`,
 		},
 		Usage: map[string]string{
-			"!refresh plugin": "重新加载YML配置文件",
+			"!refresh plugin": "重新加载插件YML配置文件",
 		},
-		Description: "当插件有变化时可运行此命令更新",
+		Description: "当插件配置有变化时可运行命令`!refresh plugin`更新插件YML配置文件",
 	})
 }
