@@ -86,7 +86,7 @@ version|否|插件版本
 usage|否|插件用法
 description|否|插件简介
 command|是|插件命令集
--|-|-
+---|---|---
 dir|否|命令执行文件夹
 cmd|是|插件命令
 
