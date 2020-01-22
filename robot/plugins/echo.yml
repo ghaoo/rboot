@@ -1,0 +1,28 @@
+name: hi
+version: 0.1.0
+ruleset:
+    hi: "^hi"
+usage:
+    hi: echo hello world and 你好
+description: 脚本插件示例
+command:
+    -
+        cmd:
+            - echo hello world
+    -
+        dir: plugins
+        cmd:
+            - .\echo.bat hellobat
+    -
+        dir: plugins
+        cmd:
+            - ./echo.sh helloshell
+    -
+        dir: plugins
+        cmd:
+            - ./hello.php
+    -
+        dir: plugins
+        cmd:
+            - ./hello.py
+
