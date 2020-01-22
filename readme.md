@@ -27,7 +27,7 @@ $ ./cmd
 
 ## 文档
 
-[![Rboot](https://img.shields.io/badge/%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3-rboot1.1.2-green)](https://www.kancloud.cn/ghaoo/rboot/1476883)
+[![Rboot](https://img.shields.io/badge/%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3-rboot1.2.0-green)](https://www.kancloud.cn/ghaoo/rboot/1476883)
 
 [![GoDoc](http://godoc.org/github.com/ghaoo/rboot?status.svg)](http://godoc.org/github.com/ghaoo/rboot)
 
