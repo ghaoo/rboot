@@ -72,4 +72,7 @@ func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	msg.Header = Header(r.Header)
 
 	bot.inputChan <- msg
+
+	w.WriteHeader(200)
+	w.Write([]byte("发送成功"))
 }
