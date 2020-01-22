@@ -58,7 +58,7 @@ func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	secret := os.Getenv("ROBOT_SECRET")
+	secret := os.Getenv("ROBOT_INCOMING_SECRET")
 
 	if err = bot.VerifySign(sign, secret, string(content), datetime); err != nil {
 		w.WriteHeader(403)
@@ -75,6 +75,8 @@ func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("bad request!"))
 		return
 	}
+
+	msg.Header = Header(r.Header)
 
 	bot.inputChan <- msg
 }

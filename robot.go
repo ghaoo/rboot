@@ -279,7 +279,7 @@ func (bot *Robot) initialize() {
 		log.Println("register plugin err: ", err)
 	}
 
-	// 监听 http 入站消息
+	// 监听 http 入站消息的 ResultFul API
 	bot.Router.HandleFunc("/incoming", bot.listenIncoming).Methods("POST")
 }
 

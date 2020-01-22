@@ -1,3 +1,3 @@
 #!/usr/bin/env python
 
-print("Hello, robot! i am python script")
+print("Hello, robot! i am a python script")
