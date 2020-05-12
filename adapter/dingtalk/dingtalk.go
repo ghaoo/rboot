@@ -41,9 +41,10 @@ func newDingTalk(bot *rboot.Robot) rboot.Adapter {
 
 	bot.Router.HandleFunc("/ding", ding.listenIncoming).Methods("POST")
 
-	// 当需要定时推送消息或警报消息时将监听 outgoing 打开
-	// 创建自定义机器人，并设置 DING_ROBOT_HOOK_ACCESS_TOKEN
-	// 和 DING_ROBOT_HOOK_SECRET，所有消息都由自定义机器人回复
+	// 当需要定时推送消息或警报消息时将监听 ding.listenOutgoing 打开
+	// 并创建自定义机器人，设置 DING_ROBOT_HOOK_ACCESS_TOKEN
+	// 和 DING_ROBOT_HOOK_SECRET，所有消息都由自定义机器人回复,
+	// 当不需要时注释掉这一行
 	go ding.listenOutgoing()
 
 	return ding

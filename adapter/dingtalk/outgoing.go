@@ -53,7 +53,7 @@ func (ding *dingtalk) listenOutgoing() {
 			return
 		}
 
-		if err = json.NewDecoder(resp.Body).Decode(caller); err != nil {
+		if err = json.NewDecoder(resp.Body).Decode(&caller); err != nil {
 			log.Printf("decode response body error: %v", err)
 			return
 		}
