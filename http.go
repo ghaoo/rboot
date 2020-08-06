@@ -57,7 +57,7 @@ func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	secret := os.Getenv("ROBOT_INCOMING_SECRET")
+	secret := os.Getenv("ROBOT_SECRET")
 
 	if err = bot.VerifySign(sign, secret, string(content), datetime); err != nil {
 		w.WriteHeader(403)
