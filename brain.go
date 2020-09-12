@@ -3,11 +3,12 @@ package rboot
 import (
 	"errors"
 	"fmt"
-	"github.com/boltdb/bolt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"sync"
+
+	"github.com/boltdb/bolt"
+	"github.com/sirupsen/logrus"
 )
 
 // Brain 是Rboot缓存器实现的接口
@@ -131,7 +132,9 @@ func (b *boltMemory) Set(bucket, key string, value []byte) error {
 	err := b.bolt.Update(func(tx *bolt.Tx) error {
 		b, e := tx.CreateBucketIfNotExists([]byte(bucket))
 		if e != nil {
-			logrus.Error("bolt: error saving:", e)
+			logrus.WithFields(logrus.Fields{
+				"mod": `rboot`,
+			}).Error("bolt: error saving:", e)
 			return e
 		}
 		return b.Put([]byte(key), value)

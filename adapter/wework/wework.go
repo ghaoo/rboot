@@ -81,12 +81,16 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		logrus.Errorln("read callback msg err:", err)
+		logrus.WithFields(logrus.Fields{
+			"mod": `wework`,
+		}).Errorln("read callback msg err:", err)
 	}
 
 	recv, err := wx.client.ParseRecvMessage(signature, timestamp, nonce, data)
 	if err != nil {
-		logrus.WithField("func", "parseRecvHandle.ParseRecvMessage").Error(err)
+		logrus.WithFields(logrus.Fields{
+			"mod": `wework`,
+		}).Error(err)
 	}
 
 	msg := rboot.NewMessage(recv.Content)
@@ -98,7 +102,9 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 	buf := bytes.Buffer{}
 	encoder := gob.NewEncoder(&buf)
 	if err := encoder.Encode(&recv); err != nil {
-		logrus.WithField("func", "parseRecvHandle.gob.NewEncoder").Error(err)
+		logrus.WithFields(logrus.Fields{
+			"mod": `rboot`,
+		}).Error(err)
 	}
 	msg.Header.Set("Data", buf.String())
 
@@ -151,7 +157,9 @@ func (wx *wework) listenOutgoing() {
 
 		_, err := wx.client.SendMessage(msg)
 		if err != nil {
-			logrus.WithField("func", "wxwork listenOutgoing").Errorf("listen outgoing message err: %v", err)
+			logrus.WithFields(logrus.Fields{
+				"mod": `wework`,
+			}).Errorf("listen outgoing message err: %v", err)
 		}
 	}
 }

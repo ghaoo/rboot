@@ -3,6 +3,7 @@ package wework
 import (
 	"encoding/json"
 	"github.com/ghaoo/wxwork"
+	"github.com/sirupsen/logrus"
 	"log"
 	"os"
 )
@@ -14,7 +15,9 @@ func (w *wework) getContacts() map[string]wxwork.User {
 	client := w.client.WithSecret(os.Getenv("WORKWX_CONTACT_SECRET"))
 	depts, err := client.ListDepartment()
 	if err != nil {
-		log.Printf("list department err: %v", err)
+		logrus.WithFields(logrus.Fields{
+			"mod": `wework`,
+		}).Errorf("list department err: %v", err)
 		return nil
 	}
 

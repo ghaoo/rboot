@@ -1,6 +1,7 @@
 package rboot
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 type route struct {
@@ -28,7 +30,9 @@ type route struct {
 // Name 为命名路由
 func (r *route) Name(name string) *route {
 	if r.name != "" {
-		log.Errorf("route already has name %q, can't set %q", r.name, name)
+		logrus.WithFields(logrus.Fields{
+			"mod": `rboot`,
+		}).Errorf("route already has name %q, can't set %q", r.name, name)
 	} else {
 		r.name = name
 	}
@@ -116,12 +120,12 @@ func (r *Router) run() {
 	// 获取 web 端口
 	port := os.Getenv("WEB_SERVER_PORT")
 	if port == "" {
-		port = "7856"
+		port = "5689"
 	}
 
 	var addr = ":" + port
 
-	log.Infof("web 服务开启，地址 %s", addr)
+	fmt.Println("web 服务开启，地址 ", addr)
 
 	isTls, _ := strconv.ParseBool(os.Getenv("WEB_SERVER_TLS"))
 	if isTls {

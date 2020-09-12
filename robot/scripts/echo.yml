@@ -1,7 +1,7 @@
 name: hi
 version: 0.1.0
 ruleset:
-    hi: "^hi"
+    hi: "^!hi"
 usage:
     hi: echo hello world and 你好
 description: 脚本插件示例
@@ -10,19 +10,19 @@ command:
         cmd:
             - echo hello world
     -
-        dir: plugins
+        dir: scripts
         cmd:
             - .\echo.bat hellobat
     -
-        dir: plugins
+        dir: scripts
         cmd:
             - ./echo.sh helloshell
     -
-        dir: plugins
+        dir: scripts
         cmd:
             - ./hello.php
     -
-        dir: plugins
+        dir: scripts
         cmd:
             - ./hello.py
 

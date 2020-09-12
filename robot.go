@@ -1,6 +1,7 @@
 package rboot
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
@@ -25,10 +26,10 @@ const (
 ===================================================================
 `
 
-	version = "1.2.0"
+	version = "1.2.1"
 )
 
-var log = logrus.WithField("mod", "rboot")
+var defaultCachePath = ".data"
 
 // Robot 是 rboot 的一个实例，它包含了聊天转接器，规则处理器，缓存器，路由适配器和消息的进出通道
 type Robot struct {
@@ -63,6 +64,11 @@ func New() *Robot {
 		rule:       new(Regex),
 	}
 
+	bot.CachePath = defaultCachePath
+	if len(os.Getenv("CACHE_PATH")) > 0 {
+		bot.CachePath = os.Getenv("CACHE_PATH")
+	}
+
 	bot.Router = newRouter()
 
 	return bot
@@ -82,6 +88,7 @@ func process(bot *Robot) {
 				defer func() {
 					if r := recover(); r != nil {
 						logrus.WithFields(logrus.Fields{
+							"mod": "rboot",
 							"msg": msg,
 						}).Errorf("panic recovered when parsing message: %#v. \nPanic: %v", msg, r)
 					}
@@ -97,6 +104,7 @@ func process(bot *Robot) {
 					action, err := DirectivePlugin(plug)
 					if err != nil {
 						logrus.WithFields(logrus.Fields{
+							"mod":     "rboot",
 							"plug":    plug,
 							"ruleset": rule,
 							"msg":     msg,
@@ -145,12 +153,12 @@ func process(bot *Robot) {
 // Go 皮皮虾，我们走~~~~~~~~~
 func (bot *Robot) Go() {
 
-	log.Infof("Rboot Version %s", version)
+	fmt.Println("Rboot Version ", version)
 
 	// 初始化
 	bot.initialize()
 
-	log.Info("皮皮虾，我们走~~~~~~~")
+	fmt.Println("皮皮虾，我们走~~~~~~~")
 
 	// 开启web服务
 	go bot.Router.run()
@@ -181,7 +189,7 @@ func (bot *Robot) Stop() {
 
 	runtime.SetFinalizer(bot, nil)
 
-	log.Info("皮皮虾，快停下~~~~~~~~")
+	fmt.Println("皮皮虾，快停下~~~~~~~~")
 
 	os.Exit(0)
 }
@@ -215,6 +223,7 @@ func (bot *Robot) fireHooks(typ int, msg *Message) {
 	err := bot.Hooks.Fire(typ, bot, msg)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
+			"mod":  "rboot",
 			"type": hookType[typ],
 			"msg":  msg,
 		}).WithError(err).Error("fireHooks: fire hooks failed")
@@ -242,10 +251,10 @@ func (bot *Robot) initialize() {
 	adpName := os.Getenv(`ROBOT_ADAPTER`)
 	// 默认使用 cli
 	if adpName == "" {
-		log.Warn("未指定 adapter，默认使用 cli")
+		fmt.Println("未指定 adapter，默认使用 cli")
 		adpName = "cli"
 	}
-	log.Info("已连接 ", adpName)
+	fmt.Println("已连接适配器 ", adpName)
 	adp, err := DetectAdapter(adpName)
 	if err != nil {
 		panic(`Detect adapter error: ` + err.Error())
@@ -262,8 +271,7 @@ func (bot *Robot) initialize() {
 	brainName := os.Getenv(`ROBOT_BRAIN`)
 	// 默认使用 memory
 	if brainName == "" {
-		log.Warn("未指定 brain，默认使用 memory")
-		brainName = "memory"
+		brainName = "bolt"
 	}
 
 	brain, err := DetectBrain(brainName)

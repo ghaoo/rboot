@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-yaml/yaml"
+	"github.com/sirupsen/logrus"
 )
 
 const defaultScriptDir = "scripts"
@@ -80,6 +81,8 @@ func registerScript() error {
 			Usage:       scp.Usage,
 			Description: scp.Description,
 		})
+
+		scripts[scp.Name] = scp
 	}
 
 	return nil
@@ -147,14 +150,18 @@ func init() {
 
 	err := registerScript()
 	if err != nil {
-		log.Println("register script err: ", err)
+		logrus.WithFields(logrus.Fields{
+			"mod": `rboot`,
+		}).Errorf("register script err: ", err)
 	}
 
 	RegisterPlugin("refresh_script", Plugin{
 		Action: func(bot *Robot, incoming *Message) []*Message {
 			err := registerScript()
 			if err != nil {
-				log.Println(err)
+				logrus.WithFields(logrus.Fields{
+					"mod": `rboot`,
+				}).Error(err)
 				return NewMessages(err.Error(), incoming.From)
 			}
 
