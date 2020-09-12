@@ -25,7 +25,7 @@ func setup(bot *rboot.Robot, in *rboot.Message) []*rboot.Message {
 }
 
 func init() {
-	rboot.RegisterScripts(`vote`, rboot.Script{
+	rboot.RegisterPlugin(`vote`, rboot.Plugin{
 		Action: setup,
 		Ruleset: map[string]string{
 			`voting`:    `^@@(.+)`,
@@ -34,10 +34,10 @@ func init() {
 			`stop_vote`: `^!投票结束`,
 		},
 		Usage: map[string]string{
-			"!投票<name> [opt1 opt2...]": "新建投票",
-			"@@<option>":               "为某一选项投票",
-			"!投票结果":                    "查看投票结果",
-			"!投票结束":                    "结束投票并返回结果",
+			"!投票<name> [选项1 选项2...]": "新建投票",
+			"@@<option>":             "为某一选项投票",
+			"!投票结果":                  "查看投票结果",
+			"!投票结束":                  "结束投票并返回结果",
 		},
 		Description: `投票小插件。`,
 	})

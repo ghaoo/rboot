@@ -2,115 +2,170 @@ package rboot
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/go-yaml/yaml"
 )
 
-var (
-	scripts = make(map[string]Script)
-	ruleset = make(map[string]map[string]string)
-)
+const defaultScriptDir = "scripts"
 
-// Script 脚本结构体
-type Script struct {
-	Action      ScriptFunc        // 执行解析或一些必要加载
-	Ruleset     map[string]string // 脚本规则集合
-	Usage       map[string]string // 帮助信息
-	Description string            // 简介
+var scripts = make(map[string]script)
+
+type script struct {
+	Name        string            `yaml:"name"`
+	Ruleset     map[string]string `yaml:"ruleset"`
+	Usage       map[string]string `yaml:"usage"`
+	Description string            `yaml:"description"`
+	Version     string            `yaml:"version"`
+	Command     []command         `yaml:"command"`
 }
 
-// SetupFunc 脚本执行或解析函数
-// - bot: A Robot instance
-// - incoming: The incoming message
-type ScriptFunc func(bot *Robot, incoming *Message) []*Message
-
-// RegisterScripts 注册脚本
-func RegisterScripts(name string, script Script) {
-
-	if name == "" {
-		panic("RegisterScripts: the script must have a name")
-	}
-	if _, ok := scripts[name]; ok {
-		log.Warnf("script named %s already registered, old script will be replaced", name)
-	}
-
-	scripts[name] = script
-
-	if len(script.Ruleset) > 0 {
-
-		ruleset[name] = script.Ruleset
-	}
+type command struct {
+	Dir string   `yaml:"dir"`
+	Cmd []string `yaml:"cmd"`
 }
 
-// DirectiveScript 根据脚本名称获取脚本执行函数
-func DirectiveScript(name string) (ScriptFunc, error) {
-
-	if script, ok := scripts[name]; ok {
-		return script.Action, nil
-	}
-
-	return nil, fmt.Errorf("DirectiveScript: no action found in script '%s' (missing a script?)", name)
-}
-
-// helpSetup 帮助脚本
-func helpSetup(bot *Robot, in *Message) (msg []*Message) {
+// 设置脚本
+func setupScript(bot *Robot, in *Message) (msg []*Message) {
 	rule := in.Header.Get("rule")
-	args := in.Header["args"]
-	msgtype := in.Header.Get("msgtype")
 
-	switch rule {
-	case `help`:
-		if len(args) < 2 || args[1] == "" {
-			// 获取所有脚本信息
-			content := ""
+	scp := scripts[rule]
 
-			for scr, spt := range scripts {
-				if msgtype == "markdown" {
-					content += fmt.Sprintf("**%s** - %s\n", scr, spt.Description)
-					for _rule, _explain := range spt.Usage {
-						content += fmt.Sprintf("- `%s` - %s\n\n", _rule, _explain)
-					}
+	for _, sc := range scp.Command {
+		for _, c := range sc.Cmd {
+			args := strings.Split(c, " ")
 
-				} else {
-					content += fmt.Sprintf("- %s - %s\n", scr, spt.Description)
-				}
+			out, err := runCommand(sc.Dir, args[0], args[1:]...)
+			if err != nil {
+				return NewMessages(err.Error())
 			}
 
-			// 获取插件信息
-
-			msg = append(msg, NewMessage(content))
-		} else {
-			if scr, ok := scripts[args[1]]; ok {
-				usage := ""
-				for _rule, _explain := range scr.Usage {
-					if msgtype == "markdown" {
-						usage += fmt.Sprintf("> `%s` - %s \n", _rule, _explain)
-					} else {
-						usage += fmt.Sprintf("- %s - %s \n", _rule, _explain)
-					}
-				}
-
-				msg = append(msg, NewMessage(usage))
-			} else {
-				msg = append(msg, NewMessage("未找到脚本 "+args[1]+" \n"))
-			}
+			msg = append(msg, NewMessage(out, in.From))
 		}
 	}
 
 	return msg
 }
 
-// 帮助脚本规则集
-var helpRules = map[string]string{
-	`help`: `^!help(?: *)(\S*)`,
+// 注册脚本
+func registerScript() error {
+	scpDir := os.Getenv("SCRIPT_DIR")
+
+	if scpDir == "" {
+		scpDir = defaultScriptDir
+	}
+
+	scps, err := allScripts(scpDir)
+	if err != nil {
+		return err
+	}
+
+	if len(scps) <= 0 {
+		return fmt.Errorf("no script found")
+	}
+
+	for _, scp := range scps {
+		if len(scp.Command) <= 0 {
+			continue
+		}
+
+		// 注册插件到脚本
+		RegisterPlugin(scp.Name, Plugin{
+			Action:      setupScript,
+			Ruleset:     scp.Ruleset,
+			Usage:       scp.Usage,
+			Description: scp.Description,
+		})
+	}
+
+	return nil
+}
+
+func allScripts(dir string) ([]script, error) {
+
+	scpFiles, err := filepath.Glob(filepath.Join(dir, "*.yml"))
+	if err != nil {
+		return nil, err
+	}
+
+	var scps = make([]script, 0)
+
+	for _, file := range scpFiles {
+		data, err := loadScript(file)
+		if err != nil {
+			continue
+		}
+
+		var scp = script{}
+		err = yaml.Unmarshal(data, &scp)
+		if err != nil {
+			continue
+		}
+
+		scps = append(scps, scp)
+	}
+
+	return scps, nil
+}
+
+func loadScript(file string) ([]byte, error) {
+	_, err := os.Stat(file)
+
+	if os.IsNotExist(err) {
+		return nil, err
+	}
+
+	fi, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer fi.Close()
+
+	return ioutil.ReadAll(fi)
+}
+
+func runCommand(dir, command string, args ...string) (string, error) {
+
+	cmd := exec.Command(command, args...)
+	if dir != "" {
+		cmd.Dir = dir
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("run script error: %v - %q", err, string(output))
+	}
+
+	return string(output), nil
 }
 
 func init() {
-	RegisterScripts(`help`, Script{
-		Action:  helpSetup,
-		Ruleset: helpRules,
-		Usage: map[string]string{
-			"!help":          "查看所有脚本简介",
-			"!help <script>": "查看script脚本的帮助信息",
+
+	err := registerScript()
+	if err != nil {
+		log.Println("register script err: ", err)
+	}
+
+	RegisterPlugin("refresh_script", Plugin{
+		Action: func(bot *Robot, incoming *Message) []*Message {
+			err := registerScript()
+			if err != nil {
+				log.Println(err)
+				return NewMessages(err.Error(), incoming.From)
+			}
+
+			return NewMessages("更新成功！", incoming.From)
 		},
-		Description: `显示已经注册的所有脚本简介或帮助信息`,
+		Ruleset: map[string]string{
+			"refresh": `^!refresh scripts`,
+		},
+		Usage: map[string]string{
+			"!refresh scripts": "重新加载插件YML配置文件",
+		},
+		Description: "当插件配置有变化时可运行命令`!refresh scripts`更新插件YML配置文件",
 	})
 }

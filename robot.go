@@ -1,11 +1,9 @@
 package rboot
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -34,22 +32,31 @@ var log = logrus.WithField("mod", "rboot")
 
 // Robot 是 rboot 的一个实例，它包含了聊天转接器，规则处理器，缓存器，路由适配器和消息的进出通道
 type Robot struct {
-	Router     *Router
-	Brain      Brain
-	adapter    Adapter
-	rule       Rule
-	plugins    map[string]plugin
-	inputChan  chan *Message
+	// 路由，支持脚本自定义添加新路由
+	Router *Router
+	// 缓存
+	Brain Brain
+	// 钩子
+	Hooks MsgHooks
+	// 缓存文件夹
+	CachePath string
+
+	// 终端
+	adapter Adapter
+	// 传入消息
+	inputChan chan *Message
+	// 传出消息
 	outputChan chan *Message
 
-	debug      bool
+	// 规则匹配器
+	rule Rule
+	// 操作系统信号
 	signalChan chan os.Signal
 }
 
 // New 获取一个Robot实例，
 func New() *Robot {
 	bot := &Robot{
-		plugins:    make(map[string]plugin),
 		inputChan:  make(chan *Message),
 		outputChan: make(chan *Message),
 		signalChan: make(chan os.Signal),
@@ -71,35 +78,29 @@ func process(bot *Robot) {
 		for in := range bot.inputChan {
 
 			go func(bot *Robot, msg *Message) {
+
 				defer func() {
 					if r := recover(); r != nil {
-						log.Errorf("panic recovered when parsing message: %#v. \nPanic: %v", fmt.Sprintf(""), r)
+						logrus.WithFields(logrus.Fields{
+							"msg": msg,
+						}).Errorf("panic recovered when parsing message: %#v. \nPanic: %v", msg, r)
 					}
 				}()
 
-				if bot.debug {
-					log.Debugf("- Incoming: \n- 类型: %s\n- 发送人: %s\n- 接收人: %v\n- 内容: %s\n\n",
-						msg.Header.Get("MsgType"),
-						msg.From,
-						msg.To,
-						msg.String(),
-					)
-				}
+				// 处理消息前的Hook
+				bot.fireHooks(HOOK_BEFORE_INCOMING, msg)
 
 				// 匹配消息
-				if script, rule, args, ok := bot.matchScript(strings.TrimSpace(msg.String())); ok {
+				if plug, rule, args, ok := bot.matchPlugin(strings.TrimSpace(msg.String())); ok {
 
-					if bot.debug {
-						log.Debugf("- 脚本: %s\n- 规则: %s\n- 参数: %v\n\n",
-							script,
-							rule,
-							args[1:])
-					}
-
-					// 获取脚本执行函数
-					action, err := DirectiveScript(script)
+					// 获取插件执行函数
+					action, err := DirectivePlugin(plug)
 					if err != nil {
-						log.Error(err)
+						logrus.WithFields(logrus.Fields{
+							"plug":    plug,
+							"ruleset": rule,
+							"msg":     msg,
+						}).WithError(err).Error("listen: directive plugin error")
 					}
 
 					msg.Header.Set("rule", rule)
@@ -121,15 +122,6 @@ func process(bot *Robot) {
 							}
 						}
 
-						if bot.debug {
-							log.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n\n",
-								resp.Header.Get("MsgType"),
-								resp.To,
-								resp.Cc(),
-								resp.From,
-								resp)
-						}
-
 						// send ...
 						bot.outputChan <- resp
 
@@ -140,8 +132,9 @@ func process(bot *Robot) {
 								bot.outputChan <- resp
 							}
 						}
+						// 处理消息后的Hook
+						bot.fireHooks(HOOK_AFTER_OUTGOING, msg)
 					}
-
 				}
 
 			}(bot, in)
@@ -217,9 +210,20 @@ func (bot *Robot) SetBrain(brain Brain) {
 	bot.Brain = brain
 }
 
+// fireHooks 执行钩子
+func (bot *Robot) fireHooks(typ int, msg *Message) {
+	err := bot.Hooks.Fire(typ, bot, msg)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"type": hookType[typ],
+			"msg":  msg,
+		}).WithError(err).Error("fireHooks: fire hooks failed")
+	}
+}
+
 // matchScript 匹配消息内容，获取相应的脚本名称(script), 对应规则名称(matchRule), 提取的匹配内容(matchArgs)
 // 当消息不匹配时，matched 返回false
-func (bot *Robot) matchScript(msg string) (script, matchRule string, matchArgs []string, matched bool) {
+func (bot *Robot) matchPlugin(msg string) (script, matchRule string, matchArgs []string, matched bool) {
 
 	for script, rules := range ruleset {
 		for m, r := range rules {
@@ -234,9 +238,6 @@ func (bot *Robot) matchScript(msg string) (script, matchRule string, matchArgs [
 
 // initialize 初始化 Robot
 func (bot *Robot) initialize() {
-	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
-	bot.debug = debug
-
 	// 指定消息提供者，如果配置文件没有指定，则默认使用 cli
 	adpName := os.Getenv(`ROBOT_ADAPTER`)
 	// 默认使用 cli
@@ -272,12 +273,6 @@ func (bot *Robot) initialize() {
 	}
 
 	bot.Brain = brain()
-
-	// 注册插件
-	err = bot.registerPlugin()
-	if err != nil {
-		log.Println("register plugin err: ", err)
-	}
 
 	// 监听 http 入站消息的 ResultFul API
 	bot.Router.HandleFunc("/incoming", bot.listenIncoming).Methods("POST")

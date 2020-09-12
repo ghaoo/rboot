@@ -1,14 +1,21 @@
 package rboot
 
 import (
+	"errors"
 	"fmt"
+	"github.com/boltdb/bolt"
+	"github.com/sirupsen/logrus"
+	"os"
+	"path"
 	"sync"
 )
 
 // Brain 是Rboot缓存器实现的接口
 type Brain interface {
 	Set(bucket, key string, value []byte) error
-	Get(bucket, key string) []byte
+	Get(bucket, key string) ([]byte, error)
+	GetBucket() ([]string, error)
+	GetKeys(bucket string) ([]string, error)
 	Remove(bucket, key string) error
 }
 
@@ -54,7 +61,7 @@ func (bot *Robot) Store(bucket, key string, value []byte) error {
 }
 
 // Find 从储存器中获取指定的bucket和key对应的信息
-func (bot *Robot) Find(bucket, key string) []byte {
+func (bot *Robot) Find(bucket, key string) ([]byte, error) {
 	return bot.Brain.Get(bucket, key)
 }
 
@@ -63,53 +70,148 @@ func (bot *Robot) Remove(bucket, key string) error {
 	return bot.Brain.Remove(bucket, key)
 }
 
-// memory the default brain
-type memory struct {
-	mu    sync.Mutex
-	items map[string][]byte
+const DefaultBoltDBFile = `db/rboot.db`
+
+type boltMemory struct {
+	bolt   *bolt.DB
+	dbfile string
+
+	mu sync.Mutex
 }
 
-// New constructs memory
-func newMemory() Brain {
-	return &memory{
-		mu:    sync.Mutex{},
-		items: make(map[string][]byte),
+// 检查存放db文件的文件夹是否存在。
+// 如果db文件存在运行目录下，则无操作
+func pathExist(dbfile string) error {
+
+	dir, _ := path.Split(dbfile)
+
+	if dir != `` {
+		if _, err := os.Stat(dir); !os.IsExist(err) {
+			return os.MkdirAll(dir, os.ModePerm)
+		}
 	}
+
+	return nil
+}
+
+// new bolt brain ...
+func Bolt() Brain {
+
+	b := new(boltMemory)
+
+	dbfile := os.Getenv(`BOLT_DB_FILE`)
+
+	if dbfile == `` {
+		logrus.Warningf(`BOLT_DB_FILE not set, using default: %s`, DefaultBoltDBFile)
+		dbfile = DefaultBoltDBFile
+	}
+
+	dbfile = path.Join(os.Getenv("DATA_PATH"), dbfile)
+	err := pathExist(dbfile)
+
+	if err != nil {
+		return nil
+	}
+
+	db, err := bolt.Open(dbfile, 0600, nil)
+	if err != nil {
+		return nil
+	}
+
+	b.bolt = db
+	b.dbfile = dbfile
+	return b
 }
 
 // save ...
-func (m *memory) Set(bucket, key string, value []byte) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (b *boltMemory) Set(bucket, key string, value []byte) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
-	m.items[bucket+key] = value
+	err := b.bolt.Update(func(tx *bolt.Tx) error {
+		b, e := tx.CreateBucketIfNotExists([]byte(bucket))
+		if e != nil {
+			logrus.Error("bolt: error saving:", e)
+			return e
+		}
+		return b.Put([]byte(key), value)
+	})
 
-	return nil
+	return err
 }
 
 // find ...
-func (m *memory) Get(bucket, key string) []byte {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (b *boltMemory) Get(bucket, key string) ([]byte, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
-	v, ok := m.items[bucket+key]
-	if !ok {
-		return []byte{}
-	}
-	return v
+	var found []byte
+	err := b.bolt.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucket))
+		if b == nil {
+			return errors.New("bucket does not exist")
+		}
+		found = b.Get([]byte(key))
+
+		return nil
+	})
+
+	return found, err
 }
 
-// delete ...
-func (m *memory) Remove(bucket, key string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+// GetBucket ...
+func (b *boltMemory) GetBucket() ([]string, error) {
+	var buckets []string
+	err := b.bolt.View(func(tx *bolt.Tx) error {
+		return tx.ForEach(func(name []byte, _ *bolt.Bucket) error {
+			buckets = append(buckets, string(name))
+			return nil
+		})
+	})
+	return buckets, err
+}
 
-	delete(m.items, bucket+key)
+// GetKeys ...
+func (b *boltMemory) GetKeys(bucket string) ([]string, error) {
+	var numKeys = 0
+	var keys []string
+	err := b.bolt.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucket))
+		if b == nil {
+			return errors.New("bucket does not exist")
+		}
+		c := b.Cursor()
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			numKeys++
+		}
 
-	return nil
+		keys = make([]string, numKeys)
+		numKeys = 0
+		c = b.Cursor()
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			keys[numKeys] = string(k)
+			numKeys++
+		}
+		return nil
+	})
+
+	return keys, err
+}
+
+// remove ...
+func (b *boltMemory) Remove(bucket, key string) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	err := b.bolt.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucket))
+		return b.Delete([]byte(key))
+	})
+
+	return err
 }
 
 // register brain ...
 func init() {
-	RegisterBrain("memory", newMemory)
+	RegisterBrain(`bolt`, Bolt)
 }

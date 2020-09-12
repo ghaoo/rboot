@@ -30,7 +30,7 @@ func randReply() string {
 }
 
 func init() {
-	rboot.RegisterScripts(`ping`, rboot.Script{
+	rboot.RegisterPlugin(`ping`, rboot.Plugin{
 		Action: setup,
 		Ruleset: map[string]string{
 			`ping`: `^!(?:ping|PING)`,
