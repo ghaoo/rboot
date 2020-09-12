@@ -166,6 +166,6 @@ func init() {
 		Usage: map[string]string{
 			"!refresh scripts": "重新加载插件YML配置文件",
 		},
-		Description: "当插件配置有变化时可运行命令`!refresh scripts`更新插件YML配置文件",
+		Description: "当插件配置有变化时更新插件YML配置文件",
 	})
 }
