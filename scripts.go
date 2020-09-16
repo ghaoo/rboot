@@ -152,7 +152,7 @@ func init() {
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"mod": `rboot`,
-		}).Errorf("register script err: ", err)
+		}).Errorf("register script err: %v", err)
 	}
 
 	RegisterPlugin("refresh_script", Plugin{
