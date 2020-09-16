@@ -1,10 +1,4 @@
-package plugins
-
-import (
-	"os"
-	"runtime"
-	"strconv"
-)
+package rboot
 
 var (
 	defaultMaxQueue = 20000
