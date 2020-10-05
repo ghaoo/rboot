@@ -37,6 +37,7 @@ func NewMessage(content string, to ...string) *Message {
 
 	if len(to) > 0 {
 		msg.To = to[0]
+		msg.SetCc(to[1:]...)
 	}
 
 	return msg
