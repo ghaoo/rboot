@@ -28,7 +28,7 @@ func NewMessages(content string, to ...string) []*Message {
 	return msg
 }
 
-// NewMessage 新建一条消息
+// NewMessage 新建一条消息，支持多个接收人
 func NewMessage(content string, to ...string) *Message {
 	msg := &Message{
 		Header: Header{},
