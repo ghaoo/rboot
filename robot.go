@@ -26,7 +26,7 @@ const (
 ===================================================================
 `
 
-	version = "1.2.1"
+	version = "1.2.3"
 )
 
 var defaultCachePath = ".data"
@@ -70,6 +70,9 @@ func New() *Robot {
 	}
 
 	bot.Router = newRouter()
+
+	// 初始化
+	bot.initialize()
 
 	return bot
 }
@@ -154,9 +157,6 @@ func process(bot *Robot) {
 func (bot *Robot) Go() {
 
 	fmt.Println("Rboot Version ", version)
-
-	// 初始化
-	bot.initialize()
 
 	fmt.Println("皮皮虾，我们走~~~~~~~")
 
