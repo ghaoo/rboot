@@ -32,8 +32,6 @@ func newWework(bot *rboot.Robot) rboot.Adapter {
 	bot.Router.HandleFunc("/wework", wx.client.CallbackVerify).Methods("GET")
 	bot.Router.HandleFunc("/wework", wx.parseRecvHandle).Methods("POST")
 
-	go wx.storeUsers()
-
 	go wx.listenOutgoing()
 
 	return wx
