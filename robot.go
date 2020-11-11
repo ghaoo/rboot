@@ -42,6 +42,8 @@ type Robot struct {
 	Hooks MsgHooks
 	// 缓存文件夹
 	CachePath string
+	// 调试信息
+	Debug bool
 
 	// 终端
 	adapter Adapter
@@ -54,8 +56,6 @@ type Robot struct {
 	rule Rule
 	// 操作系统信号
 	signalChan chan os.Signal
-
-	debug bool
 }
 
 // New 获取一个Robot实例，
@@ -73,7 +73,7 @@ func New() *Robot {
 	}
 
 	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
-	bot.debug = debug
+	bot.Debug = debug
 
 	bot.Router = newRouter()
 
@@ -109,7 +109,7 @@ func process(bot *Robot) {
 				// 匹配消息
 				if plug, rule, args, ok := bot.matchPlugin(strings.TrimSpace(msg.String())); ok {
 
-					if bot.debug {
+					if bot.Debug {
 						logrus.Debugf("- 脚本: %s\n- 规则: %s\n- 参数: %v\n\n",
 							plug,
 							rule,
@@ -146,7 +146,7 @@ func process(bot *Robot) {
 							}
 						}
 
-						if bot.debug {
+						if bot.Debug {
 							logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n\n",
 								resp.Header.Get("MsgType"),
 								resp.To,
