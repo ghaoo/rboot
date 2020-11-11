@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -53,6 +54,8 @@ type Robot struct {
 	rule Rule
 	// 操作系统信号
 	signalChan chan os.Signal
+
+	debug bool
 }
 
 // New 获取一个Robot实例，
@@ -68,6 +71,9 @@ func New() *Robot {
 	if len(os.Getenv("CACHE_PATH")) > 0 {
 		bot.CachePath = os.Getenv("CACHE_PATH")
 	}
+
+	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
+	bot.debug = debug
 
 	bot.Router = newRouter()
 
@@ -103,6 +109,13 @@ func process(bot *Robot) {
 				// 匹配消息
 				if plug, rule, args, ok := bot.matchPlugin(strings.TrimSpace(msg.String())); ok {
 
+					if bot.debug {
+						logrus.Debugf("- 脚本: %s\n- 规则: %s\n- 参数: %v\n\n",
+							plug,
+							rule,
+							args[1:])
+					}
+
 					// 获取插件执行函数
 					action, err := DirectivePlugin(plug)
 					if err != nil {
@@ -131,6 +144,15 @@ func process(bot *Robot) {
 									resp.Header[hn] = hv
 								}
 							}
+						}
+
+						if bot.debug {
+							logrus.Debugf("\nOutgoing: \n- 类型: %s \n- 接收人: %v\n- 抄送: %v\n- 发送人: %v\n- 内容: %s\n\n",
+								resp.Header.Get("MsgType"),
+								resp.To,
+								resp.Cc(),
+								resp.From,
+								resp)
 						}
 
 						// send ...
