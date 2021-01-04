@@ -110,7 +110,7 @@ func process(bot *Robot) {
 				if plug, rule, args, ok := bot.matchPlugin(strings.TrimSpace(msg.String())); ok {
 
 					if bot.Debug {
-						logrus.Debugf("- 脚本: %s\n- 规则: %s\n- 参数: %v\n\n",
+						logrus.Debugf("- 插件: %s\n- 规则: %s\n- 参数: %v\n\n",
 							plug,
 							rule,
 							args[1:])
