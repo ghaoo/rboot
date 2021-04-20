@@ -95,7 +95,7 @@ func pathExist(dbfile string) error {
 	return nil
 }
 
-// new bolt brain ...
+// Bolt new bolt brain ...
 func Bolt() Brain {
 
 	b := new(boltMemory)
@@ -124,7 +124,7 @@ func Bolt() Brain {
 	return b
 }
 
-// save ...
+// Set save ...
 func (b *boltMemory) Set(bucket, key string, value []byte) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -143,7 +143,7 @@ func (b *boltMemory) Set(bucket, key string, value []byte) error {
 	return err
 }
 
-// find ...
+// Get find ...
 func (b *boltMemory) Get(bucket, key string) ([]byte, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -201,7 +201,7 @@ func (b *boltMemory) GetKeys(bucket string) ([]string, error) {
 	return keys, err
 }
 
-// remove ...
+// Remove ...
 func (b *boltMemory) Remove(bucket, key string) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
