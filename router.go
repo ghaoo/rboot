@@ -40,7 +40,7 @@ func (r *route) Name(name string) *route {
 	return r
 }
 
-// 设置 methods
+// Methods 设置 methods
 func (r *route) Methods(methods ...string) *route {
 	r.methods = methods
 	return r
@@ -125,7 +125,7 @@ func (r *Router) run() {
 
 	var addr = ":" + port
 
-	fmt.Println("web 服务开启，地址 ", addr)
+	fmt.Println("web 服务开启，监听端口 ", addr)
 
 	isTls, _ := strconv.ParseBool(os.Getenv("WEB_SERVER_TLS"))
 	if isTls {

@@ -27,7 +27,7 @@ const (
 ===================================================================
 `
 
-	version = "1.2.7"
+	version = "1.2.8"
 )
 
 var defaultCachePath = ".data"
@@ -232,7 +232,6 @@ func (bot *Robot) SendText(text string, to string) {
 	msg.To = to
 
 	bot.outputChan <- msg
-
 }
 
 // SetBrain 设置储存器

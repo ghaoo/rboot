@@ -26,7 +26,7 @@ func signature(datetime, secret, content string) string {
 	return base64.StdEncoding.EncodeToString(data)
 }
 
-// 验证签名
+// VerifySign 验证签名
 func (bot *Robot) VerifySign(sign, secret, content, datetime string) error {
 	dt, err := time.Parse("2006-01-02 15:04:05", datetime)
 	if err != nil {

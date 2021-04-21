@@ -17,7 +17,7 @@ type Plugin struct {
 	Description string            // 简介
 }
 
-// SetupFunc 脚本执行或解析函数
+// PluginFunc SetupFunc 脚本执行或解析函数
 // - bot: A Robot instance
 // - incoming: The incoming message
 type PluginFunc func(bot *Robot, incoming *Message) []*Message
