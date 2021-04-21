@@ -125,7 +125,7 @@ func (r *Router) run() {
 
 	var addr = ":" + port
 
-	fmt.Println("web 服务开启，监听端口 ", addr)
+	fmt.Printf("web 服务开启，监听端口 %s", addr)
 
 	isTls, _ := strconv.ParseBool(os.Getenv("WEB_SERVER_TLS"))
 	if isTls {
