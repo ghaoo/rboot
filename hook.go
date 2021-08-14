@@ -10,25 +10,30 @@ var hookType = map[int]string{
 	HOOK_AFTER_OUTGOING:  "消息传出后",
 }
 
+var AllHookTypes = []int{
+	HOOK_BEFORE_INCOMING,
+	HOOK_AFTER_OUTGOING,
+}
+
 // Hook interface
 type Hook interface {
 	Types() []int
-	Fire(*Robot, *Message) error
+	Fire(*Message) error
 }
 
-type MsgHooks map[int][]Hook
+type Hooks map[int][]Hook
 
 // Add 新增钩子
-func (hooks MsgHooks) Add(hook Hook) {
+func (hooks Hooks) Add(hook Hook) {
 	for _, typ := range hook.Types() {
 		hooks[typ] = append(hooks[typ], hook)
 	}
 }
 
 // Fire 执行
-func (hooks MsgHooks) Fire(typ int, bot *Robot, msg *Message) error {
+func (hooks Hooks) Fire(typ int, bot *Robot, msg *Message) error {
 	for _, hook := range hooks[typ] {
-		if err := hook.Fire(bot, msg); err != nil {
+		if err := hook.Fire(msg); err != nil {
 			return err
 		}
 	}

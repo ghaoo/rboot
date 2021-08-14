@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/sirupsen/logrus"
@@ -27,7 +28,7 @@ const (
 ===================================================================
 `
 
-	version = "1.2.8"
+	version = "2.0.1"
 )
 
 var defaultCachePath = ".data"
@@ -39,7 +40,7 @@ type Robot struct {
 	// 缓存
 	Brain Brain
 	// 钩子
-	Hooks MsgHooks
+	Hooks Hooks
 	// 缓存文件夹
 	CachePath string
 	// 调试信息
@@ -61,6 +62,7 @@ type Robot struct {
 // New 获取一个Robot实例，
 func New() *Robot {
 	bot := &Robot{
+		Hooks:      make(Hooks),
 		inputChan:  make(chan *Message),
 		outputChan: make(chan *Message),
 		signalChan: make(chan os.Signal),
@@ -103,6 +105,22 @@ func process(bot *Robot) {
 					}
 				}()
 
+				if msg.From == "" {
+					msg.From = "rboot"
+				}
+
+				if msg.To == "" {
+					msg.To = "rboot"
+				}
+
+				if msg.Time.IsZero() {
+					msg.Time = time.Now()
+				}
+
+				if msg.Channel == "" {
+					msg.Channel = GetMsgChannel(msg.From, msg.To)
+				}
+
 				// 处理消息前的Hook
 				bot.fireHooks(HOOK_BEFORE_INCOMING, msg)
 
@@ -136,7 +154,9 @@ func process(bot *Robot) {
 					for _, resp := range response {
 						// 将消息发送到 outputChan
 						// 指定输出消息的接收者
+						resp.From = msg.To
 						resp.To = msg.From
+						resp.Channel = msg.Channel
 
 						if msg.KeepHeader {
 							for hn, hv := range msg.Header {
@@ -165,8 +185,9 @@ func process(bot *Robot) {
 								bot.outputChan <- resp
 							}
 						}
+
 						// 处理消息后的Hook
-						bot.fireHooks(HOOK_AFTER_OUTGOING, msg)
+						bot.fireHooks(HOOK_AFTER_OUTGOING, resp)
 					}
 				}
 
@@ -237,6 +258,11 @@ func (bot *Robot) SendText(text string, to string) {
 // SetBrain 设置储存器
 func (bot *Robot) SetBrain(brain Brain) {
 	bot.Brain = brain
+}
+
+// AddHook 新增钩子
+func (bot *Robot) AddHook(hook Hook) {
+	bot.Hooks.Add(hook)
 }
 
 // fireHooks 执行钩子

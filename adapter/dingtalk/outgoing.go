@@ -78,7 +78,7 @@ func (ding *dingtalk) buildMessage(msg *rboot.Message) *Message {
 		dmsg = NewTextMessage(msg.String())
 	case "link":
 		dmsg = NewLinkMessage(title, msg.String(), msg.Header.Get("msgUrl"), msg.Header.Get("picUrl"))
-	case "actionCard":
+	/*case "actionCard":
 		var card *ActionCard
 
 		err := json.Unmarshal(msg.Bytes(), &card)
@@ -96,7 +96,7 @@ func (ding *dingtalk) buildMessage(msg *rboot.Message) *Message {
 			dmsg = NewEmptyMessage()
 		} else {
 			dmsg = NewFeedCardMessage(links)
-		}
+		}*/
 	default:
 		dmsg = NewMarkdownMessage(title, msg.String())
 	}

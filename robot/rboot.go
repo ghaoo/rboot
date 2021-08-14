@@ -11,6 +11,10 @@ func main() {
 
 	bot := rboot.New()
 
+	sm := rboot.NewMsgHook(bot)
+
+	bot.AddHook(sm)
+
 	bot.Go()
 }
 

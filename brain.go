@@ -7,8 +7,8 @@ import (
 	"path"
 	"sync"
 
-	"github.com/boltdb/bolt"
 	"github.com/sirupsen/logrus"
+	bolt "go.etcd.io/bbolt"
 )
 
 // Brain 是Rboot缓存器实现的接口
@@ -16,7 +16,7 @@ type Brain interface {
 	Set(bucket, key string, value []byte) error
 	Get(bucket, key string) ([]byte, error)
 	GetBucket() ([]string, error)
-	GetKeys(bucket string) ([]string, error)
+	GetKeys(bucket string, limit int) ([]string, error)
 	Remove(bucket, key string) error
 }
 
@@ -175,8 +175,11 @@ func (b *boltMemory) GetBucket() ([]string, error) {
 }
 
 // GetKeys ...
-func (b *boltMemory) GetKeys(bucket string) ([]string, error) {
-	var numKeys = 0
+func (b *boltMemory) GetKeys(bucket string, limit int) ([]string, error) {
+	if limit == 0 {
+		return nil, errors.New("limit is 0")
+	}
+
 	var keys []string
 	err := b.bolt.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
@@ -184,16 +187,24 @@ func (b *boltMemory) GetKeys(bucket string) ([]string, error) {
 			return errors.New("bucket does not exist")
 		}
 		c := b.Cursor()
-		for k, _ := c.First(); k != nil; k, _ = c.Next() {
-			numKeys++
+
+		if limit < 0 {
+			for k, _ := c.First(); k != nil; k, _ = c.Next() {
+				limit++
+			}
 		}
 
-		keys = make([]string, numKeys)
-		numKeys = 0
+		keys = make([]string, limit)
+		numKeys := 0
 		c = b.Cursor()
-		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+
+		// 从后往前查
+		for k, _ := c.Last(); k != nil; k, _ = c.Prev() {
 			keys[numKeys] = string(k)
 			numKeys++
+			if numKeys >= limit {
+				break
+			}
 		}
 		return nil
 	})

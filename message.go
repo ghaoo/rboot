@@ -1,23 +1,28 @@
 package rboot
 
 import (
-	"bytes"
-	"io"
-	"io/ioutil"
+	"crypto/md5"
+	"encoding/json"
+	"fmt"
 	"net/textproto"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
 // Message 表示一个消息的结构
 type Message struct {
-	To         string    // 消息接收者
-	From       string    // 消息来源
-	Sender     string    // 发送者
-	Header     Header    // 头信息
-	KeepHeader bool      // 如果为true则传入消息的Header在一次会话结束之前不会清除
-	Body       io.Reader // 消息主体
+	Channel    string    `json:"channel"` // 自定义通道
+	To         string    `json:"to"`      // 消息接收者
+	From       string    `json:"from"`    // 消息来源
+	Sender     string    `json:"sender"`  // 发送者
+	Header     Header    `json:"header"`  // 头信息
+	Content    string    `json:"content"` // 消息文本内容
+	Time       time.Time `json:"time"`    // 消息发送时间
+	KeepHeader bool      `json:"-"`       // 如果为true则传入消息的Header在一次会话结束之前不会清除
 }
 
 // NewMessages 新建一组消息
@@ -31,8 +36,9 @@ func NewMessages(content string, to ...string) []*Message {
 // NewMessage 新建一条消息，支持多个接收人
 func NewMessage(content string, to ...string) *Message {
 	msg := &Message{
-		Header: Header{},
-		Body:   strings.NewReader(content),
+		Header:  Header{},
+		Content: content,
+		Time:    time.Now(),
 	}
 
 	if len(to) > 0 {
@@ -45,30 +51,7 @@ func NewMessage(content string, to ...string) *Message {
 
 // String 读取消息内容为 string
 func (m *Message) String() string {
-	content, err := ioutil.ReadAll(m.Body)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"mod": `rboot`,
-		}).Error(err)
-	}
-
-	m.Body = bytes.NewBuffer(content)
-
-	return string(content)
-}
-
-// Bytes 读取消息内容为 []byte
-func (m *Message) Bytes() []byte {
-	content, err := ioutil.ReadAll(m.Body)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"mod": `rboot`,
-		}).Error(err)
-	}
-
-	m.Body = bytes.NewBuffer(content)
-
-	return content
+	return m.Content
 }
 
 // SetCc 为消息设置抄送
@@ -113,4 +96,85 @@ func (h Header) GetKey(key string) []string {
 // Del 删除与键关联的值
 func (h Header) Del(key string) {
 	textproto.MIMEHeader(h).Del(key)
+}
+
+// GetMsgChannel 获取消息通道
+func GetMsgChannel(from, to string) string {
+	uu := []string{from, to}
+	sort.Strings(uu)
+
+	has := md5.Sum([]byte(uu[0] + uu[1]))
+	return fmt.Sprintf("%x", has)
+}
+
+// msgHook 消息钩子
+type msgHook struct {
+	bot *Robot
+}
+
+// NewMsgHook 实例化一个msgHook
+func NewMsgHook(bot *Robot) *msgHook {
+	return &msgHook{bot: bot}
+}
+
+// Types 消息钩子应用的范围
+func (h *msgHook) Types() []int {
+	return AllHookTypes
+}
+
+// Fire 执行
+func (h *msgHook) Fire(msg *Message) error {
+	jmsg, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	return h.bot.Store(msg.Channel, strconv.FormatInt(time.Now().UnixNano(), 10), jmsg)
+}
+
+// GetMsg 获取消息
+func (bot *Robot) GetMsg(channel string, limit int) []*Message {
+
+	if channel == "" {
+		logrus.WithFields(logrus.Fields{
+			"mod":  `rboot`,
+			"func": `GetMsg`,
+		}).Error("channel 不能为空")
+		return nil
+	}
+
+	keys, err := bot.Brain.GetKeys(channel, limit)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"mod":  `rboot`,
+			"func": `GetMsg`,
+		}).Error(err)
+		return nil
+	}
+
+	msgs := make([]*Message, 0)
+
+	for _, key := range keys {
+		val, err := bot.Find(channel, key)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"mod":  `rboot`,
+				"func": `GetMsg`,
+				"flow": `for keys find key`,
+			}).Error(err)
+		} else {
+			msg := &Message{}
+			if err = json.Unmarshal(val, &msg); err == nil {
+				msgs = append(msgs, msg)
+			} else {
+				logrus.WithFields(logrus.Fields{
+					"mod":  `rboot`,
+					"func": `GetMsg`,
+					"flow": `json.Unmarshal`,
+				}).Error(err)
+			}
+		}
+	}
+
+	return msgs
 }
