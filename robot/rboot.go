@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/ghaoo/rboot"
 	_ "github.com/ghaoo/rboot/adapter"
+	"github.com/ghaoo/rboot/brain/leveldb"
 	_ "github.com/ghaoo/rboot/robot/plugins"
 	"github.com/sirupsen/logrus"
 )
@@ -11,9 +12,7 @@ func main() {
 
 	bot := rboot.New()
 
-	sm := rboot.NewMsgHook(bot)
-
-	bot.AddHook(sm)
+	bot.SetBrain(leveldb.NewLevelDB())
 
 	bot.Go()
 }

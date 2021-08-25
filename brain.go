@@ -15,8 +15,6 @@ import (
 type Brain interface {
 	Set(bucket, key string, value []byte) error
 	Get(bucket, key string) ([]byte, error)
-	GetBucket() ([]string, error)
-	GetKeys(bucket string, limit int) ([]string, error)
 	Remove(bucket, key string) error
 }
 
@@ -160,56 +158,6 @@ func (b *boltMemory) Get(bucket, key string) ([]byte, error) {
 	})
 
 	return found, err
-}
-
-// GetBucket ...
-func (b *boltMemory) GetBucket() ([]string, error) {
-	var buckets []string
-	err := b.bolt.View(func(tx *bolt.Tx) error {
-		return tx.ForEach(func(name []byte, _ *bolt.Bucket) error {
-			buckets = append(buckets, string(name))
-			return nil
-		})
-	})
-	return buckets, err
-}
-
-// GetKeys ...
-func (b *boltMemory) GetKeys(bucket string, limit int) ([]string, error) {
-	if limit == 0 {
-		return nil, errors.New("limit is 0")
-	}
-
-	var keys []string
-	err := b.bolt.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket))
-		if b == nil {
-			return errors.New("bucket does not exist")
-		}
-		c := b.Cursor()
-
-		if limit < 0 {
-			for k, _ := c.First(); k != nil; k, _ = c.Next() {
-				limit++
-			}
-		}
-
-		keys = make([]string, limit)
-		numKeys := 0
-		c = b.Cursor()
-
-		// 从后往前查
-		for k, _ := c.Last(); k != nil; k, _ = c.Prev() {
-			keys[numKeys] = string(k)
-			numKeys++
-			if numKeys >= limit {
-				break
-			}
-		}
-		return nil
-	})
-
-	return keys, err
 }
 
 // Remove ...

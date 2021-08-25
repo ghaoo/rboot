@@ -2,15 +2,11 @@ package rboot
 
 import (
 	"crypto/md5"
-	"encoding/json"
 	"fmt"
 	"net/textproto"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Message 表示一个消息的结构
@@ -105,76 +101,4 @@ func GetMsgChannel(from, to string) string {
 
 	has := md5.Sum([]byte(uu[0] + uu[1]))
 	return fmt.Sprintf("%x", has)
-}
-
-// msgHook 消息钩子
-type msgHook struct {
-	bot *Robot
-}
-
-// NewMsgHook 实例化一个msgHook
-func NewMsgHook(bot *Robot) *msgHook {
-	return &msgHook{bot: bot}
-}
-
-// Types 消息钩子应用的范围
-func (h *msgHook) Types() []int {
-	return AllHookTypes
-}
-
-// Fire 执行
-func (h *msgHook) Fire(msg *Message) error {
-	jmsg, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-
-	return h.bot.Store(msg.Channel, strconv.FormatInt(time.Now().UnixNano(), 10), jmsg)
-}
-
-// GetMsg 获取消息
-func (bot *Robot) GetMsg(channel string, limit int) []*Message {
-
-	if channel == "" {
-		logrus.WithFields(logrus.Fields{
-			"mod":  `rboot`,
-			"func": `GetMsg`,
-		}).Error("channel 不能为空")
-		return nil
-	}
-
-	keys, err := bot.Brain.GetKeys(channel, limit)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"mod":  `rboot`,
-			"func": `GetMsg`,
-		}).Error(err)
-		return nil
-	}
-
-	msgs := make([]*Message, 0)
-
-	for _, key := range keys {
-		val, err := bot.Find(channel, key)
-		if err != nil {
-			logrus.WithFields(logrus.Fields{
-				"mod":  `rboot`,
-				"func": `GetMsg`,
-				"flow": `for keys find key`,
-			}).Error(err)
-		} else {
-			msg := &Message{}
-			if err = json.Unmarshal(val, &msg); err == nil {
-				msgs = append(msgs, msg)
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"mod":  `rboot`,
-					"func": `GetMsg`,
-					"flow": `json.Unmarshal`,
-				}).Error(err)
-			}
-		}
-	}
-
-	return msgs
 }
