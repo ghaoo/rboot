@@ -77,3 +77,8 @@ func pathExist(dbfile string) error {
 
 	return nil
 }
+
+// register brain ...
+func init() {
+	rboot.RegisterBrain(`leveldb`, NewLevelDB)
+}
