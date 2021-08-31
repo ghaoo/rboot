@@ -16,6 +16,7 @@ type Brain interface {
 	Set(bucket, key string, value []byte) error
 	Get(bucket, key string) ([]byte, error)
 	Remove(bucket, key string) error
+	Close() error
 }
 
 var brains = make(map[string]func() Brain)
@@ -171,6 +172,10 @@ func (b *boltMemory) Remove(bucket, key string) error {
 	})
 
 	return err
+}
+
+func (b *boltMemory) Close() error {
+	return b.bolt.Close()
 }
 
 // register brain ...

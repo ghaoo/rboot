@@ -63,6 +63,10 @@ func (level *goleveldb) Remove(bucket, key string) error {
 	return level.db.Delete([]byte(key), nil)
 }
 
+func (level *goleveldb) Close() error {
+	return level.db.Close()
+}
+
 // 检查存放db文件的文件夹是否存在。
 // 如果db文件存在运行目录下，则无操作
 func pathExist(dbfile string) error {
