@@ -15,6 +15,7 @@ type goleveldb struct {
 	db *leveldb.DB
 }
 
+// NewLevelDB 创建
 func NewLevelDB() rboot.Brain {
 	dbfile := os.Getenv(`LEVELDB_FILE`)
 
@@ -41,13 +42,13 @@ func NewLevelDB() rboot.Brain {
 	}
 }
 
-// Set ...
+// Set 保存
 func (level *goleveldb) Set(bucket, key string, val []byte) error {
 	key = bucket + key
 	return level.db.Put([]byte(key), val, nil)
 }
 
-// Get ...
+// Get 查找
 func (level *goleveldb) Get(bucket, key string) ([]byte, error) {
 	key = bucket + key
 	found, err := level.db.Get([]byte(key), nil)
@@ -58,11 +59,13 @@ func (level *goleveldb) Get(bucket, key string) ([]byte, error) {
 	return found, nil
 }
 
+// Remove 删除
 func (level *goleveldb) Remove(bucket, key string) error {
 	key = bucket + key
 	return level.db.Delete([]byte(key), nil)
 }
 
+// Close 关闭数据库
 func (level *goleveldb) Close() error {
 	return level.db.Close()
 }
