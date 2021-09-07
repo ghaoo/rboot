@@ -49,7 +49,7 @@ func newAgent() *wxwork.Agent {
 
 	token := os.Getenv("WORKWX_RECV_TOKEN")
 	encodingAESKey := os.Getenv("WORKWX_RECV_AES_KEY")
-	a.SetCallback(token, encodingAESKey)
+	a.SetMsgCrypt(token, encodingAESKey)
 
 	return a
 }
