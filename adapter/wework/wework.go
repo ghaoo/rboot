@@ -107,7 +107,6 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 	msg.Header.Set("Data", buf.String())
 
 	wx.in <- msg
-
 }
 
 // listenOutgoing 监听 rboot Outgoing
