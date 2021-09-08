@@ -94,7 +94,6 @@ func (wx *wework) parseRecvHandle(w http.ResponseWriter, r *http.Request) {
 	msg := rboot.NewMessage(recv.Content)
 	msg.From = recv.FromUsername
 	msg.Sender = recv.FromUsername
-	msg.Header.Set("AgentId", strconv.Itoa(wx.client.AgentID))
 	msg.Header.Set("msgtype", "markdown")
 
 	buf := bytes.Buffer{}
