@@ -64,7 +64,7 @@ func (wx *wework) Incoming() chan *rboot.Message {
 	return wx.in
 }
 
-// Outgoing 传入消息经脚本处理后向企业微信输入的消息
+// Outgoing 传入消息经脚本处理后向企业微信输出的消息
 func (wx *wework) Outgoing() chan *rboot.Message {
 	return wx.out
 }
