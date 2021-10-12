@@ -50,6 +50,7 @@ func (r *route) Methods(methods ...string) *route {
 type Router struct {
 	mux    *mux.Router
 	routes []*route
+	cors   bool
 
 	// 中间件
 	middlewares []func(http.Handler) http.Handler
@@ -60,8 +61,13 @@ func newRouter() *Router {
 	return &Router{
 		mux:         mux.NewRouter(),
 		routes:      make([]*route, 0),
+		cors:        true,
 		middlewares: make([]func(http.Handler) http.Handler, 0),
 	}
+}
+
+func (r *Router) SetCors(cors bool) {
+	r.cors = cors
 }
 
 // Use 注册中间件，和 *mux.Router.Use 用法相同
@@ -107,6 +113,11 @@ func (r *Router) run() {
 		if ro.name != "" {
 			routeMux = routeMux.Name(ro.name)
 		}
+	}
+
+	// 跨域请求
+	if r.cors {
+		r.mux.Use(mux.CORSMethodMiddleware(r.mux))
 	}
 
 	if len(r.middlewares) > 0 {
