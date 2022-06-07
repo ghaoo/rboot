@@ -26,7 +26,7 @@ type PluginFunc func(bot *Robot, incoming *Message) []*Message
 func RegisterPlugin(name string, plugin Plugin) {
 
 	if name == "" {
-		panic("RegisterPlugin: the plugin must have a name")
+		panic("RegisterPlugin: plugin must have a name")
 	}
 
 	// 如果已经存在插件，将插件替换为现在的插件
@@ -45,11 +45,11 @@ func DirectivePlugin(name string) (PluginFunc, error) {
 		return plugin.Action, nil
 	}
 
-	return nil, fmt.Errorf("DirectivePlugin: no action found in plugin '%s' (missing a plugin?)", name)
+	return nil, fmt.Errorf("DirectivePlugin: no action found in plugin '%s' (missing plugin?)", name)
 }
 
 // helpSetup 帮助脚本
-func helpSetup(bot *Robot, in *Message) (msg []*Message) {
+func helpSetup(_ *Robot, in *Message) (msg []*Message) {
 	rule := in.Header.Get("rule")
 	args := in.Header["args"]
 	msgtype := in.Header.Get("msgtype")

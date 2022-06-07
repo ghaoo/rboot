@@ -26,8 +26,8 @@ func signature(datetime, secret, content string) string {
 	return base64.StdEncoding.EncodeToString(data)
 }
 
-// VerifySign 验证签名
-func (bot *Robot) VerifySign(sign, secret, content, datetime string) error {
+// verifySign 验证签名
+func verifySign(sign, secret, content, datetime string) error {
 	dt, err := time.Parse("2006-01-02 15:04:05", datetime)
 	if err != nil {
 		return fmt.Errorf("datetime format is error, should 2006-01-02 15:04:05")
@@ -46,6 +46,15 @@ func (bot *Robot) VerifySign(sign, secret, content, datetime string) error {
 
 // listenIncoming 用于传入消息，为保证消息的安全性，消息应该进行签名加密
 func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
+	listenMessage(w, r, bot.inputChan)
+}
+
+// listenOutgoing 用于传出消息，为保证消息的安全性，消息应该进行签名加密
+func (bot *Robot) listenOutgoing(w http.ResponseWriter, r *http.Request) {
+	listenMessage(w, r, bot.outputChan)
+}
+
+func listenMessage(w http.ResponseWriter, r *http.Request, msgChan chan *Message) {
 	sign := r.Header.Get("sign")
 	datetime := r.Header.Get("datetime")
 
@@ -59,7 +68,7 @@ func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 
 	secret := os.Getenv("ROBOT_SECRET")
 
-	if err = bot.VerifySign(sign, secret, string(content), datetime); err != nil {
+	if err = verifySign(sign, secret, string(content), datetime); err != nil {
 		w.WriteHeader(403)
 		w.Write([]byte(err.Error()))
 		return
@@ -71,7 +80,7 @@ func (bot *Robot) listenIncoming(w http.ResponseWriter, r *http.Request) {
 	msg.Sender = r.Header.Get("sender")
 	msg.Header = Header(r.Header)
 
-	bot.inputChan <- msg
+	msgChan <- msg
 
 	w.WriteHeader(200)
 	w.Write([]byte("发送成功"))

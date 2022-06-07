@@ -111,7 +111,7 @@ func (r *Router) run() {
 		}
 
 		if ro.name != "" {
-			routeMux = routeMux.Name(ro.name)
+			routeMux = routeMux.Name(ro.name).Headers()
 		}
 	}
 
@@ -170,7 +170,7 @@ func remoteIPV4(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(remoteAddr))
 }
 
-func webHome(w http.ResponseWriter, r *http.Request) {
+func webHome(w http.ResponseWriter, _ *http.Request) {
 
 	var out = `<div style="color: green;width: 100%;text-align: center;margin-top: 10%;font-size: 18px;"><pre style="word-wrap: break-word; white-space: pre-wrap;">` + rbootLogo + `</pre></div>`
 	w.Write([]byte(out))
