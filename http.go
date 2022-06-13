@@ -30,7 +30,7 @@ func signature(datetime, secret, content string) string {
 func verifySign(sign, secret, content, datetime string) error {
 	dt, err := time.Parse("2006-01-02 15:04:05", datetime)
 	if err != nil {
-		return fmt.Errorf("datetime format is error, should 2006-01-02 15:04:05")
+		return fmt.Errorf("datetime format error, should 2006-01-02 15:04:05")
 	}
 
 	if time.Now().Sub(dt).Seconds() > float64(timeout) {
@@ -54,6 +54,7 @@ func (bot *Robot) listenOutgoing(w http.ResponseWriter, r *http.Request) {
 	listenMessage(w, r, bot.outputChan)
 }
 
+// listenMessage 监听消息
 func listenMessage(w http.ResponseWriter, r *http.Request, msgChan chan *Message) {
 	sign := r.Header.Get("sign")
 	datetime := r.Header.Get("datetime")
@@ -61,7 +62,7 @@ func listenMessage(w http.ResponseWriter, r *http.Request, msgChan chan *Message
 	content, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
-		w.Write([]byte("the message read failed, errmsg: " + err.Error()))
+		w.Write([]byte("message read failed, errmsg: " + err.Error()))
 		return
 	}
 	defer r.Body.Close()
